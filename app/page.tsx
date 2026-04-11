@@ -250,7 +250,7 @@ function CharteSection() {
   ];
 
   return (
-    <section className="bg-cream py-20 md:py-32 px-4">
+    <section className="bg-card-white py-20 md:py-32 px-4">
       <div className="max-w-5xl mx-auto text-center px-6">
         <span className="inline-block font-sans text-xs font-medium uppercase tracking-[0.32em] text-gold mb-8">
           Notre charte en 3 mots
