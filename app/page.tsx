@@ -50,7 +50,7 @@ function HeroSection() {
       >
         <source src="/videos/hero.mp4?v=3" type="video/mp4" />
       </video>
-      <div className="absolute inset-0 bg-[rgba(15,23,18,0.55)] z-[1]" />
+      <div className="absolute inset-0 bg-[rgba(15,61,46,0.35)] z-[1]" />
 
       <div className="relative z-[2] max-w-4xl text-center">
         <span className="inline-block font-sans text-xs font-medium uppercase tracking-[0.32em] text-gold mb-8">
@@ -101,32 +101,24 @@ function HeroSection() {
 
 function NarrativeSection() {
   return (
-    <section className="relative min-h-screen flex items-center py-32 px-4">
-      <Image
-        src="/images/narrative.jpg"
-        alt=""
-        fill
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-[rgba(15,23,18,0.62)]" />
-
-      <div className="relative z-[2] max-w-3xl mx-auto px-2">
+    <section className="bg-cream py-20 md:py-32 px-4">
+      <div className="max-w-3xl mx-auto px-2">
         <span className="inline-block font-sans text-xs font-medium uppercase tracking-[0.32em] text-gold mb-8">
           On se comprend
         </span>
 
-        <h2 className="font-heading text-4xl md:text-5xl font-light text-[#F5F0E6] leading-[1.05] tracking-[-0.015em] mb-8">
+        <h2 className="font-heading text-4xl md:text-5xl font-light text-green-deep leading-[1.05] tracking-[-0.015em] mb-8">
           Tu la connais, cette galère ?
         </h2>
 
-        <p className="text-lg leading-[1.85] text-[#E8DFCC] mb-6">
+        <p className="text-lg leading-[1.85] text-muted-foreground mb-6">
           Tu cherches une coiffeuse qui sait <em className="italic">vraiment</em> dompter
           tes cheveux. Une nounou en qui tu peux avoir confiance pour samedi
           soir. Une avocate qui te parle sans te faire sentir bête. La fille
           qui fait ces gâteaux d&apos;anniversaire dont tout le monde parle.
         </p>
 
-        <p className="text-lg leading-[1.85] text-[#E8DFCC] mb-6">
+        <p className="text-lg leading-[1.85] text-muted-foreground mb-6">
           Tu scrolles WhatsApp pendant des heures. Tu demandes à trois
           copines. Tu recoupes les avis. Tu doutes. Tu finis par poser la
           question dans le groupe... et tu attends. Ou tu te rabats sur
@@ -143,7 +135,7 @@ function NarrativeSection() {
           <div className="w-[50px] h-px bg-gold mx-auto" />
         </div>
 
-        <p className="text-lg leading-[1.85] text-[#E8DFCC] mb-8">
+        <p className="text-lg leading-[1.85] text-muted-foreground mb-8">
           Marre de chercher comme si on n&apos;avait personne autour de nous.
           Marre de passer à côté de pépites parce qu&apos;on n&apos;était pas
           dans le bon groupe au bon moment. Marre que les bonnes adresses
@@ -163,7 +155,7 @@ function NarrativeSection() {
 
 function CategoriesSection() {
   return (
-    <section className="py-20 md:py-32 px-4 bg-[#FAF6EC]">
+    <section className="py-20 md:py-32 px-4 bg-card-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center">
           <span className="inline-block font-sans text-xs font-medium uppercase tracking-[0.32em] text-gold mb-8">
@@ -177,7 +169,7 @@ function CategoriesSection() {
           {CATEGORIES.map((cat) => (
             <div
               key={cat}
-              className="bg-[#F5F0E6] rounded-md p-10 px-8 text-center border border-[rgba(201,169,97,0.3)]"
+              className="bg-cream rounded-md p-10 px-8 text-center border border-border-subtle"
             >
               <div className="flex justify-center text-gold mb-5">
                 {CATEGORY_ICON_MAP[cat]}
@@ -218,7 +210,7 @@ function PrestatairesSection() {
           <h2 className="font-heading text-4xl md:text-5xl font-light text-green-deep leading-tight tracking-tight mb-8">
             Fais-toi connaître chez nous.
           </h2>
-          <p className="text-base leading-[1.85] text-[#4a4a4a] mb-8">
+          <p className="text-base leading-[1.85] text-muted-foreground mb-8">
             Tu proposes un service ? Tu as un savoir-faire qui mérite
             d&apos;être connu ? Rejoins Hilmy. C&apos;est gratuit,
             c&apos;est entre nous, et c&apos;est là que les bonnes adresses
@@ -258,20 +250,12 @@ function CharteSection() {
   ];
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center py-32 px-4">
-      <Image
-        src="/images/closing.jpg"
-        alt=""
-        fill
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-[rgba(15,23,18,0.65)]" />
-
-      <div className="relative z-[2] max-w-5xl mx-auto text-center px-6">
+    <section className="bg-cream py-20 md:py-32 px-4">
+      <div className="max-w-5xl mx-auto text-center px-6">
         <span className="inline-block font-sans text-xs font-medium uppercase tracking-[0.32em] text-gold mb-8">
           Notre charte en 3 mots
         </span>
-        <h2 className="font-heading text-4xl md:text-5xl font-light text-[#F5F0E6] leading-tight tracking-tight">
+        <h2 className="font-heading text-4xl md:text-5xl font-light text-green-deep leading-tight tracking-tight">
           Ce qui nous lie.
         </h2>
 
@@ -279,10 +263,10 @@ function CharteSection() {
           {values.map((v) => (
             <div key={v.title} className="text-center">
               <div className="flex justify-center text-gold mb-5">{v.icon}</div>
-              <h3 className="font-heading text-2xl font-normal text-[#F5F0E6]">
+              <h3 className="font-heading text-2xl font-normal text-green-deep">
                 {v.title}
               </h3>
-              <p className="mt-3 text-sm text-[#E8DFCC]/85 leading-[1.6]">
+              <p className="mt-3 text-sm text-muted-foreground leading-[1.6]">
                 {v.text}
               </p>
             </div>
