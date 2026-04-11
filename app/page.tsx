@@ -48,7 +48,7 @@ function HeroSection() {
         poster="/images/hero.jpg"
         className="absolute inset-0 w-full h-full object-cover z-0"
       >
-        <source src="/videos/hero.mp4" type="video/mp4" />
+        <source src="/videos/hero.mp4?v=2" type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-[rgba(15,23,18,0.55)] z-[1]" />
 
