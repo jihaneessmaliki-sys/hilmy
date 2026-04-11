@@ -50,7 +50,7 @@ export function Header({ transparent }: { transparent?: boolean }) {
               href="/inscription"
               className={`inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition-all ${ctaClass}`}
             >
-              Je rejoins les filles
+              Montre-moi les adresses
             </Link>
           </nav>
 
@@ -95,7 +95,7 @@ export function Header({ transparent }: { transparent?: boolean }) {
               onClick={() => setOpen(false)}
               className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-medium bg-green-deep text-primary-foreground hover:bg-green-deep/90 transition-colors mt-2 text-center"
             >
-              Je rejoins les filles
+              Montre-moi les adresses
             </Link>
           </nav>
         </div>

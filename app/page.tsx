@@ -58,22 +58,28 @@ function HeroSection() {
         </span>
 
         <h1 className="font-heading text-5xl md:text-7xl lg:text-8xl font-light text-[#F5F0E6] leading-[1] tracking-[-0.025em] mb-8">
-          Tu cherches une <em className="italic font-light">perle</em> ?
+          Les meilleures adresses,
           <br className="hidden sm:block" />
-          On en a plein.
+          <em className="italic font-light">entre copines</em>.
         </h1>
 
-        <p className="text-lg leading-[1.65] text-[#E8DFCC] max-w-2xl mx-auto mb-10">
-          Coiffeuses, nounous, traiteuses, avocates, salons de thé, spas...
-          Hilmy, c&apos;est l&apos;annuaire des femmes pour les femmes.
-          Toutes recommandées entre nous.
-        </p>
+        <div className="max-w-2xl mx-auto mb-10">
+          <p className="text-lg leading-[1.65] text-[#E8DFCC]">
+            Finis les heures à chercher, les avis Google douteux, les
+            déceptions. Juste les bonnes adresses — coiffeuses, nounous,
+            avocates, traiteuses, salons de thé, spas, restos, sorties —
+            celles qu&apos;on se passe entre copines.
+          </p>
+          <p className="font-heading text-xl font-light italic text-gold mt-4">
+            Rejoins-nous.
+          </p>
+        </div>
 
         <Link
           href="/inscription"
           className="inline-flex items-center justify-center rounded-full px-12 py-5 text-base font-medium bg-[#F5F0E6] text-green-deep hover:bg-transparent hover:border hover:border-[#F5F0E6] hover:text-[#F5F0E6] transition-all"
         >
-          Je rejoins les filles
+          Montre-moi les adresses
         </Link>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center text-sm text-[#E8DFCC]">
