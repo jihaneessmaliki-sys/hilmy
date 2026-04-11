@@ -201,13 +201,14 @@ function CategoriesSection() {
 function PrestatairesSection() {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 min-h-[80vh]">
-      <div className="relative min-h-[50vh] md:min-h-0 bg-[#2a2520]">
+      <div className="relative min-h-[50vh] md:min-h-0">
         <Image
-          src="/images/prestataire.jpg"
+          src="/images/prestataire-atelier.jpg"
           alt=""
           fill
-          className="object-cover"
+          className="object-cover object-center"
         />
+        <div className="absolute inset-0 bg-[rgba(15,61,46,0.15)]" />
       </div>
       <div className="flex items-center bg-[#F5F0E6] p-10 md:p-20">
         <div className="max-w-md">
