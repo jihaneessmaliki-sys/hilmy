@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -8,7 +9,24 @@ export async function GET(request: Request) {
   const type = searchParams.get("type");
   const next = searchParams.get("next") ?? "/onboarding";
 
-  const supabase = await createClient();
+  const cookieStore = await cookies();
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
 
   // Handle email confirmation & password recovery links (token_hash flow)
   if (token_hash && type) {
@@ -18,14 +36,10 @@ export async function GET(request: Request) {
     });
 
     if (!error) {
-      // Password recovery → redirect to reset page
       if (type === "recovery") {
-        return NextResponse.redirect(
-          `${origin}/reinitialiser-mot-de-passe`
-        );
+        return NextResponse.redirect(`${origin}/reinitialiser-mot-de-passe`);
       }
 
-      // Email confirmation (signup/email) → check profile & redirect
       const {
         data: { user },
       } = await supabase.auth.getUser();
