@@ -11,6 +11,9 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
 
+  // Collect cookies so we can apply them to the redirect response
+  const pendingCookies: { name: string; value: string; options: Record<string, unknown> }[] = [];
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -21,12 +24,20 @@ export async function GET(request: Request) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
+            // Store for later + set on cookieStore for subsequent reads (e.g. getUser)
+            pendingCookies.push({ name, value, options });
+            try {
+              cookieStore.set(name, value, options);
+            } catch {
+              // ignore
+            }
           });
         },
       },
     }
   );
+
+  let redirectPath = "/inscription";
 
   // Handle email confirmation & password recovery links (token_hash flow)
   if (token_hash && type) {
@@ -37,31 +48,30 @@ export async function GET(request: Request) {
 
     if (!error) {
       if (type === "recovery") {
-        return NextResponse.redirect(`${origin}/reinitialiser-mot-de-passe`);
-      }
+        redirectPath = "/reinitialiser-mot-de-passe";
+      } else {
+        // Email confirmation → check if user has a profile
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("user_profiles")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
 
-      if (user) {
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
-
-        if (profile) {
-          return NextResponse.redirect(`${origin}/prestataires`);
+          redirectPath = profile ? "/prestataires" : "/onboarding";
+        } else {
+          redirectPath = "/onboarding";
         }
       }
-
-      return NextResponse.redirect(`${origin}/onboarding`);
     }
   }
 
   // Handle OAuth / PKCE code exchange flow
-  if (code) {
+  if (!token_hash && code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const {
@@ -75,14 +85,18 @@ export async function GET(request: Request) {
           .eq("user_id", user.id)
           .single();
 
-        if (profile) {
-          return NextResponse.redirect(`${origin}/prestataires`);
-        }
+        redirectPath = profile ? "/prestataires" : next;
+      } else {
+        redirectPath = next;
       }
-
-      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
-  return NextResponse.redirect(`${origin}/inscription`);
+  // Create redirect response and apply ALL session cookies to it
+  const response = NextResponse.redirect(`${origin}${redirectPath}`);
+  pendingCookies.forEach(({ name, value, options }) => {
+    response.cookies.set(name, value, options as Record<string, string>);
+  });
+
+  return response;
 }
