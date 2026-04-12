@@ -23,7 +23,7 @@ export default function MotDePasseOubliePage() {
     const supabase = createClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
-      { redirectTo: "https://hilmy.io/reinitialiser-mot-de-passe" }
+      { redirectTo: "https://hilmy.io/auth/callback" }
     );
 
     if (resetError) {

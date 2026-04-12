@@ -17,6 +17,7 @@ export default function InscriptionPage() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,12 +40,19 @@ export default function InscriptionPage() {
     });
 
     if (authError) {
-      setError(authError.message);
+      if (authError.message.includes("already registered")) {
+        setError("Ce compte existe déjà. Connecte-toi ou réinitialise ton mot de passe.");
+      } else if (authError.message.includes("rate limit")) {
+        setError("Trop de tentatives. Attends quelques minutes avant de réessayer.");
+      } else {
+        setError("Une erreur est survenue. Réessaie dans quelques instants.");
+      }
       setLoading(false);
       return;
     }
 
-    router.push("/onboarding");
+    setEmailSent(true);
+    setLoading(false);
   }
 
   return (
@@ -53,6 +61,30 @@ export default function InscriptionPage() {
       <main className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="w-full max-w-md">
           <div className="bg-card-white rounded-2xl shadow-sm border border-border-subtle p-8">
+            {emailSent ? (
+              <div className="text-center space-y-4 py-4">
+                <h1 className="font-heading text-3xl font-semibold text-green-deep">
+                  Vérifie ta boîte mail
+                </h1>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  On t&apos;a envoyé un email à <strong className="text-foreground">{email}</strong>.
+                  <br />
+                  Clique sur le lien pour confirmer ton compte et accéder à Hilmy.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Rien reçu ? Vérifie tes spams, on ne sait jamais.
+                </p>
+                <div className="pt-4">
+                  <Link
+                    href="/connexion"
+                    className="text-sm text-gold hover:underline font-medium"
+                  >
+                    Aller à la page de connexion
+                  </Link>
+                </div>
+              </div>
+            ) : (
+            <>
             <div className="text-center mb-8">
               <h1 className="font-heading text-3xl font-semibold text-green-deep">
                 Crée ton compte
@@ -127,27 +159,33 @@ export default function InscriptionPage() {
                 </Link>
               </p>
             </div>
+            </>
+            )}
           </div>
 
-          <div className="mt-6 p-4 rounded-xl bg-gold/5 border border-gold/20">
-            <p className="text-xs text-muted-foreground text-center leading-relaxed">
-              Hilmy est un cercle de femmes. En t&apos;inscrivant, tu confirmes
-              sur l&apos;honneur être une femme.
-            </p>
-          </div>
+          {!emailSent && (
+            <>
+              <div className="mt-6 p-4 rounded-xl bg-gold/5 border border-gold/20">
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  Hilmy est un cercle de femmes. En t&apos;inscrivant, tu confirmes
+                  sur l&apos;honneur être une femme.
+                </p>
+              </div>
 
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Tu proposes un service ?{" "}
-            <Link href="/inscription-prestataire" className="text-gold hover:underline">
-              Inscris-toi comme prestataire
-            </Link>
-          </p>
+              <p className="mt-4 text-center text-sm text-muted-foreground">
+                Tu proposes un service ?{" "}
+                <Link href="/inscription-prestataire" className="text-gold hover:underline">
+                  Inscris-toi comme prestataire
+                </Link>
+              </p>
 
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            En t&apos;inscrivant, tu acceptes nos{" "}
-            <Link href="/cgu" className="underline">CGU</Link> et notre{" "}
-            <Link href="/confidentialite" className="underline">politique de confidentialité</Link>.
-          </p>
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                En t&apos;inscrivant, tu acceptes nos{" "}
+                <Link href="/cgu" className="underline">CGU</Link> et notre{" "}
+                <Link href="/confidentialite" className="underline">politique de confidentialité</Link>.
+              </p>
+            </>
+          )}
         </div>
       </main>
       <Footer />
