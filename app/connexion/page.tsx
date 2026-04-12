@@ -98,6 +98,15 @@ export default function ConnexionPage() {
                 />
               </div>
 
+              <div className="text-right">
+                <Link
+                  href="/mot-de-passe-oublie"
+                  className="text-sm text-gold hover:underline font-medium"
+                >
+                  Mot de passe oublié ?
+                </Link>
+              </div>
+
               {error && <p className="text-sm text-red-600">{error}</p>}
 
               <Button

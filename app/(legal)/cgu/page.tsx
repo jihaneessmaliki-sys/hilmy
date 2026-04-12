@@ -18,8 +18,8 @@ export default function CguPage() {
           <p>
             Hilmy est un annuaire en ligne gratuit permettant la mise en relation
             entre des utilisatrices à la recherche de prestataires de services et
-            des prestataires femmes proposant leurs services dans la région de
-            Genève et ses environs.
+            des prestataires femmes proposant leurs services en Suisse, en
+            France, en Belgique et dans les pays limitrophes.
           </p>
         </section>
 
@@ -34,8 +34,7 @@ export default function CguPage() {
           <p className="mt-2">
             Deux types de comptes existent : le compte utilisatrice (pour
             consulter l&apos;annuaire) et le compte prestataire (pour proposer
-            ses services). L&apos;inscription se fait par lien magique envoyé par
-            email. Aucun mot de passe n&apos;est nécessaire.
+            ses services). L&apos;inscription se fait par email et mot de passe.
           </p>
         </section>
 

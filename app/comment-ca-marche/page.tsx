@@ -23,9 +23,8 @@ export default function CommentCaMarchePage() {
               </h2>
               <div className="space-y-8">
                 <Step number="01" title="Inscris-toi">
-                  Entre ton email, on t&apos;envoie un lien magique. Pas de mot
-                  de passe, pas de prise de tête. Dis-nous juste ton prénom et
-                  ta ville.
+                  Entre ton email, choisis un mot de passe, et c&apos;est parti.
+                  Dis-nous juste ton prénom et ta ville.
                 </Step>
                 <Step number="02" title="Explore l'annuaire">
                   Filtre par catégorie, par ville, ou cherche directement un nom.

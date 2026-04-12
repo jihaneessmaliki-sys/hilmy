@@ -18,7 +18,7 @@ export default function ConfidentialitePage() {
             1. Responsable du traitement
           </h2>
           <p>
-            Jiji [nom à compléter], Genève, Suisse.
+            Jihane Maliki, Genève, Suisse.
             <br />
             Contact : hello@hilmy.io
           </p>

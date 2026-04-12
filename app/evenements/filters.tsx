@@ -50,7 +50,7 @@ export function EvenementsFilters({
   }
 
   const dateOptions = [
-    { value: "all", label: "Tout" },
+    { value: "all", label: "Toutes les dates" },
     { value: "semaine", label: "Cette semaine" },
     { value: "mois", label: "Ce mois-ci" },
     { value: "trimestre", label: "Les 3 prochains mois" },
@@ -76,7 +76,7 @@ export function EvenementsFilters({
               <SelectValue placeholder="Format" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="all">Tous les formats</SelectItem>
               <SelectItem value="presentiel">En présentiel</SelectItem>
               <SelectItem value="en_ligne">En ligne</SelectItem>
             </SelectContent>

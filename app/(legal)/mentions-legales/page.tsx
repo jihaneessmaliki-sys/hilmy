@@ -11,7 +11,7 @@ export default function MentionsLegalesPage() {
             Éditrice du site
           </h2>
           <p>
-            Hilmy est édité par Jiji [nom à compléter], entreprise individuelle
+            Hilmy est édité par Jihane Maliki, entreprise individuelle
             domiciliée à Genève, Suisse.
           </p>
           <p className="mt-2">Contact : hello@hilmy.io</p>
