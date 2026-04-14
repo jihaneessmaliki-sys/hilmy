@@ -69,7 +69,7 @@ export default function RecommanderPage() {
     );
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (comment.trim().length < 30) return;
     setLoading(true);

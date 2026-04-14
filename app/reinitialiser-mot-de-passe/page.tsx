@@ -17,7 +17,7 @@ export default function ReinitialiserMotDePassePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 

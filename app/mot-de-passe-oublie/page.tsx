@@ -15,7 +15,7 @@ export default function MotDePasseOubliePage() {
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -23,7 +23,7 @@ export default function MotDePasseOubliePage() {
     const supabase = createClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
-      { redirectTo: "https://hilmy.io/auth/callback" }
+      { redirectTo: `${window.location.origin}/auth/callback` }
     );
 
     if (resetError) {

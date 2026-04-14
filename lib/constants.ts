@@ -93,6 +93,7 @@ export interface Profile {
   description: string | null;
   whatsapp: string;
   instagram: string | null;
+  tiktok: string | null;
   photos: string[];
   status: ProfileStatus;
   admin_notes: string | null;
@@ -137,6 +138,8 @@ export interface UserProfile {
   prenom: string;
   pays: string;
   ville: string;
+  bio: string | null;
+  avatar_url: string | null;
   created_at: string;
 }
 

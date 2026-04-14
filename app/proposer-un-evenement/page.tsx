@@ -63,7 +63,7 @@ export default function ProposerEvenementPage() {
     setFlyerPreview(URL.createObjectURL(file));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!flyerFile) return;
     if (form.description.trim().length < 50) return;

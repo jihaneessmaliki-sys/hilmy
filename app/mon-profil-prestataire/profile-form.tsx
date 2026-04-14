@@ -43,6 +43,7 @@ export function ProfileForm({ userId, profile }: Props) {
     description: profile?.description ?? "",
     whatsapp: profile?.whatsapp ?? "",
     instagram: profile?.instagram ?? "",
+    tiktok: profile?.tiktok ?? "",
   });
 
   const [photos, setPhotos] = useState<string[]>(profile?.photos ?? []);
@@ -67,7 +68,7 @@ export function ProfileForm({ userId, profile }: Props) {
     setNewFiles((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setSuccess(false);
@@ -104,6 +105,7 @@ export function ProfileForm({ userId, profile }: Props) {
       description: form.description || null,
       whatsapp: form.whatsapp,
       instagram: form.instagram || null,
+      tiktok: form.tiktok || null,
       photos: allPhotos,
       status: "pending" as const,
     };
@@ -266,6 +268,16 @@ export function ProfileForm({ userId, profile }: Props) {
             id="instagram"
             value={form.instagram}
             onChange={(e) => update("instagram", e.target.value)}
+            placeholder="@ton_compte"
+            className="bg-cream border-border-subtle"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="tiktok">TikTok</Label>
+          <Input
+            id="tiktok"
+            value={form.tiktok}
+            onChange={(e) => update("tiktok", e.target.value)}
             placeholder="@ton_compte"
             className="bg-cream border-border-subtle"
           />

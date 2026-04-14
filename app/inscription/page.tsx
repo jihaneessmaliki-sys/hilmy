@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
 export default function InscriptionPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -19,7 +17,7 @@ export default function InscriptionPage() {
   const [error, setError] = useState("");
   const [emailSent, setEmailSent] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
@@ -37,6 +35,9 @@ export default function InscriptionPage() {
     const { error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
 
     if (authError) {
