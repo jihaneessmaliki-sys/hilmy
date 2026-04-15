@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     }
   );
 
-  let redirectPath = "/inscription";
+  let redirectPath = "/connexion";
 
   // Handle email confirmation & password recovery links (token_hash flow)
   if (token_hash && type) {
@@ -46,7 +46,10 @@ export async function GET(request: Request) {
       type: type as "signup" | "email" | "recovery" | "magiclink",
     });
 
-    if (!error) {
+    if (error) {
+      console.error("[auth/callback] verifyOtp failed:", error.message, { type, token_hash: token_hash.slice(0, 8) + "..." });
+      redirectPath = "/connexion?error=link-expired";
+    } else {
       if (type === "recovery") {
         redirectPath = "/reinitialiser-mot-de-passe";
       } else {

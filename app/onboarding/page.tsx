@@ -41,29 +41,25 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Check if profile already exists
-    const { data: existing } = await supabase
-      .from("user_profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    // Check if profile already exists (via RPC to bypass PostgREST schema cache)
+    const { data: existing } = await supabase.rpc("get_user_profile", {
+      p_user_id: user.id,
+    });
 
-    if (existing) {
-      router.push("/prestataires");
+    if (existing && existing.length > 0) {
+      window.location.href = "/prestataires";
       return;
     }
 
     const signupType = user.user_metadata?.signupType ?? "member";
 
-    const { error: insertError } = await supabase
-      .from("user_profiles")
-      .insert({
-        user_id: user.id,
-        prenom: prenom.trim(),
-        pays,
-        ville: ville.trim(),
-        signupType,
-      });
+    const { error: insertError } = await supabase.rpc("create_user_profile", {
+      p_user_id: user.id,
+      p_prenom: prenom.trim(),
+      p_pays: pays,
+      p_ville: ville.trim(),
+      p_signup_type: signupType,
+    });
 
     if (insertError) {
       console.error("user_profiles insert error:", insertError);
@@ -72,7 +68,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    router.push("/prestataires");
+    window.location.href = "/prestataires";
   }
 
   return (

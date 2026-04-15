@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,30 @@ import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ConnexionPage() {
+  return (
+    <Suspense>
+      <ConnexionForm />
+    </Suspense>
+  );
+}
+
+function ConnexionForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showResend, setShowResend] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendInfo, setResendInfo] = useState("");
+
+  useEffect(() => {
+    if (searchParams.get("error") === "link-expired") {
+      setError("Le lien a expiré ou n'est plus valide. Connecte-toi ou demande un nouveau lien de confirmation.");
+      setShowResend(true);
+    }
+  }, [searchParams]);
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,10 +48,18 @@ export default function ConnexionPage() {
     });
 
     if (authError) {
-      setError("Email ou mot de passe incorrect.");
+      const msg = authError.message?.toLowerCase() ?? "";
+      if (msg.includes("not confirmed") || msg.includes("not verified") || msg.includes("email_not_confirmed")) {
+        setError("Ton email n'est pas encore confirmé. Vérifie ta boîte mail (et tes spams).");
+        setShowResend(true);
+      } else {
+        setError("Email ou mot de passe incorrect.");
+        setShowResend(false);
+      }
       setLoading(false);
       return;
     }
+    setShowResend(false);
 
     // Check if user has a profile already
     const { data: { user } } = await supabase.auth.getUser();
@@ -108,6 +135,40 @@ export default function ConnexionPage() {
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
+              {resendInfo && <p className="text-sm text-green-deep">{resendInfo}</p>}
+
+              {showResend && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={resendLoading}
+                  onClick={async () => {
+                    const target = email.trim().toLowerCase();
+                    if (!target || !target.includes("@")) {
+                      setError("Entre ton email ci-dessus pour qu'on te renvoie le lien.");
+                      return;
+                    }
+                    setResendLoading(true);
+                    setResendInfo("");
+                    const res = await fetch("/api/auth/resend-confirmation", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email: target }),
+                    });
+                    if (res.ok) {
+                      setResendInfo("C'est renvoyé ! Vérifie ta boîte mail.");
+                      setError("");
+                    } else {
+                      const data = await res.json().catch(() => null) as { error?: string } | null;
+                      setError(data?.error ?? "Impossible de renvoyer l'email pour l'instant.");
+                    }
+                    setResendLoading(false);
+                  }}
+                  className="w-full rounded-full border-border-subtle"
+                >
+                  {resendLoading ? "Renvoi en cours..." : "Renvoyer l'email de confirmation"}
+                </Button>
+              )}
 
               <Button
                 type="submit"
