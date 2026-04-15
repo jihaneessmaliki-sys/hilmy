@@ -15,14 +15,10 @@ function isValidSignupType(value: string | undefined): value is "member" | "prov
   return value === "member" || value === "provider";
 }
 
-function getRedirectTo(request: Request, nextPath?: string) {
-  const url = new URL("/auth/callback", request.url);
-
-  if (nextPath) {
-    url.searchParams.set("next", nextPath);
-  }
-
-  return url.toString();
+function getBaseUrl(request: Request) {
+  return process.env.NODE_ENV === "production"
+    ? "https://hilmy.io"
+    : new URL(request.url).origin;
 }
 
 function isValidNextPath(value: string | undefined) {
@@ -61,6 +57,8 @@ export async function POST(request: Request) {
 
   try {
     const supabase = createAdminClient();
+    const baseUrl = getBaseUrl(request);
+
     const { data, error } = await supabase.auth.admin.generateLink({
       type: "signup",
       email,
@@ -69,11 +67,11 @@ export async function POST(request: Request) {
         data: {
           signupType,
         },
-        redirectTo: getRedirectTo(request, nextPath),
+        redirectTo: `${baseUrl}/auth/callback`,
       },
     });
 
-    if (error || !data.properties.action_link) {
+    if (error || !data.properties.hashed_token) {
       if (error?.message.includes("already been registered") || error?.message.includes("already registered")) {
         return NextResponse.json(
           { error: "Ce compte existe déjà. Connecte-toi ou réinitialise ton mot de passe." },
@@ -87,7 +85,12 @@ export async function POST(request: Request) {
       );
     }
 
-    await sendSignupEmail(email, data.properties.action_link);
+    // Build a direct link to our own callback with the token_hash.
+    // This bypasses Supabase's /auth/v1/verify endpoint which can
+    // redirect to the site root if the redirect URL is not whitelisted.
+    const confirmUrl = `${baseUrl}/auth/callback?token_hash=${data.properties.hashed_token}&type=signup`;
+
+    await sendSignupEmail(email, confirmUrl);
 
     try {
       await sendFounderSignupNotification({
