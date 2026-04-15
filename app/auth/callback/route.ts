@@ -56,13 +56,33 @@ export async function GET(request: Request) {
         } = await supabase.auth.getUser();
 
         if (user) {
-          const { data: profile } = await supabase
+          // On cherche d'abord dans user_profiles
+          let signupType = null;
+          let profile = await supabase
             .from("user_profiles")
-            .select("id")
+            .select("id, signupType")
             .eq("user_id", user.id)
             .single();
 
-          redirectPath = profile ? "/prestataires" : "/onboarding";
+          if (!profile.data) {
+            // Si pas trouvé, on tente dans profiles (prestataire)
+            profile = await supabase
+              .from("profiles")
+              .select("id, signupType")
+              .eq("user_id", user.id)
+              .single();
+          }
+
+          signupType = profile.data?.signupType;
+
+          if (signupType === "provider") {
+            redirectPath = "/mon-profil-prestataire";
+          } else if (signupType === "member") {
+            redirectPath = "/mon-compte";
+          } else {
+            // fallback
+            redirectPath = "/onboarding";
+          }
         } else {
           redirectPath = "/onboarding";
         }
@@ -79,13 +99,32 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       if (user && next === "/onboarding") {
-        const { data: profile } = await supabase
+        // On cherche d'abord dans user_profiles
+        let signupType = null;
+        let profile = await supabase
           .from("user_profiles")
-          .select("id")
+          .select("id, signupType")
           .eq("user_id", user.id)
           .single();
 
-        redirectPath = profile ? "/prestataires" : next;
+        if (!profile.data) {
+          // Si pas trouvé, on tente dans profiles (prestataire)
+          profile = await supabase
+            .from("profiles")
+            .select("id, signupType")
+            .eq("user_id", user.id)
+            .single();
+        }
+
+        signupType = profile.data?.signupType;
+
+        if (signupType === "provider") {
+          redirectPath = "/mon-profil-prestataire";
+        } else if (signupType === "member") {
+          redirectPath = "/mon-compte";
+        } else {
+          redirectPath = next;
+        }
       } else {
         redirectPath = next;
       }

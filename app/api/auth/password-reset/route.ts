@@ -9,7 +9,11 @@ type PasswordResetPayload = {
 };
 
 function getRedirectTo(request: Request) {
-  return new URL("/auth/callback", request.url).toString();
+  // Force le domaine hilmy.io en production
+  const baseUrl = process.env.NODE_ENV === "production"
+    ? "https://hilmy.io"
+    : (new URL(request.url)).origin;
+  return `${baseUrl}/auth/callback`;
 }
 
 export async function POST(request: Request) {
@@ -37,14 +41,20 @@ export async function POST(request: Request) {
       },
     });
 
-    if (error || !data.properties.action_link) {
+    if (error || !data.properties.hashed_token) {
       return NextResponse.json(
         { error: "Impossible d'envoyer l'email pour l'instant." },
         { status: 500 }
       );
     }
 
-    await sendPasswordResetEmail(email, data.properties.action_link);
+    // Build a direct link to our own callback with the token_hash.
+    // This avoids going through Supabase's /auth/v1/verify endpoint,
+    // which can fail with otp_expired and redirect to the site root with a hash error.
+    const baseUrl = getRedirectTo(request).replace(/\/auth\/callback$/, "");
+    const resetUrl = `${baseUrl}/auth/callback?token_hash=${data.properties.hashed_token}&type=recovery`;
+
+    await sendPasswordResetEmail(email, resetUrl);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

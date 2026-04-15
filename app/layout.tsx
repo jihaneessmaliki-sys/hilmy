@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, DM_Sans } from "next/font/google";
+import { AuthListener } from "@/components/auth-listener";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -42,7 +43,10 @@ export default function RootLayout({
       lang="fr"
       className={`${fraunces.variable} ${dmSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <AuthListener />
+        {children}
+      </body>
     </html>
   );
 }
