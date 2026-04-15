@@ -9,11 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { categoryLabel } from "@/lib/constants";
 
 interface FiltersBarProps {
   categories: string[];
   pays: string[];
-  categoryLabel: (s: string) => string;
   currentCategorie?: string;
   currentPays?: string;
   currentVille?: string;
@@ -23,7 +23,6 @@ interface FiltersBarProps {
 export function FiltersBar({
   categories,
   pays,
-  categoryLabel,
   currentCategorie,
   currentPays,
   currentVille,

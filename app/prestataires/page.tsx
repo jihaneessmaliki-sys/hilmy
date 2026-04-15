@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { PrestataireCard } from "@/components/prestataire-card";
-import { CATEGORIES, PAYS, categoryLabel, type Profile } from "@/lib/constants";
+import { CATEGORIES, PAYS, type Profile } from "@/lib/constants";
 import { FiltersBar } from "./filters-bar";
 
 interface Props {
@@ -54,7 +54,6 @@ export default async function PrestatairesPage({ searchParams }: Props) {
         <FiltersBar
           categories={CATEGORIES}
           pays={PAYS}
-          categoryLabel={categoryLabel}
           currentCategorie={params.categorie}
           currentPays={params.pays}
           currentVille={params.ville}
