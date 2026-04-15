@@ -7,7 +7,6 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 
 export default function MotDePasseOubliePage() {
   const [email, setEmail] = useState("");
@@ -20,14 +19,20 @@ export default function MotDePasseOubliePage() {
     setLoading(true);
     setError("");
 
-    const supabase = createClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      email,
-      { redirectTo: `${window.location.origin}/auth/callback` }
-    );
+    const response = await fetch("/api/auth/password-reset", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+      }),
+    });
 
-    if (resetError) {
-      setError("Une erreur est survenue. Vérifie ton email et réessaie.");
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+
+    if (!response.ok) {
+      setError(result?.error || "Une erreur est survenue. Vérifie ton email et réessaie.");
       setLoading(false);
       return;
     }

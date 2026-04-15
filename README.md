@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hilmy
 
-## Getting Started
+Hilmy est une application Next.js avec authentification Supabase et emails transactionnels gérés côté serveur.
 
-First, run the development server:
+## Démarrage
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L'application démarre sur `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variables d'environnement
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Les flux d'inscription et de réinitialisation utilisent désormais des routes serveur.
 
-## Learn More
+### Obligatoires
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+EMAIL_FROM="Hilmy <hello@hilmy.io>"
+FOUNDER_NOTIFICATION_EMAILS="founder1@hilmy.io,founder2@hilmy.io"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Envoi email recommandé : Resend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+RESEND_API_KEY=
+```
 
-## Deploy on Vercel
+Avec `RESEND_API_KEY`, l'application envoie les emails via l'API Resend. C'est le chemin recommandé pour la prod.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Fallback SMTP
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Si `RESEND_API_KEY` est absent, l'application bascule sur SMTP.
+
+```bash
+BREVO_SMTP_USER=
+BREVO_SMTP_KEY=
+BREVO_SMTP_HOST=smtp-relay.brevo.com
+BREVO_SMTP_PORT=587
+```
+
+## Flux auth email
+
+- L'inscription appelle `POST /api/auth/signup`
+- Le renvoi de confirmation appelle `POST /api/auth/resend-confirmation`
+- La réinitialisation appelle `POST /api/auth/password-reset`
+- Les liens sont générés via `supabase.auth.admin.generateLink(...)`
+- Les emails sont envoyés depuis `lib/email/transactional.ts`
+- Les founders reçoivent un email de notification à chaque nouveau compte via `FOUNDER_NOTIFICATION_EMAILS`
+
+Le renvoi de confirmation utilise `supabase.auth.resend(...)` côté serveur, car l'API admin Supabase ne fournit pas de `generateLink()` dédié au renvoi d'un signup déjà créé.
+
+## Checklist prod
+
+1. Ajouter `SUPABASE_SERVICE_ROLE_KEY` dans l'environnement local et production.
+2. Configurer un domaine d'envoi vérifié pour `EMAIL_FROM`.
+3. Si tu utilises Resend, vérifier le domaine dans Resend.
+4. Si tu utilises SMTP, vérifier les identifiants et les DNS SPF/DKIM.
+5. Vérifier que l'URL publique du site pointe bien vers `/auth/callback` après confirmation et recovery.

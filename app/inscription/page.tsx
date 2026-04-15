@@ -7,19 +7,21 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 
 export default function InscriptionPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [emailSent, setEmailSent] = useState(false);
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    setInfo("");
 
     if (password.length < 8) {
       setError("Le mot de passe doit contenir au moins 8 caractères.");
@@ -31,29 +33,58 @@ export default function InscriptionPage() {
     }
 
     setLoading(true);
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+    const normalizedEmail = email.trim().toLowerCase();
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        email: normalizedEmail,
+        password,
+        signupType: "member",
+      }),
     });
 
-    if (authError) {
-      if (authError.message.includes("already registered")) {
-        setError("Ce compte existe déjà. Connecte-toi ou réinitialise ton mot de passe.");
-      } else if (authError.message.includes("rate limit")) {
-        setError("Trop de tentatives. Attends quelques minutes avant de réessayer.");
-      } else {
-        setError("Une erreur est survenue. Réessaie dans quelques instants.");
-      }
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+
+    if (!response.ok) {
+      setError(result?.error || "Une erreur est survenue. Réessaie dans quelques instants.");
       setLoading(false);
       return;
     }
 
+    setEmail(normalizedEmail);
+
     setEmailSent(true);
     setLoading(false);
+  }
+
+  async function handleResendConfirmation() {
+    setError("");
+    setInfo("");
+    setResendLoading(true);
+
+    const response = await fetch("/api/auth/resend-confirmation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+      }),
+    });
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+
+    if (!response.ok) {
+      setError(result?.error || "Impossible de renvoyer l'email pour l'instant. Réessaie dans quelques minutes.");
+      setResendLoading(false);
+      return;
+    }
+
+    setInfo("On vient de renvoyer l'email de confirmation.");
+    setResendLoading(false);
   }
 
   return (
@@ -75,6 +106,19 @@ export default function InscriptionPage() {
                 <p className="text-xs text-muted-foreground">
                   Rien reçu ? Vérifie tes spams, on ne sait jamais.
                 </p>
+                {error && <p className="text-sm text-red-600">{error}</p>}
+                {info && <p className="text-sm text-green-deep">{info}</p>}
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={resendLoading}
+                    onClick={handleResendConfirmation}
+                    className="rounded-full border-border-subtle"
+                  >
+                    {resendLoading ? "Renvoi en cours..." : "Renvoyer l'email"}
+                  </Button>
+                </div>
                 <div className="pt-4">
                   <Link
                     href="/connexion"
