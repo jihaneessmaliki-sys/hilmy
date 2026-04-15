@@ -53,6 +53,8 @@ export default function OnboardingPage() {
       return;
     }
 
+    const signupType = user.user_metadata?.signupType ?? "member";
+
     const { error: insertError } = await supabase
       .from("user_profiles")
       .insert({
@@ -60,10 +62,12 @@ export default function OnboardingPage() {
         prenom: prenom.trim(),
         pays,
         ville: ville.trim(),
+        signupType,
       });
 
     if (insertError) {
-      setError("Une erreur est survenue. Réessaie.");
+      console.error("user_profiles insert error:", insertError);
+      setError(`Une erreur est survenue : ${insertError.message}`);
       setLoading(false);
       return;
     }
