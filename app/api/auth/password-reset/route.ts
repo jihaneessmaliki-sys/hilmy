@@ -41,20 +41,14 @@ export async function POST(request: Request) {
       },
     });
 
-    if (error || !data.properties.hashed_token) {
+    if (error || !data.properties.action_link) {
       return NextResponse.json(
         { error: "Impossible d'envoyer l'email pour l'instant." },
         { status: 500 }
       );
     }
 
-    // Build a direct link to our own callback with the token_hash.
-    // This avoids going through Supabase's /auth/v1/verify endpoint,
-    // which can fail with otp_expired and redirect to the site root with a hash error.
-    const baseUrl = getRedirectTo(request).replace(/\/auth\/callback$/, "");
-    const resetUrl = `${baseUrl}/auth/callback?token_hash=${data.properties.hashed_token}&type=recovery`;
-
-    await sendPasswordResetEmail(email, resetUrl);
+    await sendPasswordResetEmail(email, data.properties.action_link);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
