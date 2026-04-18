@@ -6,6 +6,7 @@
 
 @theme inline {
   --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-fraunces);
   --font-heading: var(--font-fraunces);
 
   --color-background: var(--background);
@@ -32,6 +33,35 @@
   --color-gold: #C9A961;
   --color-green-deep: #0F3D2E;
   --color-border-subtle: #E8E2D4;
+
+  /* HILMY V2 charte */
+  --color-vert: #0F3D2E;
+  --color-vert-dark: #092417;
+  --color-vert-soft: #1a4a3a;
+  --color-or: #C9A961;
+  --color-or-light: #E5D4AF;
+  --color-or-deep: #B8924A;
+  --color-creme: #F5F0E6;
+  --color-creme-deep: #EEE6D8;
+  --color-creme-soft: #FAF6EC;
+  --color-blanc: #FDFBF7;
+  --color-texte: #2A1F1A;
+  --color-texte-sec: #6B5D54;
+  --color-texte-muted: #8A7B6E;
+
+  --text-display: clamp(3rem, 7vw, 5.5rem);
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.02em;
+  --text-h1: clamp(2.25rem, 4.5vw, 3.5rem);
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.015em;
+  --text-h2: clamp(1.875rem, 3vw, 2.75rem);
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.01em;
+  --text-lead: 1rem;
+  --text-lead--line-height: 1.6;
+
+  --container-container: 1200px;
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -68,6 +98,25 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /*
+   * Garde-fou global anti-overflow horizontal sur mobile.
+   *
+   * Observé : sur iPhone Safari toutes les pages glissent légèrement
+   * à gauche/droite lors du scroll vertical. Cause probable : un
+   * élément fils (décoration absolute, text avec tracking large,
+   * section sans overflow-hidden) qui dépasse d'un ou deux pixels
+   * le viewport et propage la largeur au body.
+   *
+   * `overflow-x: clip` sur html + body stoppe le scroll horizontal
+   * sans tuer `position: sticky` (contrairement à `overflow-x: hidden`
+   * qui crée un nouveau contexte de scroll et casse les sticky
+   * ancêtres). Fallback `hidden` pour navigateurs anciens.
+   */
+  html,
+  body {
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -76,5 +125,29 @@
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-fraunces);
+    font-weight: 300;
   }
+}
+
+/* Hilmy eyebrow — forces Tailwind's built-in `overline` text-decoration off */
+.overline {
+  font-size: 0.6875rem !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.28em !important;
+  text-transform: uppercase !important;
+  font-weight: 500 !important;
+  text-decoration-line: none !important;
+}
+
+/* Subtle organic gold textures */
+.bg-grain {
+  position: relative;
+}
+.bg-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' /%3E%3C/svg%3E");
 }
