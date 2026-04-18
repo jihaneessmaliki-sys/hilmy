@@ -57,24 +57,28 @@ export default async function AdminHomePage() {
     placesCities,
     profilesByCat,
   ] = await Promise.all([
-    supabase
+    // Toutes les agrégations passent en service_role : c'est un
+    // dashboard admin-only (protégé par layout), et les RLS SELECT
+    // cachent à tort les 'pending'/'flagged' même à un admin auth
+    // (cf. bug observé sur /admin/prestataires-a-valider).
+    admin
       .from('user_profiles')
       .select('id', { count: 'exact', head: true })
       .eq('signupType', 'member'),
-    supabase
+    admin
       .from('user_profiles')
       .select('id', { count: 'exact', head: true })
       .eq('signupType', 'provider'),
-    supabase
+    admin
       .from('user_profiles')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', weekAgo),
-    supabase
+    admin
       .from('user_profiles')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', monthAgo),
 
-    supabase
+    admin
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending'),
@@ -82,11 +86,11 @@ export default async function AdminHomePage() {
     // 'published' | 'flagged' | 'removed' | 'past'). On compte les
     // événements 'flagged' = signalés par la communauté et en attente
     // de décision admin, cohérent avec l'intent "à valider".
-    supabase
+    admin
       .from('events')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'flagged'),
-    supabase
+    admin
       .from('recommendations')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'flagged'),
@@ -103,28 +107,28 @@ export default async function AdminHomePage() {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending'),
 
-    supabase
+    admin
       .from('recommendations')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'published'),
-    supabase
+    admin
       .from('events')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'published')
       .gte('start_date', nowISO),
-    supabase
+    admin
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'approved'),
 
-    supabase.from('profiles').select('ville').eq('status', 'approved'),
-    supabase
+    admin.from('profiles').select('ville').eq('status', 'approved'),
+    admin
       .from('events')
       .select('city')
       .eq('status', 'published')
       .gte('start_date', nowISO),
-    supabase.from('places').select('city'),
-    supabase.from('profiles').select('categorie').eq('status', 'approved'),
+    admin.from('places').select('city'),
+    admin.from('profiles').select('categorie').eq('status', 'approved'),
   ])
 
   // Agrège Top villes (somme prestataires + events + lieux par ville)
