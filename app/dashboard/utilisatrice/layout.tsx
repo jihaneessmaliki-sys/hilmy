@@ -6,7 +6,8 @@ export default async function UtilisatriceLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { profile } = await requireUserProfile()
+  const { user, profile } = await requireUserProfile()
+  const isAdmin = Boolean(user.user_metadata?.is_admin)
 
   const items: SidebarItem[] = [
     { href: '/dashboard/utilisatrice', label: 'Accueil', icon: '·' },
@@ -37,6 +38,18 @@ export default async function UtilisatriceLayout({
       label: 'Paramètres',
       icon: '◦',
     },
+    // Raccourci admin — uniquement si user_metadata.is_admin=true
+    // (la route /admin reste gated par son propre layout).
+    ...(isAdmin
+      ? ([
+          {
+            href: '/admin',
+            label: 'Admin',
+            icon: '⚡',
+            badge: 'BACK-OFFICE',
+          },
+        ] as SidebarItem[])
+      : []),
   ]
 
   const memberSince = new Date(profile.created_at).toLocaleDateString('fr-FR', {

@@ -1,4 +1,4 @@
-import { Sidebar } from '@/components/dashboard/Sidebar'
+import { Sidebar, type SidebarItem } from '@/components/dashboard/Sidebar'
 import { requirePrestataire } from '@/lib/supabase/session'
 import { createClient } from '@/lib/supabase/server'
 import { CATEGORIES_MAP } from '@/lib/constants'
@@ -8,7 +8,8 @@ export default async function PrestataireLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { prestataire } = await requirePrestataire()
+  const { user, prestataire } = await requirePrestataire()
+  const isAdmin = Boolean(user.user_metadata?.is_admin)
   const supabase = await createClient()
 
   // Badge "nouveaux avis" = recommendations sans reponse_pro, publiées
@@ -20,7 +21,7 @@ export default async function PrestataireLayout({
     .eq('status', 'published')
     .is('reponse_pro', null)
 
-  const items = [
+  const items: SidebarItem[] = [
     { href: '/dashboard/prestataire', label: 'Accueil', icon: '·' },
     { href: '/dashboard/prestataire/fiche', label: 'Ma fiche', icon: '❋' },
     {
@@ -47,6 +48,18 @@ export default async function PrestataireLayout({
       label: 'Paramètres',
       icon: '◦',
     },
+    // Raccourci admin — uniquement si user_metadata.is_admin=true
+    // (la route /admin reste gated par son propre layout).
+    ...(isAdmin
+      ? ([
+          {
+            href: '/admin',
+            label: 'Admin',
+            icon: '⚡',
+            badge: 'BACK-OFFICE',
+          },
+        ] as SidebarItem[])
+      : []),
   ]
 
   const metier = CATEGORIES_MAP[prestataire.categorie] ?? prestataire.categorie
