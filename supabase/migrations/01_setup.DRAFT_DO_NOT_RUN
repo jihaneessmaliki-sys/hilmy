@@ -1,0 +1,65 @@
+-- =====================================================================
+-- HILMY · Stage 4 · Migration 01 — Setup général
+-- Extensions, fonctions helper, table admins, fonction is_admin().
+--
+-- À exécuter EN PREMIER dans l'éditeur SQL Supabase.
+-- Idempotent (peut être rejoué sans erreur).
+-- =====================================================================
+
+-- Extensions
+create extension if not exists "pgcrypto";
+create extension if not exists "uuid-ossp";
+
+-- ---------------------------------------------------------------------
+-- Fonction updated_at : set automatiquement le timestamp de màj
+-- ---------------------------------------------------------------------
+create or replace function set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+-- ---------------------------------------------------------------------
+-- Table admins : whitelist d'utilisatrices qui ont les droits admin
+-- (validation des fiches prestataires, modération avis/recos).
+-- Pour ajouter une admin : insert into admins (user_id) values ('<uuid>');
+-- ---------------------------------------------------------------------
+create table if not exists admins (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table admins enable row level security;
+
+-- Seules les admins peuvent lire la table admins (pas de fuite de rôles)
+drop policy if exists "admins_self_read" on admins;
+create policy "admins_self_read"
+  on admins for select
+  to authenticated
+  using (user_id = auth.uid());
+
+-- ---------------------------------------------------------------------
+-- Fonction is_admin() : renvoie true si l'utilisateur connecté est admin
+-- SECURITY DEFINER pour passer outre la RLS de la table admins quand
+-- utilisée dans les policies des autres tables.
+-- ---------------------------------------------------------------------
+create or replace function is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from admins where user_id = auth.uid()
+  );
+$$;
+
+grant execute on function is_admin() to authenticated, anon;
+
+comment on function is_admin() is
+  'Renvoie true si l''utilisateur connecté figure dans la table admins.';

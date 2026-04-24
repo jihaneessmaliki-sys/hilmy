@@ -1,0 +1,175 @@
+-- =====================================================================
+-- HILMY · Stage 4 · Migration 05 — Table avis
+-- Avis laissés par les utilisatrices sur les fiches prestataires.
+-- 1 avis max par user par prestataire.
+-- La prestataire peut répondre publiquement à chaque avis.
+-- =====================================================================
+
+create table if not exists avis (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  prestataire_id uuid not null references prestataires(id) on delete cascade,
+
+  note integer not null check (note between 1 and 5),
+  texte text not null check (length(trim(texte)) >= 10),
+
+  -- Réponse publique de la prestataire
+  reponse_pro text,
+  reponse_date timestamptz,
+
+  -- Modération
+  status text not null default 'published' check (status in (
+    'published', 'hidden', 'reported'
+  )),
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  -- 1 seul avis par user par prestataire
+  unique (user_id, prestataire_id)
+);
+
+-- Indexes
+create index if not exists avis_prestataire_idx on avis (prestataire_id) where status = 'published';
+create index if not exists avis_user_idx on avis (user_id);
+create index if not exists avis_status_idx on avis (status);
+
+-- Trigger updated_at
+drop trigger if exists avis_set_updated_at on avis;
+create trigger avis_set_updated_at
+  before update on avis
+  for each row execute function set_updated_at();
+
+-- Trigger reponse_date : se met automatiquement quand reponse_pro est remplie
+create or replace function avis_set_reponse_date()
+returns trigger language plpgsql as $$
+begin
+  if new.reponse_pro is not null
+     and new.reponse_pro <> ''
+     and (old.reponse_pro is null or old.reponse_pro = '' or old.reponse_pro <> new.reponse_pro)
+  then
+    new.reponse_date = now();
+  elsif new.reponse_pro is null or new.reponse_pro = '' then
+    new.reponse_date = null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists avis_reponse_date on avis;
+create trigger avis_reponse_date
+  before insert or update of reponse_pro on avis
+  for each row execute function avis_set_reponse_date();
+
+-- =====================================================================
+-- RLS
+-- =====================================================================
+alter table avis enable row level security;
+
+-- SELECT public : avis publiés, uniquement si la prestataire est approuvée
+drop policy if exists "avis_public_read" on avis;
+create policy "avis_public_read"
+  on avis for select
+  to anon, authenticated
+  using (
+    status = 'published'
+    and exists (
+      select 1 from prestataires p
+      where p.id = avis.prestataire_id
+        and p.status = 'approved'
+    )
+  );
+
+-- SELECT author : voit ses propres avis quel que soit le status
+drop policy if exists "avis_author_read" on avis;
+create policy "avis_author_read"
+  on avis for select
+  to authenticated
+  using (user_id = auth.uid());
+
+-- SELECT prestataire : la prestataire voit tous les avis sur sa fiche (y compris cachés)
+drop policy if exists "avis_prestataire_read" on avis;
+create policy "avis_prestataire_read"
+  on avis for select
+  to authenticated
+  using (
+    exists (
+      select 1 from prestataires p
+      where p.id = avis.prestataire_id
+        and p.user_id = auth.uid()
+    )
+  );
+
+-- SELECT admin
+drop policy if exists "avis_admin_read" on avis;
+create policy "avis_admin_read"
+  on avis for select
+  to authenticated
+  using (is_admin());
+
+-- INSERT : authenticated, user_id = auth.uid(), et la prestataire doit être approuvée
+-- ET la user ne peut pas laisser un avis sur sa propre fiche
+drop policy if exists "avis_author_insert" on avis;
+create policy "avis_author_insert"
+  on avis for insert
+  to authenticated
+  with check (
+    user_id = auth.uid()
+    and status = 'published'
+    and reponse_pro is null
+    and exists (
+      select 1 from prestataires p
+      where p.id = avis.prestataire_id
+        and p.status = 'approved'
+        and p.user_id <> auth.uid()   -- pas son propre profil
+    )
+  );
+
+-- UPDATE author : peut modifier sa note et son texte, pas reponse_pro
+drop policy if exists "avis_author_update" on avis;
+create policy "avis_author_update"
+  on avis for update
+  to authenticated
+  using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    -- Ne peut pas toucher à reponse_pro (réservé à la prestataire)
+  );
+
+-- UPDATE prestataire : peut seulement répondre (reponse_pro), pas modifier la note/texte
+drop policy if exists "avis_prestataire_reply" on avis;
+create policy "avis_prestataire_reply"
+  on avis for update
+  to authenticated
+  using (
+    exists (
+      select 1 from prestataires p
+      where p.id = avis.prestataire_id
+        and p.user_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1 from prestataires p
+      where p.id = avis.prestataire_id
+        and p.user_id = auth.uid()
+    )
+  );
+
+-- UPDATE admin : tout
+drop policy if exists "avis_admin_update" on avis;
+create policy "avis_admin_update"
+  on avis for update
+  to authenticated
+  using (is_admin())
+  with check (is_admin());
+
+-- DELETE : author ou admin
+drop policy if exists "avis_author_delete" on avis;
+create policy "avis_author_delete"
+  on avis for delete
+  to authenticated
+  using (user_id = auth.uid() or is_admin());
+
+comment on table avis is
+  'Avis clients sur prestataires. 1 avis par user par presta. Note 1-5, texte minimum 10 caractères. Réponse publique possible par la prestataire.';

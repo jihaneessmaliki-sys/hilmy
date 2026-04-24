@@ -1,182 +1,192 @@
+import { ContentPageShell } from '@/components/v2/ContentPageShell'
+import { LegalSection } from '@/components/v2/LegalSection'
+
 export default function ConfidentialitePage() {
   return (
-    <>
-      <h1 className="font-heading text-3xl md:text-4xl font-medium text-green-deep mb-8">
-        Politique de confidentialité
-      </h1>
-
-      <p className="text-muted-foreground leading-relaxed mb-8">
-        Dernière mise à jour : avril 2026. Cette politique décrit comment Hilmy
-        collecte, utilise et protège vos données personnelles conformément au
-        Règlement général sur la protection des données (RGPD) et à la Loi
-        fédérale suisse sur la protection des données (LPD).
-      </p>
-
-      <div className="space-y-8 text-muted-foreground leading-relaxed">
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            1. Responsable du traitement
-          </h2>
+    <ContentPageShell
+      kicker="Légal · Confidentialité"
+      titre={
+        <>
+          Politique de{' '}
+          <em className="font-serif italic text-or">confidentialité.</em>
+        </>
+      }
+      lead={
+        <>
+          Dernière mise à jour&nbsp;: avril 2026. Comment Hilmy collecte,
+          utilise et protège vos données conformément au RGPD et à la LPD
+          suisse.
+        </>
+      }
+    >
+      <div className="grid max-w-3xl gap-10">
+        <LegalSection numero="01" titre="Responsable du traitement">
           <p>
             Jihane Maliki, Genève, Suisse.
             <br />
-            Contact : hello@hilmy.io
+            Contact&nbsp;:{' '}
+            <a
+              href="mailto:hello@hilmy.io"
+              className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+            >
+              hello@hilmy.io
+            </a>
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            2. Données collectées
-          </h2>
-          <p>Nous collectons les données suivantes :</p>
-          <ul className="mt-2 list-disc pl-6 space-y-1">
-            <li>
-              <strong>Utilisatrices :</strong> adresse email, prénom, ville.
-            </li>
-            <li>
-              <strong>Prestataires :</strong> adresse email, nom ou raison
-              sociale, catégorie d&apos;activité, ville, description, numéro
-              WhatsApp, compte Instagram, photos.
-            </li>
-            <li>
-              <strong>Recommandations :</strong> témoignages écrits, notes,
-              photos, tags, indicateur de prix.
-            </li>
-            <li>
-              <strong>Lieux recommandés :</strong> nom, adresse, coordonnées
-              géographiques (via Google Places API).
-            </li>
-            <li>
-              <strong>Événements proposés :</strong> titre, description, date,
-              lieu, flyer, lien d&apos;inscription.
-            </li>
-            <li>
-              <strong>Signalements :</strong> identifiant du contenu signalé,
-              motif du signalement.
-            </li>
+        <LegalSection numero="02" titre="Données collectées">
+          <p>Nous collectons les données suivantes&nbsp;:</p>
+          <ul className="mt-3 space-y-2 pl-5">
+            <LegalListItem strong="Utilisatrices">
+              adresse email, prénom, ville.
+            </LegalListItem>
+            <LegalListItem strong="Prestataires">
+              adresse email, nom ou raison sociale, catégorie d&apos;activité,
+              ville, description, numéro WhatsApp, compte Instagram, photos.
+            </LegalListItem>
+            <LegalListItem strong="Recommandations">
+              témoignages écrits, notes, photos, tags, indicateur de prix.
+            </LegalListItem>
+            <LegalListItem strong="Lieux recommandés">
+              nom, adresse, coordonnées géographiques (via Google Places API).
+            </LegalListItem>
+            <LegalListItem strong="Événements proposés">
+              titre, description, date, lieu, flyer, lien d&apos;inscription.
+            </LegalListItem>
+            <LegalListItem strong="Signalements">
+              identifiant du contenu signalé, motif du signalement.
+            </LegalListItem>
           </ul>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            3. Finalités du traitement
-          </h2>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>Gestion des comptes utilisatrices et prestataires.</li>
-            <li>
-              Mise en relation entre utilisatrices et prestataires via
-              l&apos;annuaire.
-            </li>
-            <li>Modération des profils et traitement des signalements.</li>
-            <li>
+        <LegalSection numero="03" titre="Finalités du traitement">
+          <ul className="space-y-2 pl-5">
+            <LegalBullet>Gestion des comptes utilisatrices et prestataires.</LegalBullet>
+            <LegalBullet>
+              Mise en relation entre utilisatrices et prestataires via l&apos;annuaire.
+            </LegalBullet>
+            <LegalBullet>
+              Modération des fiches et traitement des signalements.
+            </LegalBullet>
+            <LegalBullet>
               Communication par email relative au fonctionnement du service.
-            </li>
+            </LegalBullet>
           </ul>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            4. Base légale
-          </h2>
+        <LegalSection numero="04" titre="Base légale">
           <p>
             Le traitement de vos données repose sur votre consentement (lors de
             l&apos;inscription) et sur l&apos;intérêt légitime de Hilmy à
             assurer le bon fonctionnement et la sécurité du service (modération,
             signalements).
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            5. Durée de conservation
-          </h2>
+        <LegalSection numero="05" titre="Durée de conservation">
           <p>
             Les données sont conservées tant que votre compte est actif. En cas
             de suppression de compte, vos données sont effacées dans un délai de
-            30 jours, sauf obligation légale de conservation plus longue.
+            30&nbsp;jours, sauf obligation légale de conservation plus longue.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            6. Destinataires des données
-          </h2>
-          <ul className="list-disc pl-6 space-y-1">
-            <li>
-              <strong>Supabase Inc.</strong> : stockage des données et
-              authentification.
-            </li>
-            <li>
-              <strong>Vercel Inc.</strong> : hébergement du site web.
-            </li>
-            <li>
-              <strong>Resend</strong> : envoi des emails transactionnels (liens
-              de connexion).
-            </li>
-            <li>
-              <strong>Google LLC</strong> : identification et géolocalisation des
-              lieux recommandés (Google Places API).
-            </li>
+        <LegalSection numero="06" titre="Destinataires des données">
+          <ul className="space-y-2 pl-5">
+            <LegalListItem strong="Supabase Inc.">
+              stockage des données et authentification.
+            </LegalListItem>
+            <LegalListItem strong="Vercel Inc.">
+              hébergement du site web.
+            </LegalListItem>
+            <LegalListItem strong="Brevo (sib SA)">
+              envoi des emails transactionnels.
+            </LegalListItem>
+            <LegalListItem strong="Google LLC">
+              identification et géolocalisation des lieux recommandés (Google
+              Places API).
+            </LegalListItem>
           </ul>
-          <p className="mt-2">
+          <p className="mt-3 italic text-texte-sec">
             Aucune donnée n&apos;est vendue ou partagée à des fins publicitaires.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            7. Vos droits
-          </h2>
+        <LegalSection numero="07" titre="Vos droits">
           <p>
             Conformément au RGPD et à la LPD, vous disposez des droits
-            suivants :
+            suivants&nbsp;:
           </p>
-          <ul className="mt-2 list-disc pl-6 space-y-1">
-            <li>Droit d&apos;accès à vos données personnelles.</li>
-            <li>Droit de rectification des données inexactes.</li>
-            <li>Droit à l&apos;effacement (droit à l&apos;oubli).</li>
-            <li>Droit à la portabilité de vos données.</li>
-            <li>Droit d&apos;opposition au traitement.</li>
-            <li>Droit de retirer votre consentement à tout moment.</li>
+          <ul className="mt-3 space-y-2 pl-5">
+            <LegalBullet>Droit d&apos;accès à vos données personnelles.</LegalBullet>
+            <LegalBullet>Droit de rectification des données inexactes.</LegalBullet>
+            <LegalBullet>Droit à l&apos;effacement (droit à l&apos;oubli).</LegalBullet>
+            <LegalBullet>Droit à la portabilité de vos données.</LegalBullet>
+            <LegalBullet>Droit d&apos;opposition au traitement.</LegalBullet>
+            <LegalBullet>Droit de retirer votre consentement à tout moment.</LegalBullet>
           </ul>
-          <p className="mt-2">
-            Pour exercer ces droits, contactez-nous à hello@hilmy.io.
+          <p className="mt-3">
+            Pour exercer ces droits, contactez-nous à{' '}
+            <a
+              href="mailto:hello@hilmy.io"
+              className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+            >
+              hello@hilmy.io
+            </a>
+            .
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            8. Réclamation
-          </h2>
+        <LegalSection numero="08" titre="Réclamation">
           <p>
             Si vous estimez que le traitement de vos données n&apos;est pas
             conforme, vous pouvez introduire une réclamation auprès de
-            l&apos;autorité de protection des données compétente :
+            l&apos;autorité de protection des données compétente&nbsp;:
           </p>
-          <ul className="mt-2 list-disc pl-6 space-y-1">
-            <li>
-              <strong>Suisse</strong> : Préposé fédéral à la protection des
-              données et à la transparence (PFPDT).
-            </li>
-            <li>
-              <strong>France</strong> : Commission nationale de
-              l&apos;informatique et des libertés (CNIL).
-            </li>
-            <li>
-              <strong>Belgique</strong> : Autorité de protection des données
-              (APD).
-            </li>
-            <li>
-              <strong>Luxembourg</strong> : Commission nationale pour la
-              protection des données (CNPD).
-            </li>
+          <ul className="mt-3 space-y-2 pl-5">
+            <LegalListItem strong="Suisse">
+              Préposé fédéral à la protection des données et à la transparence
+              (PFPDT).
+            </LegalListItem>
+            <LegalListItem strong="France">
+              Commission nationale de l&apos;informatique et des libertés
+              (CNIL).
+            </LegalListItem>
+            <LegalListItem strong="Belgique">
+              Autorité de protection des données (APD).
+            </LegalListItem>
+            <LegalListItem strong="Luxembourg">
+              Commission nationale pour la protection des données (CNPD).
+            </LegalListItem>
           </ul>
-          <p className="mt-2">
+          <p className="mt-3 italic text-texte-sec">
             Les utilisatrices résidant dans l&apos;Union européenne bénéficient
             de l&apos;ensemble des protections prévues par le RGPD.
           </p>
-        </section>
+        </LegalSection>
       </div>
-    </>
-  );
+    </ContentPageShell>
+  )
+}
+
+function LegalBullet({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="relative pl-1 before:absolute before:-left-4 before:top-[10px] before:h-1 before:w-1 before:rounded-full before:bg-or">
+      {children}
+    </li>
+  )
+}
+
+function LegalListItem({
+  strong,
+  children,
+}: {
+  strong: string
+  children: React.ReactNode
+}) {
+  return (
+    <li className="relative pl-1 before:absolute before:-left-4 before:top-[10px] before:h-1 before:w-1 before:rounded-full before:bg-or">
+      <span className="font-medium text-vert">{strong}&nbsp;:</span> {children}
+    </li>
+  )
 }

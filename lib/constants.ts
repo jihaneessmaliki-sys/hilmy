@@ -1,52 +1,77 @@
-// ─── Provider categories (prestataires) ───────────────────
+// =====================================================================
+// STAGE 5/8 · Feature flag LAUNCH_MODE (pilotable via env)
+// =====================================================================
+// Contrôlé par NEXT_PUBLIC_LAUNCH_MODE côté env.
+//   "mock" (défaut) → listings publics en état "jour 1", fiches via mock-data.
+//   "live"          → lecture live Supabase (tables profiles/places/events)
+//                     avec skeletons, états vides, messages d'erreur soignés.
+//
+// En prod Vercel : mettre NEXT_PUBLIC_LAUNCH_MODE=live.
+// En dev local : omettre ou mettre "mock" dans .env.local.
+// =====================================================================
+type LaunchMode = "mock" | "live";
+export const LAUNCH_MODE: LaunchMode =
+  (process.env.NEXT_PUBLIC_LAUNCH_MODE as LaunchMode | undefined) === "live"
+    ? "live"
+    : "mock";
+
+export const isLive = () => LAUNCH_MODE === "live";
+export const isMock = () => LAUNCH_MODE === "mock";
+
+
+// ─── Provider categories (prestataires) · 10 catégories V2 ─
+// Alignées sur CHECK constraint profiles_categorie_check (01_alter_profiles.sql)
 export const CATEGORIES_MAP: Record<string, string> = {
   "beaute": "Beauté",
-  "enfants": "Enfants",
-  "evenementiel": "Événementiel",
-  "cuisine": "Cuisine",
-  "sport": "Sport",
-  "mode": "Mode",
+  "bien-etre": "Bien-être",
+  "sante-mentale": "Santé mentale",
+  "sport-nutrition": "Sport & Nutrition",
+  "enfants-famille": "Enfants & Famille",
   "maison": "Maison",
-  "droit-finances": "Droit & finances",
-  "conseilleres-marque": "Conseillères de marque",
+  "cuisine": "Cuisine",
+  "evenementiel": "Événementiel",
+  "mode-style": "Mode & Style",
+  "business-juridique": "Business & Juridique",
 };
 
 export const CATEGORIES_DESCRIPTIONS: Record<string, string> = {
   "beaute": "Pour les jours où tu as envie de te faire chouchouter.",
-  "enfants": "Parce qu'on confie ses petits qu'à des mains qu'on connaît.",
-  "evenementiel": "Pour les fêtes qu'on n'oublie jamais.",
+  "bien-etre": "Pour souffler, respirer, se retrouver — entre nous.",
+  "sante-mentale": "Thérapeutes, coachs, praticiennes. Parce qu'on va mieux entourée.",
+  "sport-nutrition": "Bouger, manger, comprendre son corps — sans injonctions.",
+  "enfants-famille": "Parce qu'on confie ses petits qu'à des mains qu'on connaît.",
+  "maison": "Pour un chez-soi qui te ressemble, tenu par des mains sûres.",
   "cuisine": "Parce que les meilleures recettes se passent entre nous.",
-  "sport": "Pour bouger entre filles, sans prise de tête.",
-  "mode": "Pour les retouches parfaites et les looks qui te ressemblent.",
-  "maison": "Pour une maison qui te ressemble, tenue par des mains sûres.",
-  "droit-finances": "Parce que parler argent et papiers, c'est plus simple entre femmes.",
-  "conseilleres-marque": "Thermomix, Kobold et compagnie, par des filles qui savent les vendre et les utiliser.",
+  "evenementiel": "Pour les fêtes qu'on n'oublie jamais.",
+  "mode-style": "Pour les retouches parfaites et les looks qui te ressemblent.",
+  "business-juridique": "Parler argent, stratégie, papiers. Plus simple entre femmes.",
 };
 
 export const CATEGORIES = Object.keys(CATEGORIES_MAP);
 
-// ─── Place categories (lieux) ─────────────────────────────
+// ─── Place categories (lieux) · 9 catégories V2 ──────────
+// Alignées sur CHECK constraint places_hilmy_category_check (02_alter_places.sql)
 export const PLACE_CATEGORIES_MAP: Record<string, string> = {
-  "restaurants-cafes": "Restaurants & cafés",
-  "salons-the": "Salons de thé & pâtisseries",
+  "restos-cafes": "Restos & Cafés",
+  "salons-the": "Salons de thé",
   "boutiques": "Boutiques",
-  "bien-etre": "Bien-être",
-  "sorties-enfants": "Sorties enfants",
-  "hebergements": "Hébergements",
+  "bien-etre": "Spas & Bien-être",
+  "enfants": "Sorties enfants",
+  "hebergements": "Hôtels & Séjours",
   "sante": "Santé",
-  "lieux-culturels": "Lieux culturels",
-  "sport-nature": "Sport & nature",
+  "culturel": "Lieux culturels",
+  "sport-nature": "Sport & Nature",
 };
 
 export const PLACE_CATEGORIES_DESCRIPTIONS: Record<string, string> = {
-  "restaurants-cafes": "Les tables qu'on a aimées et qu'on referait.",
+  "restos-cafes": "Les tables qu'on a aimées et qu'on referait.",
   "salons-the": "Pour les pauses douceur entre copines.",
   "boutiques": "Les adresses mode, déco et concept stores qu'on se chuchote.",
   "bien-etre": "Spas, hammams et massages pour souffler un peu.",
-  "sorties-enfants": "Les endroits où les petits sont rois.",
+  "enfants": "Les endroits où les petits sont rois.",
   "hebergements": "Les nuits douces qu'on a testées pour toi.",
   "sante": "Médecins femmes, gynécos, sages-femmes et dentistes de confiance.",
-  "lieux-culturels": "Musées, galeries et librairies qu'on a adorés.",
+  "culturel": "Musées, galeries et librairies qu'on a adorés.",
   "sport-nature": "Clubs, salles et sentiers où on se sent bien.",
 };
 
@@ -73,6 +98,24 @@ export const REC_TAGS_MAP: Record<string, string> = {
 };
 
 export const REC_TAGS = Object.keys(REC_TAGS_MAP);
+
+// ─── Diet tags (restos & salons de thé uniquement) ────────
+export const DIET_TAGS_MAP: Record<string, string> = {
+  "halal": "Halal",
+  "casher": "Casher",
+  "vegetarien": "Végétarien",
+  "vegan": "Vegan",
+  "sans-gluten": "Sans gluten",
+};
+
+export const DIET_TAGS = Object.keys(DIET_TAGS_MAP);
+
+export function dietTagLabel(slug: string): string {
+  return DIET_TAGS_MAP[slug] ?? slug;
+}
+
+/** Catégories HILMY où le choix de régime alimentaire est pertinent. */
+export const DIET_CATEGORIES = new Set(["restos-cafes", "salons-the"]);
 
 // ─── Types ────────────────────────────────────────────────
 export type ProfileStatus = "pending" | "approved" | "rejected" | "ghost";

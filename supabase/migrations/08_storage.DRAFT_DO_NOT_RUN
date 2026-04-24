@@ -1,0 +1,211 @@
+-- =====================================================================
+-- HILMY · Stage 4 · Migration 08 — Storage buckets + RLS
+-- 4 buckets publics en lecture, scope owner par user_id en écriture.
+-- Convention de chemin : {user_id}/{sous-dossier-optionnel}/{filename}
+--
+-- Exemple : "a1b2c3d4-.../cafe-lila/photo-1.jpg"
+-- La vérification owner se fait sur le premier segment = user_id.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- Création des buckets (idempotent)
+-- ---------------------------------------------------------------------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('prestataire-photos', 'prestataire-photos', true, 5242880,
+    array['image/jpeg', 'image/png', 'image/webp']::text[]),
+  ('recommendation-photos', 'recommendation-photos', true, 5242880,
+    array['image/jpeg', 'image/png', 'image/webp']::text[]),
+  ('event-flyers', 'event-flyers', true, 8388608,
+    array['image/jpeg', 'image/png', 'image/webp', 'application/pdf']::text[]),
+  ('user-avatars', 'user-avatars', true, 2097152,
+    array['image/jpeg', 'image/png', 'image/webp']::text[])
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+-- ---------------------------------------------------------------------
+-- Fonction helper : extraire le user_id depuis le chemin du fichier
+-- Convention : premier segment = UUID du user propriétaire
+-- ---------------------------------------------------------------------
+create or replace function storage_owner_from_path(object_name text)
+returns uuid
+language sql
+immutable
+as $$
+  select
+    case
+      when object_name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/'
+      then (split_part(object_name, '/', 1))::uuid
+      else null
+    end;
+$$;
+
+-- =====================================================================
+-- POLICIES — pour chaque bucket
+-- 4 policies par bucket : read public, insert owner, update owner, delete owner
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- prestataire-photos
+-- ---------------------------------------------------------------------
+drop policy if exists "prestataire_photos_public_read" on storage.objects;
+create policy "prestataire_photos_public_read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'prestataire-photos');
+
+drop policy if exists "prestataire_photos_owner_insert" on storage.objects;
+create policy "prestataire_photos_owner_insert"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'prestataire-photos'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+drop policy if exists "prestataire_photos_owner_update" on storage.objects;
+create policy "prestataire_photos_owner_update"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'prestataire-photos'
+    and storage_owner_from_path(name) = auth.uid()
+  )
+  with check (
+    bucket_id = 'prestataire-photos'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+drop policy if exists "prestataire_photos_owner_delete" on storage.objects;
+create policy "prestataire_photos_owner_delete"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'prestataire-photos'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+-- ---------------------------------------------------------------------
+-- recommendation-photos
+-- ---------------------------------------------------------------------
+drop policy if exists "reco_photos_public_read" on storage.objects;
+create policy "reco_photos_public_read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'recommendation-photos');
+
+drop policy if exists "reco_photos_owner_insert" on storage.objects;
+create policy "reco_photos_owner_insert"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'recommendation-photos'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+drop policy if exists "reco_photos_owner_update" on storage.objects;
+create policy "reco_photos_owner_update"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'recommendation-photos'
+    and storage_owner_from_path(name) = auth.uid()
+  )
+  with check (
+    bucket_id = 'recommendation-photos'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+drop policy if exists "reco_photos_owner_delete" on storage.objects;
+create policy "reco_photos_owner_delete"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'recommendation-photos'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+-- ---------------------------------------------------------------------
+-- event-flyers
+-- ---------------------------------------------------------------------
+drop policy if exists "event_flyers_public_read" on storage.objects;
+create policy "event_flyers_public_read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'event-flyers');
+
+drop policy if exists "event_flyers_owner_insert" on storage.objects;
+create policy "event_flyers_owner_insert"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'event-flyers'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+drop policy if exists "event_flyers_owner_update" on storage.objects;
+create policy "event_flyers_owner_update"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'event-flyers'
+    and storage_owner_from_path(name) = auth.uid()
+  )
+  with check (
+    bucket_id = 'event-flyers'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+drop policy if exists "event_flyers_owner_delete" on storage.objects;
+create policy "event_flyers_owner_delete"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'event-flyers'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+-- ---------------------------------------------------------------------
+-- user-avatars
+-- ---------------------------------------------------------------------
+drop policy if exists "user_avatars_public_read" on storage.objects;
+create policy "user_avatars_public_read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'user-avatars');
+
+drop policy if exists "user_avatars_owner_insert" on storage.objects;
+create policy "user_avatars_owner_insert"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'user-avatars'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+drop policy if exists "user_avatars_owner_update" on storage.objects;
+create policy "user_avatars_owner_update"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'user-avatars'
+    and storage_owner_from_path(name) = auth.uid()
+  )
+  with check (
+    bucket_id = 'user-avatars'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+drop policy if exists "user_avatars_owner_delete" on storage.objects;
+create policy "user_avatars_owner_delete"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'user-avatars'
+    and storage_owner_from_path(name) = auth.uid()
+  );
+
+comment on function storage_owner_from_path(text) is
+  'Extrait le UUID propriétaire d''un fichier Storage depuis son chemin (premier segment). Convention : {user_id}/fichier.ext';

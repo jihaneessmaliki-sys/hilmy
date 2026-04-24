@@ -1,0 +1,164 @@
+-- =====================================================================
+-- HILMY · Stage 4 · Migration 02 — Table prestataires
+-- Fiches des prestataires (femmes uniquement, 9 catégories de métiers).
+-- Validation obligatoire par une admin avant publication.
+-- =====================================================================
+
+create table if not exists prestataires (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+
+  slug text not null unique,
+  nom text not null,
+  metier text not null,
+  categorie text not null check (categorie in (
+    'coaching', 'therapie', 'bien-etre', 'beaute', 'sport',
+    'nutrition', 'mode', 'juridique', 'business'
+  )),
+
+  -- Localisation
+  ville text not null,
+  pays text not null check (pays in ('CH', 'FR', 'BE', 'LU', 'MC')),
+
+  -- Contenu éditorial
+  tagline text,
+  bio text,
+  photo_profil_url text,
+  cover_color text default '#D4C5B0',
+
+  -- Tarification
+  prix_from numeric(10,2),
+  prix_gamme text check (prix_gamme in ('€', '€€', '€€€')),
+  devise text not null default 'CHF' check (devise in ('CHF', 'EUR')),
+
+  -- Contact public
+  email text,
+  telephone text,
+  instagram text,
+  linkedin text,
+  site_web text,
+
+  -- Services + galerie (JSON pour flexibilité)
+  services jsonb not null default '[]'::jsonb,  -- [{nom, prix, duree}]
+  galerie jsonb not null default '[]'::jsonb,   -- [url, url, ...]
+
+  -- Modération
+  status text not null default 'pending' check (status in (
+    'pending', 'approved', 'rejected', 'paused'
+  )),
+  source_import text not null default 'manuel' check (source_import in (
+    'google_places', 'instagram', 'linkedin', 'manuel'
+  )),
+  rejection_reason text,
+
+  -- Stats (maintenues par triggers dans 07_counters.sql)
+  note_moyenne numeric(2,1) not null default 0,
+  nb_avis integer not null default 0,
+  nb_vues integer not null default 0,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  approved_at timestamptz,
+
+  constraint prestataires_slug_format check (slug ~ '^[a-z0-9-]+$')
+);
+
+-- Indexes
+create index if not exists prestataires_user_id_idx on prestataires (user_id);
+create index if not exists prestataires_categorie_idx on prestataires (categorie) where status = 'approved';
+create index if not exists prestataires_ville_idx on prestataires (ville) where status = 'approved';
+create index if not exists prestataires_status_idx on prestataires (status);
+create index if not exists prestataires_slug_idx on prestataires (slug);
+
+-- Trigger updated_at
+drop trigger if exists prestataires_set_updated_at on prestataires;
+create trigger prestataires_set_updated_at
+  before update on prestataires
+  for each row execute function set_updated_at();
+
+-- Trigger approved_at : se met automatiquement quand status passe à approved
+create or replace function prestataires_set_approved_at()
+returns trigger language plpgsql as $$
+begin
+  if new.status = 'approved' and (old.status is null or old.status <> 'approved') then
+    new.approved_at = now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists prestataires_approved_at on prestataires;
+create trigger prestataires_approved_at
+  before insert or update of status on prestataires
+  for each row execute function prestataires_set_approved_at();
+
+-- =====================================================================
+-- RLS
+-- =====================================================================
+alter table prestataires enable row level security;
+
+-- SELECT public : uniquement les fiches approuvées
+drop policy if exists "prestataires_public_read_approved" on prestataires;
+create policy "prestataires_public_read_approved"
+  on prestataires for select
+  to anon, authenticated
+  using (status = 'approved');
+
+-- SELECT owner : une prestataire voit sa propre fiche quel que soit le status
+drop policy if exists "prestataires_owner_read" on prestataires;
+create policy "prestataires_owner_read"
+  on prestataires for select
+  to authenticated
+  using (user_id = auth.uid());
+
+-- SELECT admin : les admins voient tout (modération)
+drop policy if exists "prestataires_admin_read" on prestataires;
+create policy "prestataires_admin_read"
+  on prestataires for select
+  to authenticated
+  using (is_admin());
+
+-- INSERT : l'utilisatrice doit créer sa propre fiche, status forcé à pending
+drop policy if exists "prestataires_owner_insert" on prestataires;
+create policy "prestataires_owner_insert"
+  on prestataires for insert
+  to authenticated
+  with check (
+    user_id = auth.uid()
+    and status = 'pending'
+    and approved_at is null
+  );
+
+-- UPDATE owner : peut éditer sa fiche mais ne peut pas s'auto-approuver
+drop policy if exists "prestataires_owner_update" on prestataires;
+create policy "prestataires_owner_update"
+  on prestataires for update
+  to authenticated
+  using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and (
+      -- Ne peut jamais passer à approved/rejected (réservé aux admins)
+      status in ('pending', 'paused')
+      -- Sauf si déjà approuvée : peut rester approved ou passer en paused
+      or (status = 'approved')
+    )
+  );
+
+-- UPDATE admin : peut tout changer (y compris status)
+drop policy if exists "prestataires_admin_update" on prestataires;
+create policy "prestataires_admin_update"
+  on prestataires for update
+  to authenticated
+  using (is_admin())
+  with check (is_admin());
+
+-- DELETE : owner uniquement (ou admin)
+drop policy if exists "prestataires_owner_delete" on prestataires;
+create policy "prestataires_owner_delete"
+  on prestataires for delete
+  to authenticated
+  using (user_id = auth.uid() or is_admin());
+
+comment on table prestataires is
+  'Fiches prestataires — femmes uniquement, validation admin obligatoire avant publication.';

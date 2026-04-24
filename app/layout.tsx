@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, DM_Sans } from "next/font/google";
 import { AuthListener } from "@/components/auth-listener";
+import { SessionProvider } from "@/components/auth/SessionProvider";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -19,34 +21,41 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Hilmy — L'annuaire des femmes pour les femmes",
+  title: "Hilmy — Le carnet d'adresses qui circule entre femmes",
   description:
-    "Coiffeuses, nounous, traiteuses, avocates, salons de thé, événements entre femmes… Toutes les bonnes adresses entre nous, en Suisse romande, en France, en Belgique et au Luxembourg.",
+    "Le carnet des bonnes adresses qui circule entre femmes, enfin digitalisé. Coiffeuses, thérapeutes, spas, restos, événements — vérifiés entre copines.",
   keywords:
-    "annuaire femmes, prestataires femmes, recommandations femmes, services femmes francophones, événements femmes",
+    "carnet adresses femmes, bonnes adresses femmes francophones, annuaire coiffeuses, thérapeutes femmes, spas femmes, événements femmes Suisse France Belgique Luxembourg Monaco",
   openGraph: {
-    title: "Hilmy — L'annuaire des femmes pour les femmes",
+    title: "Hilmy — Le carnet d'adresses qui circule entre femmes",
     description:
-      "Toutes les bonnes adresses entre femmes, en Suisse romande, en France, en Belgique et au Luxembourg.",
+      "Le carnet des bonnes adresses qui circule entre femmes, enfin digitalisé.",
     siteName: "Hilmy",
     locale: "fr_FR",
     type: "website",
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html
       lang="fr"
       className={`${fraunces.variable} ${dmSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <AuthListener />
-        {children}
+        <SessionProvider initialUser={user}>
+          <AuthListener />
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

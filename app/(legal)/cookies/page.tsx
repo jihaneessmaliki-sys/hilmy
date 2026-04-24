@@ -1,76 +1,73 @@
+import { ContentPageShell } from '@/components/v2/ContentPageShell'
+import { LegalSection } from '@/components/v2/LegalSection'
+
 export default function CookiesPage() {
   return (
-    <>
-      <h1 className="font-heading text-3xl md:text-4xl font-medium text-green-deep mb-8">
-        Politique relative aux cookies
-      </h1>
-
-      <p className="text-muted-foreground leading-relaxed mb-8">
-        Dernière mise à jour : avril 2026.
-      </p>
-
-      <div className="space-y-8 text-muted-foreground leading-relaxed">
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            1. Qu&apos;est-ce qu&apos;un cookie ?
-          </h2>
+    <ContentPageShell
+      kicker="Légal · Cookies"
+      titre={
+        <>
+          Politique relative{' '}
+          <em className="font-serif italic text-or">aux cookies.</em>
+        </>
+      }
+      lead={<>Dernière mise à jour&nbsp;: avril 2026.</>}
+    >
+      <div className="grid max-w-3xl gap-10">
+        <LegalSection numero="01" titre="Qu'est-ce qu'un cookie ?">
           <p>
             Un cookie est un petit fichier texte déposé sur votre navigateur
             lorsque vous visitez un site web. Il permet au site de se souvenir
             de certaines informations pour faciliter votre navigation.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            2. Cookies utilisés par Hilmy
-          </h2>
+        <LegalSection numero="02" titre="Cookies utilisés par Hilmy">
           <p>
             Hilmy utilise uniquement des cookies strictement nécessaires au
-            fonctionnement du service :
+            fonctionnement du service&nbsp;:
           </p>
-          <ul className="mt-2 list-disc pl-6 space-y-1">
-            <li>
-              <strong>Cookie de session Supabase</strong> : permet de maintenir
-              votre connexion. Ce cookie est essentiel au fonctionnement de
-              l&apos;authentification et ne peut pas être désactivé.
+          <ul className="mt-3 space-y-2 pl-5">
+            <li className="relative pl-1 before:absolute before:-left-4 before:top-[10px] before:h-1 before:w-1 before:rounded-full before:bg-or">
+              <span className="font-medium text-vert">
+                Cookie de session Supabase
+              </span>{' '}
+              — maintient votre connexion. Essentiel au fonctionnement de
+              l&apos;authentification, ne peut pas être désactivé.
             </li>
           </ul>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            3. Cookies tiers
-          </h2>
+        <LegalSection numero="03" titre="Cookies tiers">
           <p>
             Hilmy n&apos;utilise aucun cookie de tracking, aucun cookie
             publicitaire et aucun service d&apos;analytics tiers. Nous ne
             collectons aucune donnée de navigation à des fins commerciales.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            4. Gestion des cookies
-          </h2>
+        <LegalSection numero="04" titre="Gestion des cookies">
           <p>
             Vous pouvez à tout moment configurer votre navigateur pour refuser
             les cookies. Veuillez noter que la désactivation du cookie de session
             empêchera l&apos;utilisation des fonctionnalités nécessitant une
             connexion.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            5. Contact
-          </h2>
+        <LegalSection numero="05" titre="Contact">
           <p>
-            Pour toute question relative aux cookies, contactez-nous à
-            hello@hilmy.io.
+            Pour toute question relative aux cookies, écris-nous à{' '}
+            <a
+              href="mailto:hello@hilmy.io"
+              className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+            >
+              hello@hilmy.io
+            </a>
+            .
           </p>
-        </section>
+        </LegalSection>
       </div>
-    </>
-  );
+    </ContentPageShell>
+  )
 }

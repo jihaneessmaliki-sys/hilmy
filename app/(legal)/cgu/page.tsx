@@ -1,72 +1,65 @@
+import { ContentPageShell } from '@/components/v2/ContentPageShell'
+import { LegalSection } from '@/components/v2/LegalSection'
+
 export default function CguPage() {
   return (
-    <>
-      <h1 className="font-heading text-3xl md:text-4xl font-medium text-green-deep mb-8">
-        Conditions générales d&apos;utilisation
-      </h1>
-
-      <p className="text-muted-foreground leading-relaxed mb-8">
-        Dernière mise à jour : avril 2026. L&apos;utilisation du site Hilmy
-        implique l&apos;acceptation pleine et entière des présentes conditions.
-      </p>
-
-      <div className="space-y-8 text-muted-foreground leading-relaxed">
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            1. Objet
-          </h2>
+    <ContentPageShell
+      kicker="Légal · CGU"
+      titre={
+        <>
+          Conditions générales{' '}
+          <em className="font-serif italic text-or">d&apos;utilisation.</em>
+        </>
+      }
+      lead={
+        <>
+          Dernière mise à jour&nbsp;: avril 2026. L&apos;utilisation du site
+          Hilmy implique l&apos;acceptation pleine et entière des présentes
+          conditions.
+        </>
+      }
+    >
+      <div className="grid max-w-3xl gap-10">
+        <LegalSection numero="01" titre="Objet">
           <p>
             Hilmy est un annuaire en ligne gratuit permettant la mise en relation
             entre des utilisatrices à la recherche de prestataires de services et
             des prestataires femmes proposant leurs services en Suisse, en
-            France, en Belgique et dans les pays limitrophes.
+            France, en Belgique, au Luxembourg et à Monaco.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            2. Inscription et compte
-          </h2>
+        <LegalSection numero="02" titre="Inscription et compte">
           <p>
             L&apos;inscription sur Hilmy est réservée aux femmes. En créant un
             compte, vous confirmez sur l&apos;honneur être une femme.
           </p>
-          <p className="mt-2">
-            Deux types de comptes existent : le compte utilisatrice (pour
+          <p>
+            Deux types de comptes existent&nbsp;: le compte utilisatrice (pour
             consulter l&apos;annuaire) et le compte prestataire (pour proposer
             ses services). L&apos;inscription se fait par email et mot de passe.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            3. Engagement de confiance
-          </h2>
+        <LegalSection numero="03" titre="Engagement de confiance">
           <p>
-            En utilisant Hilmy, vous vous engagez à respecter les autres
-            membres, à ne pas publier de contenu trompeur, offensant ou
-            illicite, et à contribuer à un environnement bienveillant entre
-            femmes.
+            En utilisant Hilmy, vous vous engagez à respecter les autres membres,
+            à ne pas publier de contenu trompeur, offensant ou illicite, et à
+            contribuer à un environnement bienveillant entre femmes.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            4. Modération et signalement
-          </h2>
+        <LegalSection numero="04" titre="Modération et signalement">
           <p>
-            Chaque profil de prestataire est soumis à validation par
-            l&apos;équipe Hilmy avant publication. Les utilisatrices peuvent
-            signaler tout profil qui leur semble inapproprié. L&apos;équipe
-            Hilmy se réserve le droit de suspendre ou supprimer tout compte ne
-            respectant pas les présentes conditions.
+            Chaque fiche prestataire est soumise à validation par l&apos;équipe
+            Hilmy avant publication. Les utilisatrices peuvent signaler tout
+            profil qui leur semble inapproprié. L&apos;équipe Hilmy se réserve
+            le droit de suspendre ou supprimer tout compte ne respectant pas les
+            présentes conditions.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            5. Responsabilité
-          </h2>
+        <LegalSection numero="05" titre="Responsabilité">
           <p>
             Hilmy est un service de mise en relation et ne peut être tenu
             responsable de la qualité, de la conformité ou de l&apos;exécution
@@ -74,46 +67,43 @@ export default function CguPage() {
             relation commerciale se noue directement entre l&apos;utilisatrice et
             la prestataire, en dehors de Hilmy.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            6. Gratuité
-          </h2>
+        <LegalSection numero="06" titre="Gratuité">
           <p>
             L&apos;inscription et l&apos;utilisation de Hilmy sont entièrement
             gratuites, tant pour les utilisatrices que pour les prestataires.
             Aucune commission n&apos;est prélevée sur les prestations.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            7. Suppression de compte
-          </h2>
+        <LegalSection numero="07" titre="Suppression de compte">
           <p>
             Vous pouvez demander la suppression de votre compte à tout moment en
-            contactant hello@hilmy.io. Vos données seront effacées dans un délai
-            de 30 jours.
+            contactant{' '}
+            <a
+              href="mailto:hello@hilmy.io"
+              className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+            >
+              hello@hilmy.io
+            </a>
+            . Vos données seront effacées dans un délai de 30 jours.
           </p>
-        </section>
+        </LegalSection>
 
-        <section>
-          <h2 className="font-heading text-xl font-medium text-foreground mb-3">
-            8. Droit applicable et juridiction
-          </h2>
+        <LegalSection numero="08" titre="Droit applicable et juridiction">
           <p>
             Les présentes conditions sont régies par le droit suisse. Tout
             litige relatif à l&apos;utilisation de Hilmy sera soumis à la
             compétence exclusive des tribunaux du canton de Genève, Suisse.
           </p>
-          <p className="mt-2">
-            Les utilisatrices résidant dans l&apos;Union européenne
-            bénéficient des protections prévues par le RGPD et les
-            réglementations applicables dans leur pays de résidence.
+          <p>
+            Les utilisatrices résidant dans l&apos;Union européenne bénéficient
+            des protections prévues par le RGPD et les réglementations
+            applicables dans leur pays de résidence.
           </p>
-        </section>
+        </LegalSection>
       </div>
-    </>
-  );
+    </ContentPageShell>
+  )
 }

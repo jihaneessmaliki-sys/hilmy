@@ -1,0 +1,63 @@
+-- =====================================================================
+-- HILMY · Stage 4 · Migration 06 — Table favoris
+-- Favoris polymorphiques : une user sauvegarde n'importe quel type
+-- d'item (prestataire, recommandation, événement).
+-- Strictement privé : RLS owner only.
+-- =====================================================================
+
+create table if not exists favoris (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+
+  item_type text not null check (item_type in (
+    'prestataire', 'recommandation', 'evenement'
+  )),
+  item_id uuid not null,
+
+  note_perso text,  -- note privée optionnelle ("pour l'anniv de Julie")
+  created_at timestamptz not null default now(),
+
+  -- 1 favori par user par item
+  unique (user_id, item_type, item_id)
+);
+
+-- Indexes
+create index if not exists favoris_user_idx on favoris (user_id);
+create index if not exists favoris_item_idx on favoris (item_type, item_id);
+
+-- =====================================================================
+-- RLS — strictement privé
+-- =====================================================================
+alter table favoris enable row level security;
+
+-- SELECT : uniquement ses propres favoris
+drop policy if exists "favoris_self_read" on favoris;
+create policy "favoris_self_read"
+  on favoris for select
+  to authenticated
+  using (user_id = auth.uid());
+
+-- INSERT : pour soi uniquement
+drop policy if exists "favoris_self_insert" on favoris;
+create policy "favoris_self_insert"
+  on favoris for insert
+  to authenticated
+  with check (user_id = auth.uid());
+
+-- UPDATE : pour modifier sa note_perso
+drop policy if exists "favoris_self_update" on favoris;
+create policy "favoris_self_update"
+  on favoris for update
+  to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+-- DELETE : retire ses favoris
+drop policy if exists "favoris_self_delete" on favoris;
+create policy "favoris_self_delete"
+  on favoris for delete
+  to authenticated
+  using (user_id = auth.uid());
+
+comment on table favoris is
+  'Favoris polymorphiques (prestataires, recommandations, événements). Strictement privés, RLS owner-only.';

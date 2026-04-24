@@ -1,0 +1,216 @@
+-- =====================================================================
+-- HILMY · Stage 4 · Migration 04 — Table evenements
+-- Événements organisés par la communauté (brunchs, ateliers, book clubs).
+-- Flyer obligatoire. Validation admin avant publication.
+-- =====================================================================
+
+create table if not exists evenements (
+  id uuid primary key default gen_random_uuid(),
+  organisateur_id uuid not null references auth.users(id) on delete cascade,
+  prestataire_id uuid references prestataires(id) on delete set null,
+
+  slug text not null unique,
+  titre text not null,
+  categorie text not null,
+  description text not null,
+
+  -- Flyer obligatoire (Supabase Storage : bucket event-flyers)
+  flyer_url text not null,
+
+  -- Dates
+  start_date timestamptz not null,
+  end_date timestamptz,
+
+  -- Lieu
+  lieu_nom text not null,
+  lieu_adresse text,
+  ville text not null,
+  pays text not null check (pays in ('CH', 'FR', 'BE', 'LU', 'MC')),
+  latitude numeric(10, 7),
+  longitude numeric(10, 7),
+
+  -- Capacité
+  places integer not null default 20 check (places >= 1),
+  inscrites_count integer not null default 0,
+
+  -- Tarification
+  prix numeric(10, 2) not null default 0,
+  devise text not null default 'CHF' check (devise in ('CHF', 'EUR')),
+
+  -- Visibilité / modération
+  status text not null default 'pending' check (status in (
+    'pending', 'published', 'archived', 'cancelled'
+  )),
+  visibility text not null default 'public' check (visibility in (
+    'public', 'members_only'
+  )),
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint evenements_slug_format check (slug ~ '^[a-z0-9-]+$'),
+  constraint evenements_dates_coherent check (end_date is null or end_date >= start_date)
+);
+
+-- Table inscriptions : qui est inscrite à quel événement
+create table if not exists evenement_inscriptions (
+  id uuid primary key default gen_random_uuid(),
+  evenement_id uuid not null references evenements(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  statut text not null default 'inscrite' check (statut in (
+    'inscrite', 'liste_attente', 'annulee'
+  )),
+  created_at timestamptz not null default now(),
+  unique (evenement_id, user_id)
+);
+
+-- Indexes
+create index if not exists evenements_organisateur_idx on evenements (organisateur_id);
+create index if not exists evenements_prestataire_idx on evenements (prestataire_id);
+create index if not exists evenements_status_start_idx on evenements (status, start_date);
+create index if not exists evenements_ville_idx on evenements (ville) where status = 'published';
+create index if not exists evenements_categorie_idx on evenements (categorie) where status = 'published';
+
+create index if not exists evenement_inscriptions_event_idx on evenement_inscriptions (evenement_id);
+create index if not exists evenement_inscriptions_user_idx on evenement_inscriptions (user_id);
+
+-- Trigger updated_at
+drop trigger if exists evenements_set_updated_at on evenements;
+create trigger evenements_set_updated_at
+  before update on evenements
+  for each row execute function set_updated_at();
+
+-- =====================================================================
+-- RLS — evenements
+-- =====================================================================
+alter table evenements enable row level security;
+
+-- SELECT public : événements publiés et visibilité publique
+drop policy if exists "evenements_public_read" on evenements;
+create policy "evenements_public_read"
+  on evenements for select
+  to anon, authenticated
+  using (status = 'published' and visibility = 'public');
+
+-- SELECT members : événements members_only visibles des utilisatrices connectées
+drop policy if exists "evenements_members_read" on evenements;
+create policy "evenements_members_read"
+  on evenements for select
+  to authenticated
+  using (status = 'published' and visibility = 'members_only');
+
+-- SELECT owner (organisatrice)
+drop policy if exists "evenements_owner_read" on evenements;
+create policy "evenements_owner_read"
+  on evenements for select
+  to authenticated
+  using (organisateur_id = auth.uid());
+
+-- SELECT admin
+drop policy if exists "evenements_admin_read" on evenements;
+create policy "evenements_admin_read"
+  on evenements for select
+  to authenticated
+  using (is_admin());
+
+-- INSERT : organisatrice, status forcé à pending
+drop policy if exists "evenements_owner_insert" on evenements;
+create policy "evenements_owner_insert"
+  on evenements for insert
+  to authenticated
+  with check (
+    organisateur_id = auth.uid()
+    and status = 'pending'
+  );
+
+-- UPDATE owner : l'organisatrice peut éditer mais pas s'auto-publier
+drop policy if exists "evenements_owner_update" on evenements;
+create policy "evenements_owner_update"
+  on evenements for update
+  to authenticated
+  using (organisateur_id = auth.uid())
+  with check (
+    organisateur_id = auth.uid()
+    -- Ne peut ni s'auto-publier ni forcer republication depuis archived
+    and status in ('pending', 'published', 'cancelled')
+  );
+
+-- UPDATE admin
+drop policy if exists "evenements_admin_update" on evenements;
+create policy "evenements_admin_update"
+  on evenements for update
+  to authenticated
+  using (is_admin())
+  with check (is_admin());
+
+-- DELETE : owner ou admin
+drop policy if exists "evenements_owner_delete" on evenements;
+create policy "evenements_owner_delete"
+  on evenements for delete
+  to authenticated
+  using (organisateur_id = auth.uid() or is_admin());
+
+-- =====================================================================
+-- RLS — evenement_inscriptions
+-- =====================================================================
+alter table evenement_inscriptions enable row level security;
+
+-- SELECT : user voit ses propres inscriptions, organisatrice voit toutes
+-- les inscriptions de ses événements
+drop policy if exists "inscriptions_self_read" on evenement_inscriptions;
+create policy "inscriptions_self_read"
+  on evenement_inscriptions for select
+  to authenticated
+  using (user_id = auth.uid());
+
+drop policy if exists "inscriptions_organisateur_read" on evenement_inscriptions;
+create policy "inscriptions_organisateur_read"
+  on evenement_inscriptions for select
+  to authenticated
+  using (
+    exists (
+      select 1 from evenements e
+      where e.id = evenement_inscriptions.evenement_id
+        and e.organisateur_id = auth.uid()
+    )
+  );
+
+drop policy if exists "inscriptions_admin_read" on evenement_inscriptions;
+create policy "inscriptions_admin_read"
+  on evenement_inscriptions for select
+  to authenticated
+  using (is_admin());
+
+-- INSERT : user s'inscrit elle-même à un événement publié
+drop policy if exists "inscriptions_self_insert" on evenement_inscriptions;
+create policy "inscriptions_self_insert"
+  on evenement_inscriptions for insert
+  to authenticated
+  with check (
+    user_id = auth.uid()
+    and exists (
+      select 1 from evenements e
+      where e.id = evenement_inscriptions.evenement_id
+        and e.status = 'published'
+    )
+  );
+
+-- UPDATE : user modifie son propre statut (ex: annuler son inscription)
+drop policy if exists "inscriptions_self_update" on evenement_inscriptions;
+create policy "inscriptions_self_update"
+  on evenement_inscriptions for update
+  to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+-- DELETE : user retire son inscription
+drop policy if exists "inscriptions_self_delete" on evenement_inscriptions;
+create policy "inscriptions_self_delete"
+  on evenement_inscriptions for delete
+  to authenticated
+  using (user_id = auth.uid() or is_admin());
+
+comment on table evenements is
+  'Événements organisés par la communauté. Flyer obligatoire, validation admin.';
+comment on table evenement_inscriptions is
+  'Inscriptions aux événements. 1 inscription par user par événement (unique constraint).';

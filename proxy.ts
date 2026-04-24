@@ -46,7 +46,26 @@ export async function proxy(request: NextRequest) {
   ];
   // /evenements and /evenement/[id] are PUBLIC (SEO + discovery)
 
-  const isProtected = protectedPaths.some((p) => path.startsWith(p));
+  // V2 mockée — routes design en accès libre (pas de Supabase requis pour tester)
+  const v2OpenPaths = [
+    "/onboarding/prestataire",
+    "/annuaire",
+    "/prestataire-v2",
+    "/recommandations",
+    "/recommandation",
+    "/evenements-v2",
+    "/evenement-v2",
+    "/hero-demo",
+    "/auth/login",
+    "/auth/signup",
+    "/dashboard/utilisatrice",
+    "/dashboard/prestataire",
+    "/plan",
+    "/hero-variants",
+  ];
+  const isV2Open = v2OpenPaths.some((p) => path.startsWith(p));
+
+  const isProtected = protectedPaths.some((p) => path.startsWith(p)) && !isV2Open;
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();

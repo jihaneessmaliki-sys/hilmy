@@ -1,105 +1,173 @@
-import Link from "next/link";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { ContentPageShell } from '@/components/v2/ContentPageShell'
+import { GoldLine } from '@/components/ui/GoldLine'
+import Link from 'next/link'
 
 export default function CommentCaMarchePage() {
   return (
-    <>
-      <Header />
-      <main className="flex-1">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <span className="inline-block text-[13px] font-medium uppercase tracking-[0.15em] text-gold">
-            Mode d&apos;emploi
-          </span>
-          <h1 className="mt-4 font-heading text-3xl md:text-5xl font-medium text-green-deep leading-tight">
-            Comment ça marche
-          </h1>
-
-          <div className="mt-12 space-y-16">
-            {/* Utilisatrice */}
-            <div>
-              <h2 className="font-heading text-2xl font-medium text-green-deep mb-6">
-                Tu cherches une prestataire ?
-              </h2>
-              <div className="space-y-8">
-                <Step number="01" title="Inscris-toi">
-                  Entre ton email, choisis un mot de passe, et c&apos;est parti.
-                  Dis-nous juste ton prénom et ta ville.
-                </Step>
-                <Step number="02" title="Explore l'annuaire">
-                  Filtre par catégorie, par ville, ou cherche directement un nom.
-                  Chaque profil est vérifié par notre équipe avant d&apos;apparaître.
-                </Step>
-                <Step number="03" title="Contacte-la directement">
-                  Tu as trouvé ta perle ? Écris-lui sur WhatsApp ou Instagram.
-                  C&apos;est direct, pas d&apos;intermédiaire.
-                </Step>
-              </div>
-            </div>
-
-            {/* Prestataire */}
-            <div>
-              <h2 className="font-heading text-2xl font-medium text-green-deep mb-6">
-                Tu proposes un service ?
-              </h2>
-              <div className="space-y-8">
-                <Step number="01" title="Crée ton profil">
-                  Inscris-toi, raconte ton activité, ajoute tes photos et tes
-                  coordonnées. Ça prend 5 minutes.
-                </Step>
-                <Step number="02" title="On valide">
-                  Notre équipe vérifie chaque profil à la main. C&apos;est comme
-                  ça qu&apos;on garde la confiance entre nous.
-                </Step>
-                <Step number="03" title="Les filles te trouvent">
-                  Ton profil est visible dans l&apos;annuaire. Les filles te
-                  contactent directement. C&apos;est gratuit.
-                </Step>
-              </div>
-            </div>
+    <ContentPageShell
+      kicker="Mode d'emploi"
+      titre={
+        <>
+          Comment ça{' '}
+          <em className="font-serif italic text-or">marche, concrètement.</em>
+        </>
+      }
+      lead={
+        <>
+          On a voulu un produit simple&nbsp;: pas de jargon, pas d&apos;étapes
+          inutiles, pas de promesses qu&apos;on ne tient pas. Voilà, en trois
+          gestes de chaque côté.
+        </>
+      }
+    >
+      <div className="grid gap-16 md:grid-cols-2 md:gap-12">
+        {/* Utilisatrice */}
+        <section>
+          <div className="flex items-center gap-4">
+            <GoldLine width={32} />
+            <span className="overline text-or">Côté copine</span>
           </div>
+          <h2 className="mt-4 font-serif text-[clamp(1.5rem,3vw,2rem)] font-light text-vert">
+            Tu cherches une prestataire ?
+          </h2>
 
-          <div className="mt-16 flex flex-col sm:flex-row gap-4">
-            <Link
-              href="/inscription"
-              className="inline-flex items-center justify-center rounded-full px-8 py-4 text-base font-medium bg-green-deep text-primary-foreground hover:bg-green-deep/90 transition-colors"
-            >
-              Je rejoins les filles
-            </Link>
-            <Link
-              href="/inscription-prestataire"
-              className="inline-flex items-center justify-center rounded-full px-8 py-4 text-base font-medium border-[1.5px] border-green-deep text-green-deep hover:bg-green-deep/5 transition-colors"
-            >
-              Je propose mes services
-            </Link>
+          <ol className="mt-8 space-y-8">
+            <Step
+              numero="01"
+              titre="Inscris-toi"
+              texte={
+                <>
+                  Email, mot de passe, prénom. Trente secondes, on te guide pour le
+                  reste.
+                </>
+              }
+            />
+            <Step
+              numero="02"
+              titre="Explore l'annuaire"
+              texte={
+                <>
+                  Filtre par catégorie, par ville, ou tape le nom direct. Chaque
+                  fiche est vérifiée à la main avant d&apos;apparaître — c&apos;est
+                  comme ça qu&apos;on garde la confiance.
+                </>
+              }
+            />
+            <Step
+              numero="03"
+              titre="Contacte-la directement"
+              texte={
+                <>
+                  Tu as trouvé ta perle&nbsp;? Écris-lui sur WhatsApp ou Instagram
+                  depuis sa fiche. Aucun intermédiaire, aucune commission — on te
+                  laisse entre vous.
+                </>
+              }
+            />
+          </ol>
+        </section>
+
+        {/* Prestataire */}
+        <section>
+          <div className="flex items-center gap-4">
+            <GoldLine width={32} />
+            <span className="overline text-or">Côté prestataire</span>
           </div>
+          <h2 className="mt-4 font-serif text-[clamp(1.5rem,3vw,2rem)] font-light text-vert">
+            Tu proposes un service ?
+          </h2>
+
+          <ol className="mt-8 space-y-8">
+            <Step
+              numero="01"
+              titre="Crée ta fiche"
+              texte={
+                <>
+                  Choisis ta méthode&nbsp;: depuis Google Places (2 minutes) ou en
+                  remplissant toi-même (8 minutes). Tout est gratuit, et ça le
+                  restera.
+                </>
+              }
+            />
+            <Step
+              numero="02"
+              titre="On la valide"
+              texte={
+                <>
+                  Notre équipe relit chaque fiche avant publication. Si quelque
+                  chose manque, on te fait des suggestions par email. C&apos;est la
+                  garantie qu&apos;aucune mauvaise surprise n&apos;arrive aux
+                  copines.
+                </>
+              }
+            />
+            <Step
+              numero="03"
+              titre="Les copines te trouvent"
+              texte={
+                <>
+                  Ta fiche apparaît dans l&apos;annuaire. Les premières clientes
+                  viennent, laissent leurs avis, et ton cercle s&apos;élargit. On
+                  ne prélève rien sur tes prestations — jamais.
+                </>
+              }
+            />
+          </ol>
+        </section>
+      </div>
+
+      <div className="mt-20 rounded-sm border border-or/20 bg-blanc p-8 md:p-12">
+        <div className="flex items-center gap-4">
+          <GoldLine width={32} />
+          <span className="overline text-or">Envie de démarrer&nbsp;?</span>
         </div>
-      </main>
-      <Footer />
-    </>
-  );
+        <p className="mt-4 font-serif text-[20px] italic leading-[1.5] text-vert md:text-[24px]">
+          Deux parcours, une seule promesse&nbsp;: entre femmes, tout est plus
+          simple.
+        </p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/auth/signup"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-vert px-7 text-[12px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark"
+          >
+            Je rejoins les copines
+            <span className="text-or-light" aria-hidden="true">
+              →
+            </span>
+          </Link>
+          <Link
+            href="/onboarding/prestataire"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-or px-7 text-[12px] font-medium tracking-[0.22em] text-or-deep uppercase transition-all hover:bg-or/10"
+          >
+            Je propose mes services
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+      </div>
+    </ContentPageShell>
+  )
 }
 
 function Step({
-  number,
-  title,
-  children,
+  numero,
+  titre,
+  texte,
 }: {
-  number: string;
-  title: string;
-  children: React.ReactNode;
+  numero: string
+  titre: string
+  texte: React.ReactNode
 }) {
   return (
-    <div className="flex gap-5">
-      <span className="font-heading text-3xl font-medium text-gold shrink-0 w-12">
-        {number}
+    <li className="flex gap-5">
+      <span className="shrink-0 font-serif text-3xl italic text-or">
+        {numero}
       </span>
       <div>
-        <h3 className="font-heading text-lg font-medium text-green-deep">
-          {title}
+        <h3 className="font-serif text-[18px] font-light italic text-vert">
+          {titre}
         </h3>
-        <p className="mt-1 text-muted-foreground leading-relaxed">{children}</p>
+        <p className="mt-1 text-[15px] leading-[1.75] text-texte">{texte}</p>
       </div>
-    </div>
-  );
+    </li>
+  )
 }

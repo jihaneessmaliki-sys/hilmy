@@ -1,0 +1,172 @@
+-- =====================================================================
+-- HILMY · Stage 4 · Migration 03 — Table recommandations
+-- Lieux recommandés par les utilisatrices (restos, cafés, spas, etc.).
+-- Plusieurs utilisatrices peuvent recommander le MÊME lieu — on dédoublonne
+-- via google_place_id ou slug, et on maintient un compteur.
+-- =====================================================================
+
+create table if not exists recommandations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+
+  slug text not null unique,
+  nom text not null,
+  categorie text not null check (categorie in (
+    'resto', 'cafe', 'spa', 'boutique', 'hotel',
+    'culture', 'nature', 'sport', 'evenementiel'
+  )),
+
+  -- Localisation
+  ville text not null,
+  pays text not null check (pays in ('CH', 'FR', 'BE', 'LU', 'MC')),
+  adresse text,
+  latitude numeric(10, 7),
+  longitude numeric(10, 7),
+
+  -- Contenu
+  description text,
+  cover_color text default '#D4C5B0',
+  photos jsonb not null default '[]'::jsonb,  -- [url, url, ...]
+
+  -- Lien Google Places (pour dédoublonnage + enrichissement)
+  google_place_id text unique,
+  google_place_data jsonb,  -- { name, address, phone, hours, rating, reviews_count, ... }
+
+  -- Modération
+  status text not null default 'published' check (status in (
+    'draft', 'published', 'archived', 'reported'
+  )),
+
+  -- Stats (maintenues par triggers dans 07_counters.sql)
+  nb_recommandations integer not null default 1,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint recommandations_slug_format check (slug ~ '^[a-z0-9-]+$')
+);
+
+-- Table relais pour tracer QUI a recommandé QUEL lieu (pour le compteur + dédoublonnage)
+create table if not exists recommandation_auteurs (
+  id uuid primary key default gen_random_uuid(),
+  recommandation_id uuid not null references recommandations(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  commentaire text,
+  created_at timestamptz not null default now(),
+  unique (recommandation_id, user_id)
+);
+
+-- Indexes
+create index if not exists recommandations_categorie_idx on recommandations (categorie) where status = 'published';
+create index if not exists recommandations_ville_idx on recommandations (ville) where status = 'published';
+create index if not exists recommandations_status_idx on recommandations (status);
+create index if not exists recommandations_google_place_id_idx on recommandations (google_place_id);
+create index if not exists recommandation_auteurs_reco_idx on recommandation_auteurs (recommandation_id);
+create index if not exists recommandation_auteurs_user_idx on recommandation_auteurs (user_id);
+
+-- Trigger updated_at
+drop trigger if exists recommandations_set_updated_at on recommandations;
+create trigger recommandations_set_updated_at
+  before update on recommandations
+  for each row execute function set_updated_at();
+
+-- =====================================================================
+-- RLS — recommandations
+-- =====================================================================
+alter table recommandations enable row level security;
+
+-- SELECT public : les lieux publiés sont visibles de toutes
+drop policy if exists "recommandations_public_read" on recommandations;
+create policy "recommandations_public_read"
+  on recommandations for select
+  to anon, authenticated
+  using (status = 'published');
+
+-- SELECT owner : voir ses propres brouillons + archivés
+drop policy if exists "recommandations_owner_read" on recommandations;
+create policy "recommandations_owner_read"
+  on recommandations for select
+  to authenticated
+  using (user_id = auth.uid());
+
+-- SELECT admin
+drop policy if exists "recommandations_admin_read" on recommandations;
+create policy "recommandations_admin_read"
+  on recommandations for select
+  to authenticated
+  using (is_admin());
+
+-- INSERT : owner uniquement, doit publier sous son user_id
+drop policy if exists "recommandations_owner_insert" on recommandations;
+create policy "recommandations_owner_insert"
+  on recommandations for insert
+  to authenticated
+  with check (user_id = auth.uid());
+
+-- UPDATE : owner uniquement
+drop policy if exists "recommandations_owner_update" on recommandations;
+create policy "recommandations_owner_update"
+  on recommandations for update
+  to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+-- UPDATE admin
+drop policy if exists "recommandations_admin_update" on recommandations;
+create policy "recommandations_admin_update"
+  on recommandations for update
+  to authenticated
+  using (is_admin())
+  with check (is_admin());
+
+-- DELETE : owner ou admin
+drop policy if exists "recommandations_owner_delete" on recommandations;
+create policy "recommandations_owner_delete"
+  on recommandations for delete
+  to authenticated
+  using (user_id = auth.uid() or is_admin());
+
+-- =====================================================================
+-- RLS — recommandation_auteurs
+-- =====================================================================
+alter table recommandation_auteurs enable row level security;
+
+-- SELECT public (pour afficher "recommandé par X copines")
+drop policy if exists "recommandation_auteurs_public_read" on recommandation_auteurs;
+create policy "recommandation_auteurs_public_read"
+  on recommandation_auteurs for select
+  to anon, authenticated
+  using (
+    exists (
+      select 1 from recommandations r
+      where r.id = recommandation_auteurs.recommandation_id
+        and r.status = 'published'
+    )
+  );
+
+-- INSERT : une utilisatrice s'ajoute elle-même
+drop policy if exists "recommandation_auteurs_self_insert" on recommandation_auteurs;
+create policy "recommandation_auteurs_self_insert"
+  on recommandation_auteurs for insert
+  to authenticated
+  with check (user_id = auth.uid());
+
+-- UPDATE : owner uniquement (pour modifier son commentaire)
+drop policy if exists "recommandation_auteurs_self_update" on recommandation_auteurs;
+create policy "recommandation_auteurs_self_update"
+  on recommandation_auteurs for update
+  to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+-- DELETE : owner
+drop policy if exists "recommandation_auteurs_self_delete" on recommandation_auteurs;
+create policy "recommandation_auteurs_self_delete"
+  on recommandation_auteurs for delete
+  to authenticated
+  using (user_id = auth.uid() or is_admin());
+
+comment on table recommandations is
+  'Lieux recommandés par les utilisatrices. Dédoublonnage par google_place_id ou slug.';
+comment on table recommandation_auteurs is
+  'Table relais many-to-many : qui a recommandé quel lieu + son commentaire.';

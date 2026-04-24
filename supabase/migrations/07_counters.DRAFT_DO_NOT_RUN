@@ -1,0 +1,151 @@
+-- =====================================================================
+-- HILMY · Stage 4 · Migration 07 — Triggers de compteurs
+-- Maintient automatiquement les stats dénormalisées :
+--   - prestataires.note_moyenne + nb_avis
+--   - recommandations.nb_recommandations
+--   - evenements.inscrites_count
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- Recalcul note_moyenne + nb_avis d'une prestataire
+-- ---------------------------------------------------------------------
+create or replace function refresh_prestataire_stats(p_presta_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update prestataires
+  set
+    note_moyenne = coalesce((
+      select round(avg(note)::numeric, 1)
+      from avis
+      where prestataire_id = p_presta_id and status = 'published'
+    ), 0),
+    nb_avis = (
+      select count(*)
+      from avis
+      where prestataire_id = p_presta_id and status = 'published'
+    )
+  where id = p_presta_id;
+end;
+$$;
+
+-- Trigger : recalcule quand un avis est ajouté / modifié / supprimé
+create or replace function avis_trigger_refresh_stats()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'DELETE' then
+    perform refresh_prestataire_stats(old.prestataire_id);
+    return old;
+  else
+    perform refresh_prestataire_stats(new.prestataire_id);
+    -- Si le prestataire a changé (edge case), recalculer aussi l'ancien
+    if tg_op = 'UPDATE' and old.prestataire_id <> new.prestataire_id then
+      perform refresh_prestataire_stats(old.prestataire_id);
+    end if;
+    return new;
+  end if;
+end;
+$$;
+
+drop trigger if exists avis_refresh_prestataire_stats on avis;
+create trigger avis_refresh_prestataire_stats
+  after insert or update or delete on avis
+  for each row execute function avis_trigger_refresh_stats();
+
+-- ---------------------------------------------------------------------
+-- Recalcul nb_recommandations d'un lieu
+-- ---------------------------------------------------------------------
+create or replace function refresh_recommandation_count(p_reco_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update recommandations
+  set nb_recommandations = (
+    select count(*)
+    from recommandation_auteurs
+    where recommandation_id = p_reco_id
+  )
+  where id = p_reco_id;
+end;
+$$;
+
+create or replace function recommandation_auteurs_trigger_refresh()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'DELETE' then
+    perform refresh_recommandation_count(old.recommandation_id);
+    return old;
+  else
+    perform refresh_recommandation_count(new.recommandation_id);
+    if tg_op = 'UPDATE' and old.recommandation_id <> new.recommandation_id then
+      perform refresh_recommandation_count(old.recommandation_id);
+    end if;
+    return new;
+  end if;
+end;
+$$;
+
+drop trigger if exists reco_auteurs_refresh_count on recommandation_auteurs;
+create trigger reco_auteurs_refresh_count
+  after insert or update or delete on recommandation_auteurs
+  for each row execute function recommandation_auteurs_trigger_refresh();
+
+-- ---------------------------------------------------------------------
+-- Recalcul inscrites_count d'un événement
+-- ---------------------------------------------------------------------
+create or replace function refresh_evenement_inscrites(p_event_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update evenements
+  set inscrites_count = (
+    select count(*)
+    from evenement_inscriptions
+    where evenement_id = p_event_id and statut = 'inscrite'
+  )
+  where id = p_event_id;
+end;
+$$;
+
+create or replace function inscriptions_trigger_refresh()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'DELETE' then
+    perform refresh_evenement_inscrites(old.evenement_id);
+    return old;
+  else
+    perform refresh_evenement_inscrites(new.evenement_id);
+    if tg_op = 'UPDATE' and old.evenement_id <> new.evenement_id then
+      perform refresh_evenement_inscrites(old.evenement_id);
+    end if;
+    return new;
+  end if;
+end;
+$$;
+
+drop trigger if exists inscriptions_refresh_count on evenement_inscriptions;
+create trigger inscriptions_refresh_count
+  after insert or update or delete on evenement_inscriptions
+  for each row execute function inscriptions_trigger_refresh();
+
+comment on function refresh_prestataire_stats(uuid) is
+  'Recalcule note_moyenne et nb_avis d''une prestataire. Appelée par trigger sur avis.';
+comment on function refresh_recommandation_count(uuid) is
+  'Recalcule le nombre d''auteurs d''une recommandation. Appelée par trigger.';
+comment on function refresh_evenement_inscrites(uuid) is
+  'Recalcule le nombre d''inscrites à un événement. Appelée par trigger.';

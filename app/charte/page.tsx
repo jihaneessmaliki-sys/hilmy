@@ -1,107 +1,111 @@
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import { Shield, Users, Heart } from "lucide-react";
+import { ContentPageShell } from '@/components/v2/ContentPageShell'
+import { GoldLine } from '@/components/ui/GoldLine'
 
 export default function ChartePage() {
   return (
-    <>
-      <Header />
-      <main className="flex-1">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <span className="inline-block text-[13px] font-medium uppercase tracking-[0.15em] text-gold">
-            Ce qui nous lie
-          </span>
-          <h1 className="mt-4 font-heading text-3xl md:text-5xl font-medium text-green-deep leading-tight">
-            Notre charte de confiance
-          </h1>
-
-          <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-            Hilmy n&apos;est pas un site comme les autres. C&apos;est un endroit
-            où on se fait confiance, entre femmes. Cette charte, c&apos;est notre
-            pacte. Simple, clair, sincère.
+    <ContentPageShell
+      kicker="Ce qui nous lie"
+      titre={
+        <>
+          Notre{' '}
+          <em className="font-serif italic text-or">charte de confiance.</em>
+        </>
+      }
+      lead={
+        <>
+          Hilmy n&apos;est pas un site comme les autres. C&apos;est un endroit où on se
+          fait confiance entre femmes. Cette charte, c&apos;est notre pacte&nbsp;:
+          simple, clair, sincère.
+        </>
+      }
+    >
+      <div className="grid max-w-3xl gap-12">
+        <CharteItem numero="01" titre="Confiance vérifiée">
+          <p>
+            Chaque fiche prestataire est relue à la main par notre équipe avant
+            d&apos;être visible dans l&apos;annuaire. On ne laisse rien passer au
+            hasard — on prend le temps de vérifier les coordonnées, la cohérence
+            de l&apos;offre, le ton.
           </p>
+          <p>
+            Si quelque chose te semble bizarre, tu peux signaler une fiche en un
+            clic. On traite chaque alerte avec sérieux et discrétion.
+          </p>
+        </CharteItem>
 
-          <div className="mt-12 space-y-10">
-            <CharteItem
-              icon={<Shield className="w-6 h-6" />}
-              title="Confiance"
-            >
-              <p>
-                Chaque profil de prestataire est vérifié par notre équipe avant
-                d&apos;être visible. On ne laisse rien passer au hasard.
-              </p>
-              <p className="mt-2">
-                Si quelque chose te semble louche, tu peux signaler un profil en
-                un clic. On traite chaque signalement avec sérieux et discrétion.
-              </p>
-            </CharteItem>
+        <CharteItem numero="02" titre="100 % entre femmes">
+          <p>
+            Hilmy s&apos;adresse aux femmes — utilisatrices et prestataires.
+            En t&apos;inscrivant, tu confirmes sur l&apos;honneur être une femme.
+            C&apos;est notre force&nbsp;: ici, on est entre nous.
+          </p>
+          <p>
+            On se comprend, on se soutient, on se recommande les yeux fermés.
+            Ce cadre nous permet d&apos;être plus libres, plus précises, plus
+            généreuses dans ce qu&apos;on partage.
+          </p>
+        </CharteItem>
 
-            <CharteItem
-              icon={<Users className="w-6 h-6" />}
-              title="Entre femmes"
-            >
-              <p>
-                Hilmy est un cercle de femmes. En t&apos;inscrivant — que ce soit
-                comme utilisatrice ou comme prestataire — tu confirmes sur
-                l&apos;honneur être une femme.
-              </p>
-              <p className="mt-2">
-                C&apos;est notre force : ici, on est entre nous. On se comprend,
-                on se soutient, on se recommande les yeux fermés.
-              </p>
-            </CharteItem>
+        <CharteItem numero="03" titre="Bienveillance, toujours">
+          <p>
+            On se passe les bonnes adresses, pas les coups bas. Pas de commentaires
+            méchants, pas de jugements faciles. Si on n&apos;est pas satisfaite
+            d&apos;une prestation, on en parle avec respect — et la prestataire
+            peut répondre publiquement.
+          </p>
+          <p>
+            Les prestataires mettent leur talent et leur cœur dans ce qu&apos;elles
+            font. On honore ça.
+          </p>
+        </CharteItem>
 
-            <CharteItem
-              icon={<Heart className="w-6 h-6" />}
-              title="Bienveillance"
-            >
-              <p>
-                On se passe les bonnes adresses, pas les coups bas. Pas de
-                commentaires méchants, pas de jugements. Si on n&apos;est pas
-                satisfaite d&apos;une prestation, on en parle avec respect.
-              </p>
-              <p className="mt-2">
-                Les prestataires mettent leur talent et leur coeur dans ce
-                qu&apos;elles font. On honore ça.
-              </p>
-            </CharteItem>
+        <CharteItem numero="04" titre="Gratuité réelle">
+          <p>
+            Hilmy est gratuit. Pour les utilisatrices comme pour les prestataires.
+            On ne prend pas de commission sur les prestations, on ne vend pas tes
+            données, on ne pousse pas de fiches contre paiement.
+          </p>
+          <p>
+            Notre seul rôle, c&apos;est de connecter les copines entre elles —
+            point.
+          </p>
+        </CharteItem>
 
-            <CharteItem
-              icon={null}
-              title="Gratuité"
-            >
-              <p>
-                Hilmy est gratuit. Pour les utilisatrices comme pour les
-                prestataires. On ne prend pas de commission, on ne vend pas tes
-                données. On est là pour connecter les filles entre elles, point.
-              </p>
-            </CharteItem>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </>
-  );
+        <CharteItem numero="05" titre="Tes données t'appartiennent">
+          <p>
+            Données hébergées en Europe, conformes RGPD et nLPD suisse.
+            Tu peux à tout moment exporter ce qu&apos;on a sur toi, suspendre ton
+            compte ou demander la suppression. Aucune revente à des tiers, jamais.
+          </p>
+        </CharteItem>
+      </div>
+    </ContentPageShell>
+  )
 }
 
 function CharteItem({
-  icon,
-  title,
+  numero,
+  titre,
   children,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
+  numero: string
+  titre: string
+  children: React.ReactNode
 }) {
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-3">
-        {icon && <div className="text-gold">{icon}</div>}
-        <h2 className="font-heading text-xl font-medium text-green-deep">
-          {title}
-        </h2>
+    <article className="rounded-sm border border-or/15 bg-blanc p-8 md:p-10">
+      <div className="flex items-baseline gap-4">
+        <span className="font-serif text-3xl italic text-or">{numero}</span>
+        <div className="flex items-center gap-3">
+          <GoldLine width={20} />
+          <h2 className="font-serif text-[clamp(1.25rem,2.5vw,1.5rem)] font-light text-vert">
+            {titre}
+          </h2>
+        </div>
       </div>
-      <div className="text-muted-foreground leading-relaxed">{children}</div>
-    </div>
-  );
+      <div className="mt-5 space-y-3 text-[15px] leading-[1.8] text-texte">
+        {children}
+      </div>
+    </article>
+  )
 }
