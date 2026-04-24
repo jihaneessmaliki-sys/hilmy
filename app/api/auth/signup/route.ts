@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendFounderSignupNotification, sendSignupEmail } from "@/lib/email/transactional";
+import { getRequestOrigin } from "@/lib/auth/redirect-origin";
 
 export const runtime = "nodejs";
 
@@ -16,9 +17,7 @@ function isValidSignupType(value: string | undefined): value is "member" | "prov
 }
 
 function getBaseUrl(request: Request) {
-  return process.env.NODE_ENV === "production"
-    ? "https://hilmy.io"
-    : new URL(request.url).origin;
+  return getRequestOrigin(request);
 }
 
 function isValidNextPath(value: string | undefined) {

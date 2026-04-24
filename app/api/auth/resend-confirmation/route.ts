@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendSignupEmail } from "@/lib/email/transactional";
+import { getRequestOrigin } from "@/lib/auth/redirect-origin";
 
 export const runtime = "nodejs";
 
@@ -9,9 +10,7 @@ type ResendConfirmationPayload = {
 };
 
 function getBaseUrl(request: Request) {
-  return process.env.NODE_ENV === "production"
-    ? "https://hilmy.io"
-    : new URL(request.url).origin;
+  return getRequestOrigin(request);
 }
 
 export async function POST(request: Request) {

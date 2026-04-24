@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPasswordResetEmail } from "@/lib/email/transactional";
+import { getRequestOrigin } from "@/lib/auth/redirect-origin";
 
 export const runtime = "nodejs";
 
@@ -9,11 +10,7 @@ type PasswordResetPayload = {
 };
 
 function getRedirectTo(request: Request) {
-  // Force le domaine hilmy.io en production
-  const baseUrl = process.env.NODE_ENV === "production"
-    ? "https://hilmy.io"
-    : (new URL(request.url)).origin;
-  return `${baseUrl}/auth/callback`;
+  return `${getRequestOrigin(request)}/auth/callback`;
 }
 
 export async function POST(request: Request) {
@@ -41,14 +38,19 @@ export async function POST(request: Request) {
       },
     });
 
-    if (error || !data.properties.action_link) {
+    if (error || !data.properties.hashed_token) {
       return NextResponse.json(
         { error: "Impossible d'envoyer l'email pour l'instant." },
         { status: 500 }
       );
     }
 
-    await sendPasswordResetEmail(email, data.properties.action_link);
+    // Build a direct link to our own callback with the token_hash.
+    // Bypasse Supabase /auth/v1/verify qui renvoie les tokens en hash
+    // fragment (inaccessibles au server) — cf. Stage 12 diagnostic reset.
+    const resetUrl = `${getRedirectTo(request)}?token_hash=${data.properties.hashed_token}&type=recovery`;
+
+    await sendPasswordResetEmail(email, resetUrl);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
