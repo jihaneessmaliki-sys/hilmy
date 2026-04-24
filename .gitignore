@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev artefacts
+*.zip
+*.backup.*
+.claude/worktrees/
+maquette-interieur.html
+parcours-utilisatrice.html
+hilmy-deploy.sh
+hilmy-fix.sh
+
