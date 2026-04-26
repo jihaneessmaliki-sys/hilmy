@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     'Trois paliers pensés pour toi : Standard 19 €, Premium 49 €, Cercle Pro 99 €. Aucun engagement, mois par mois.',
 }
 
-const HELLO = 'hello@hilmy.io'
+const HELLO = 'hilmy.io@hotmail.com'
 
 function mailto(tier: 'Standard' | 'Premium' | 'Cercle Pro') {
   const subject = `Inscription palier ${tier} Hilmy`
