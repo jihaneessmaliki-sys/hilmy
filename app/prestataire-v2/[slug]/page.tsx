@@ -10,6 +10,7 @@ import { SocialChannelsButtons } from '@/components/v2/SocialChannelsButtons'
 import { TrackPageView } from '@/components/v2/TrackPageView'
 import { AvisSection, type AvisItem } from '@/components/v2/AvisSection'
 import { PalierBadge } from '@/components/v2/PalierBadge'
+import { PastilleSelectionHilmy } from '@/components/v2/PastilleSelectionHilmy'
 import {
   categoriesPrestataires,
   type Prestataire as MockPrestataire,
@@ -197,8 +198,9 @@ export default async function PrestatairePage({
                 « {p.tagline} »
               </p>
               {p.palier && (
-                <div className="mt-6">
+                <div className="mt-6 flex flex-wrap items-center gap-3">
                   <PalierBadge palier={p.palier} size="medium" />
+                  {p.palier === 'cercle_pro' && <PastilleSelectionHilmy />}
                 </div>
               )}
               <div className="mt-8 flex flex-wrap items-center gap-6">
@@ -353,6 +355,14 @@ export default async function PrestatairePage({
                       {p.tarifsDe} {devise(p.ville)}
                     </dd>
                   </div>
+                  {row.nb_vues > 0 && (
+                    <div className="flex items-center justify-between border-b border-or/10 pb-3">
+                      <dt className="text-texte-sec">Vues fiche</dt>
+                      <dd className="font-medium text-vert">
+                        {row.nb_vues.toLocaleString('fr-FR')}
+                      </dd>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <dt className="text-texte-sec">Note moyenne</dt>
                     <dd className="font-medium text-vert">
