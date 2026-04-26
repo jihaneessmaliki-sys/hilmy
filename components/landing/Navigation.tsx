@@ -61,6 +61,7 @@ export function Navigation({ variant = 'transparent' }: NavigationProps = {}) {
             { href: '/annuaire', label: "L'annuaire" },
             { href: '/recommandations', label: 'Recommandations' },
             { href: '/evenements-v2', label: 'Événements' },
+            { href: '/tarifs', label: 'Tarifs' },
             { href: '/manifeste', label: 'À propos' },
           ].map((link) => (
             <Link
