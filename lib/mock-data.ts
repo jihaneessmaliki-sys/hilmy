@@ -105,6 +105,7 @@ export type Prestataire = {
   email?: string;
   telephone?: string;
   instagram?: string;
+  palier?: 'standard' | 'premium' | 'cercle_pro';
 };
 
 export const prestataires: Prestataire[] = [

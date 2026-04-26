@@ -9,6 +9,7 @@ import { PhotoGallery } from '@/components/v2/PhotoGallery'
 import { SocialChannelsButtons } from '@/components/v2/SocialChannelsButtons'
 import { TrackPageView } from '@/components/v2/TrackPageView'
 import { AvisSection, type AvisItem } from '@/components/v2/AvisSection'
+import { PalierBadge } from '@/components/v2/PalierBadge'
 import {
   categoriesPrestataires,
   type Prestataire as MockPrestataire,
@@ -67,6 +68,7 @@ function adaptDbPrestataire(p: DbPrestataire): MockPrestataire {
     email: p.email ?? undefined,
     telephone: p.whatsapp ?? undefined,
     instagram: p.instagram ?? undefined,
+    palier: p.palier,
   }
 }
 
@@ -194,6 +196,11 @@ export default async function PrestatairePage({
               <p className="mt-6 max-w-xl font-serif text-[20px] italic leading-[1.4] text-texte md:text-[22px]">
                 « {p.tagline} »
               </p>
+              {p.palier && (
+                <div className="mt-6">
+                  <PalierBadge palier={p.palier} size="medium" />
+                </div>
+              )}
               <div className="mt-8 flex flex-wrap items-center gap-6">
                 <div className="flex items-center gap-1.5 text-[13px] font-medium text-vert">
                   <span className="text-or">★</span>

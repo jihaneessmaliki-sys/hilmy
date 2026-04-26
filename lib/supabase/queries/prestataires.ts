@@ -44,7 +44,8 @@ const PRESTATAIRE_SELECT = `
   source_import,
   note_moyenne,
   nb_avis,
-  nb_vues
+  nb_vues,
+  palier
 `;
 
 /**

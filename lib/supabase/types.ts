@@ -98,6 +98,9 @@ export interface Prestataire {
   note_moyenne: number;
   nb_avis: number;
   nb_vues: number;
+
+  // Palier d'abonnement (display-only V1 — sera renommé `tier` au Chantier 3)
+  palier?: "standard" | "premium" | "cercle_pro";
 }
 
 /* ─────────────────────────────────────────────────────────────

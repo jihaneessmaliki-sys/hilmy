@@ -49,6 +49,7 @@ function adaptPrestataireFromDb(p: DbPrestataire): MockPrestataire {
     services: Array.isArray(p.services) ? p.services : [],
     galerie,
     tarifsDe: p.prix_from ?? 0,
+    palier: p.palier,
   }
 }
 
@@ -72,7 +73,7 @@ export default function AnnuairePage() {
         const { data, error: err } = await supabase
           .from('profiles')
           .select(
-            'id, user_id, nom, slug, categorie, ville, description, tagline, photos, galerie, services, prix_from, prix_gamme, devise, status, note_moyenne, nb_avis, nb_vues, approved_at, source_import, created_at, updated_at, admin_notes, whatsapp, instagram, tiktok, email, site_web, linkedin'
+            'id, user_id, nom, slug, categorie, ville, description, tagline, photos, galerie, services, prix_from, prix_gamme, devise, status, note_moyenne, nb_avis, nb_vues, approved_at, source_import, created_at, updated_at, admin_notes, whatsapp, instagram, tiktok, email, site_web, linkedin, palier'
           )
           .eq('status', 'approved')
           .order('approved_at', { ascending: false, nullsFirst: false })

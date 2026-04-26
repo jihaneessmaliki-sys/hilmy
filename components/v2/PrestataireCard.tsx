@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { Prestataire } from '@/lib/mock-data'
 import { categoriesPrestataires } from '@/lib/mock-data'
+import { PalierBadge } from './PalierBadge'
 
 function categorieLabel(slug: string) {
   return (
@@ -56,6 +57,14 @@ export function PrestataireCard({ p, index = 0 }: Props) {
             <div className="absolute right-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-vert/85 px-3 py-1 text-[11px] text-creme backdrop-blur">
               <span className="text-or">★</span>
               {p.note.toFixed(1)}
+            </div>
+          )}
+          {/* Badge palier — visible seulement pour premium/cercle_pro
+              (le standard est le défaut, on ne badge pas pour ne pas
+              surcharger la liste). */}
+          {(p.palier === 'premium' || p.palier === 'cercle_pro') && (
+            <div className="absolute bottom-5 right-5">
+              <PalierBadge palier={p.palier} size="small" />
             </div>
           )}
         </div>
