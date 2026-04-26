@@ -62,6 +62,12 @@ export function Navigation({ variant = 'transparent' }: NavigationProps = {}) {
             { href: '/recommandations', label: 'Recommandations' },
             { href: '/evenements-v2', label: 'Événements' },
             { href: '/tarifs', label: 'Tarifs' },
+            // Lien dashboard visible uniquement pour les comptes prestataire.
+            // Approximation via signupType (set au signup) — si la fiche n'existe
+            // pas encore, /mon-espace redirige proprement vers /onboarding.
+            ...(user?.user_metadata?.signupType === 'provider'
+              ? [{ href: '/mon-espace', label: 'Mon espace' }]
+              : []),
             { href: '/manifeste', label: 'À propos' },
           ].map((link) => (
             <Link
