@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { getPlaceDetails } from "@/lib/google/places";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
+  const limited = enforceRateLimit(request, {
+    tag: "places-details",
+    max: 60,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   const { searchParams } = new URL(request.url);
   const placeId = searchParams.get("place_id");
 

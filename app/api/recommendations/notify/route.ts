@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendNouvelAvisRecu } from "@/lib/email/transactional";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 /**
  * Appelée par le client juste après avoir inséré une recommendation
@@ -10,6 +11,13 @@ import { sendNouvelAvisRecu } from "@/lib/email/transactional";
  * Body attendu : { recommendation_id: string }
  */
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, {
+    tag: "reco-notify",
+    max: 10,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   const supabase = await createClient();
   const {
     data: { user },

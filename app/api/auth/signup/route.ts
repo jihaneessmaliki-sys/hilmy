@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendFounderSignupNotification, sendSignupEmail } from "@/lib/email/transactional";
 import { getRequestOrigin } from "@/lib/auth/redirect-origin";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,13 @@ function isValidNextPath(value: string | undefined) {
 }
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, {
+    tag: "auth-signup",
+    max: 5,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   let payload: SignupPayload;
 
   try {

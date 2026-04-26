@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendSignupEmail } from "@/lib/email/transactional";
 import { getRequestOrigin } from "@/lib/auth/redirect-origin";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,13 @@ function getBaseUrl(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, {
+    tag: "auth-resend-confirmation",
+    max: 5,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   let payload: ResendConfirmationPayload;
 
   try {

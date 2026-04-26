@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { enforceRateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -9,6 +10,13 @@ type SubscribePayload = {
 }
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, {
+    tag: 'subscribe',
+    max: 5,
+    windowMs: 60 * 1000,
+  })
+  if (limited) return limited
+
   let payload: SubscribePayload
   try {
     payload = await request.json()

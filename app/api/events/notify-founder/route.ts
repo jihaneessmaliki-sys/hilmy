@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendNewEventToFounders } from "@/lib/email/transactional";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 function getSiteUrl() {
   return (
@@ -19,6 +20,13 @@ function getSiteUrl() {
  * Body attendu : { event_id: string }
  */
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, {
+    tag: "events-notify-founder",
+    max: 10,
+    windowMs: 60 * 1000,
+  });
+  if (limited) return limited;
+
   const supabase = await createClient();
   const {
     data: { user },
