@@ -7,6 +7,7 @@ import { FadeInSection } from '@/components/ui/FadeInSection'
 import { PrestataireCard } from '@/components/v2/PrestataireCard'
 import { PhotoGallery } from '@/components/v2/PhotoGallery'
 import { SocialChannelsButtons } from '@/components/v2/SocialChannelsButtons'
+import { TrackPageView } from '@/components/v2/TrackPageView'
 import { AvisSection, type AvisItem } from '@/components/v2/AvisSection'
 import {
   categoriesPrestataires,
@@ -148,6 +149,7 @@ export default async function PrestatairePage({
 
   return (
     <PageShell>
+      <TrackPageView profileId={row.id} />
       {/* Hero */}
       <section
         className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-24"
@@ -228,6 +230,7 @@ export default async function PrestatairePage({
                     site_web: row.site_web,
                   }}
                   variant="stack"
+                  profileId={row.id}
                 />
               </div>
               <div className="mt-6">

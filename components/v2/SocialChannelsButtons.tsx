@@ -1,4 +1,5 @@
 import { SOCIAL_CHANNELS, type SocialKey } from '@/lib/social-channels'
+import { SocialChannelLink } from './SocialChannelLink'
 
 type ChannelValues = Partial<Record<SocialKey, string | null | undefined>>
 
@@ -9,17 +10,22 @@ interface Props {
   variant?: 'stack' | 'inline'
   /** Affiche le label du canal en plus du CTA. */
   showHandle?: boolean
+  /** ID du profile ciblé. Si fourni, chaque clic POST /api/track/contact. */
+  profileId?: string | null
 }
 
 /**
  * Liste de boutons cliquables pour tous les canaux renseignés
  * (whatsapp, phone_public, email, instagram, tiktok, linkedin, facebook,
  * youtube, site_web). Les vides sont automatiquement omis.
+ *
+ * Si profileId est fourni, chaque clic est tracké via /api/track/contact.
  */
 export function SocialChannelsButtons({
   values,
   variant = 'stack',
   showHandle = false,
+  profileId = null,
 }: Props) {
   const filled = SOCIAL_CHANNELS.map((c) => {
     const raw = values[c.key]
@@ -49,11 +55,12 @@ export function SocialChannelsButtons({
           url.startsWith('http') &&
           !(channel.key === 'email' || channel.key === 'phone_public')
         return (
-          <a
+          <SocialChannelLink
             key={channel.key}
             href={url}
-            target={isExternal ? '_blank' : undefined}
-            rel={isExternal ? 'noopener noreferrer' : undefined}
+            channelKey={channel.key}
+            profileId={profileId}
+            isExternal={isExternal}
             className={
               variant === 'inline'
                 ? 'group inline-flex items-center gap-2 rounded-full border border-or/30 bg-blanc px-4 py-2 text-[12px] font-medium text-vert transition-colors hover:border-or hover:bg-creme-soft'
@@ -75,7 +82,7 @@ export function SocialChannelsButtons({
             >
               →
             </span>
-          </a>
+          </SocialChannelLink>
         )
       })}
     </div>
