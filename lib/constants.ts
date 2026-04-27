@@ -19,8 +19,9 @@ export const isLive = () => LAUNCH_MODE === "live";
 export const isMock = () => LAUNCH_MODE === "mock";
 
 
-// ─── Provider categories (prestataires) · 10 catégories V2 ─
-// Alignées sur CHECK constraint profiles_categorie_check (01_alter_profiles.sql)
+// ─── Provider categories (prestataires) · 11 catégories V2 ─
+// Alignées sur CHECK constraint profiles_categorie_check (01_alter_profiles.sql
+// + 21_categorie_conseilleres.sql).
 export const CATEGORIES_MAP: Record<string, string> = {
   "beaute": "Beauté",
   "bien-etre": "Bien-être",
@@ -32,6 +33,7 @@ export const CATEGORIES_MAP: Record<string, string> = {
   "evenementiel": "Événementiel",
   "mode-style": "Mode & Style",
   "business-juridique": "Business & Juridique",
+  "conseilleres-de-marque": "Conseillères de marque",
 };
 
 export const CATEGORIES_DESCRIPTIONS: Record<string, string> = {
@@ -45,6 +47,7 @@ export const CATEGORIES_DESCRIPTIONS: Record<string, string> = {
   "evenementiel": "Pour les fêtes qu'on n'oublie jamais.",
   "mode-style": "Pour les retouches parfaites et les looks qui te ressemblent.",
   "business-juridique": "Parler argent, stratégie, papiers. Plus simple entre femmes.",
+  "conseilleres-de-marque": "Vendre ce qu'on aime, à son rythme — VDI, ambassadrices, vendeuses à domicile.",
 };
 
 export const CATEGORIES = Object.keys(CATEGORIES_MAP);

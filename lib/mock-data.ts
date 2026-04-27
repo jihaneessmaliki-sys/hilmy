@@ -51,7 +51,8 @@ export const villesSuggestions: string[] = [
 ];
 
 // ─── Catégories alignées sur le schéma DB (profiles.categorie) ─────
-// 10 catégories prestataires — CHECK constraint en base.
+// 11 catégories prestataires — CHECK constraint en base
+// (01_alter_profiles.sql + 21_categorie_conseilleres.sql).
 export const categoriesPrestataires = [
   { slug: "beaute", label: "Beauté", emoji: "❋" },
   { slug: "bien-etre", label: "Bien-être", emoji: "✿" },
@@ -63,6 +64,7 @@ export const categoriesPrestataires = [
   { slug: "evenementiel", label: "Événementiel", emoji: "✦" },
   { slug: "mode-style", label: "Mode & Style", emoji: "❖" },
   { slug: "business-juridique", label: "Business & Juridique", emoji: "◆" },
+  { slug: "conseilleres-de-marque", label: "Conseillères de marque", emoji: "✺" },
 ] as const;
 
 // 9 catégories lieux — CHECK constraint sur places.hilmy_category.

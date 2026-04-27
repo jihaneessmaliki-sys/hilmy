@@ -1,8 +1,11 @@
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 
-// Aligné sur les 10 catégories DB (profiles.categorie CHECK constraint)
-// + lib/mock-data.ts categoriesPrestataires + lib/constants.ts CATEGORIES_MAP
+// Aligné sur les 11 catégories DB (profiles.categorie CHECK constraint
+// après migration 21_categorie_conseilleres.sql) + lib/mock-data.ts
+// categoriesPrestataires + lib/constants.ts CATEGORIES_MAP.
+// Le composant garde son nom historique "NineUniverses" pour ne pas
+// casser les imports — rename optionnel à voir plus tard.
 const universes = [
   { num: '01', slug: 'beaute', name: 'Beauté', sub: 'Coiffure, ongles, maquillage' },
   { num: '02', slug: 'bien-etre', name: 'Bien-être', sub: 'Spa, yoga, massages' },
@@ -14,6 +17,7 @@ const universes = [
   { num: '08', slug: 'evenementiel', name: 'Événementiel', sub: 'Wedding planning, traiteurs' },
   { num: '09', slug: 'mode-style', name: 'Mode & Style', sub: 'Stylistes, couturières, relooking' },
   { num: '10', slug: 'business-juridique', name: 'Business & Juridique', sub: 'Coachs biz, avocates, fiscalistes' },
+  { num: '11', slug: 'conseilleres-de-marque', name: 'Conseillères de marque', sub: 'VDI, ambassadrices de marque, vendeuses à domicile' },
 ]
 
 export function NineUniverses() {
@@ -24,12 +28,12 @@ export function NineUniverses() {
           <div className="mb-16 grid gap-10 md:grid-cols-2 md:gap-20">
             <SectionHeader
               number="03"
-              kicker="DIX UNIVERS"
+              kicker="ONZE UNIVERS"
               title={
                 <>
-                  Dix territoires,
+                  Onze territoires,
                   <br />
-                  une seule communauté.
+                  une seule team.
                 </>
               }
             />

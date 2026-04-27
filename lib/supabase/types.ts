@@ -27,7 +27,8 @@ export type PrestataireCategorie =
   | "cuisine"
   | "evenementiel"
   | "mode-style"
-  | "business-juridique";
+  | "business-juridique"
+  | "conseilleres-de-marque";
 
 export type PrestataireSourceImport =
   | "google_places"
