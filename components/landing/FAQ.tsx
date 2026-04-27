@@ -5,14 +5,25 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 
-const faqs = [
+// Réponse `a` accepte string | string[] : single paragraph (default
+// existant) ou multi-paragraphes pour les Q/R qui en ont besoin
+// (rebranchage minimal, autres entries restent des strings).
+type FaqEntry = { q: string; a: string | string[] }
+
+const faqs: FaqEntry[] = [
   {
     q: 'Pourquoi réservé aux femmes ?',
     a: "Parce qu'on voulait un espace où la confiance entre femmes soit la première brique. Les hommes restent bienvenus dans leurs familles, leurs business, leurs amitiés. Ici, on fait autre chose.",
   },
   {
+    // Réponse alignée avec /tarifs (commits 923fd8c + ba98306 + 929cf56).
+    // Ancienne réponse "Entièrement gratuit... aucun abonnement..." retirée
+    // car elle contredisait frontalement les paliers payants prestataires.
     q: "C'est gratuit ?",
-    a: "Entièrement gratuit pour les utilisatrices comme pour les prestataires. Aucun abonnement, aucune commission sur les prestations. Notre modèle économique viendra plus tard, jamais sur ton dos.",
+    a: [
+      "Pour les copines qui rejoignent la team et explorent l'annuaire ou les recommandations : oui, entièrement gratuit, et ça le restera.",
+      "Pour les prestataires qui veulent une fiche dans l'annuaire, on propose trois formules à partir de 19€/mois. Pas d'engagement, tu pars quand tu veux. Tu peux voir tous les détails sur la page /tarifs.",
+    ],
   },
   {
     q: 'Comment valider un profil prestataire ?',
@@ -91,7 +102,16 @@ export function FAQ() {
                         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                         className="overflow-hidden"
                       >
-                        <p className="pb-6 text-sm leading-[1.7] text-texte-sec md:pr-12">{faq.a}</p>
+                        <div className="pb-6 md:pr-12">
+                          {(Array.isArray(faq.a) ? faq.a : [faq.a]).map((para, idx) => (
+                            <p
+                              key={idx}
+                              className={`text-sm leading-[1.7] text-texte-sec ${idx > 0 ? 'mt-3' : ''}`}
+                            >
+                              {para}
+                            </p>
+                          ))}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
