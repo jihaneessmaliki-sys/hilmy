@@ -1,473 +1,414 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { PageShell } from '@/components/v2/PageShell'
-import { GoldLine } from '@/components/ui/GoldLine'
-import { FadeInSection } from '@/components/ui/FadeInSection'
+import { WizardSection } from './_components/WizardSection'
+import { LieuPricing } from './_components/LieuPricing'
 
 export const metadata: Metadata = {
-  title: 'Tarifs prestataires — Hilmy',
+  title: 'Tarifs · Hilmy — La team des bonnes adresses',
   description:
-    'Trois paliers pensés pour toi : Standard 19 €, Premium 49 €, Cercle Pro 99 €. Aucun engagement, mois par mois.',
+    "L'annuaire prestataires femmes francophones en Suisse, France, Belgique. Trois formules pour visibilité et bonnes adresses entre copines.",
 }
 
-const HELLO = 'hilmy.io@hotmail.com'
-
-function mailto(tier: 'Standard' | 'Premium' | 'Cercle Pro') {
-  const subject = `Inscription palier ${tier} Hilmy`
-  return `mailto:${HELLO}?subject=${encodeURIComponent(subject)}`
-}
-
-type Feature = { label: string; emphasis?: boolean }
-
-const STANDARD_FEATURES: Feature[] = [
-  { label: 'Fiche complète sur l’annuaire' },
-  { label: '9 canaux sociaux cliquables' },
-  { label: 'Catégorie + ville + filtres' },
-  { label: 'Recevoir et répondre aux avis Pass Copine' },
-  { label: 'Compteur de vues mensuelles (total)' },
-  { label: 'Newsletter prestataires' },
-  { label: 'Badge « Prestataire Hilmy »' },
-  { label: 'Jusqu’à 5 photos sur la fiche', emphasis: true },
+// 6 catégories Sélection Hilmy — décision Jiji batch 3.2 Q6 :
+// distinct des 9 PLACE_CATEGORIES, n'inclut PAS Boutiques / Spas /
+// Santé qui concurrenceraient l'annuaire prestataires femmes (notre ADN).
+// Une SELECTION_HILMY_CATEGORIES distincte sera créée dans un batch
+// futur (form de soumission lieux contraint à ces 6).
+const SELECTION_HILMY_CATEGORIES = [
+  'Restos & cafés',
+  'Salons de thé',
+  'Hébergements',
+  'Lieux culturels',
+  'Sport & nature',
+  'Sorties enfants',
 ]
 
-const PREMIUM_FEATURES: Feature[] = [
-  { label: 'Tout le palier Standard', emphasis: true },
-  { label: 'Dashboard détaillé (vues / clics / contacts par jour, semaine, mois)' },
-  { label: 'Tap-to-contact tracé (WhatsApp, tél, site)' },
-  { label: 'Jusqu’à 20 photos + galerie organisée par catégorie' },
-  { label: '1 vidéo de présentation (60 sec, vertical façon story)' },
-  { label: 'Programme d’avantage Pass Copine (–10 % membres)' },
-  { label: 'Stats hebdo par email automatique' },
-  { label: 'Story IG Hilmy par trimestre' },
-  { label: 'Boost saisonnier inclus 2× par an' },
+const POURQUOI_ITEMS = [
+  {
+    num: '01',
+    title: 'Entre nous',
+    body:
+      "Les copines se recommandent entre elles. C'est plus fort qu'un avis Google : c'est de la confiance qui circule.",
+  },
+  {
+    num: '02',
+    title: 'Du trafic qui se transforme',
+    body:
+      'Les copines cherchent activement les bonnes adresses pour elles, leurs sœurs, leurs amies.',
+  },
+  {
+    num: '03',
+    title: "Tu n'es pas seule là-dedans",
+    body:
+      "Onboarding accompagné, support direct. Tu écris, on te répond. La team, c'est aussi ça.",
+  },
 ]
 
-const CERCLE_PRO_FEATURES: Feature[] = [
-  { label: 'Tout le palier Premium', emphasis: true },
-  { label: 'Vidéos illimitées sur la fiche (présentation, témoignages, before/after, démos, ambiance)' },
-  { label: 'Photos illimitées' },
-  { label: 'Carrousel vidéo en haut de fiche (3 premières en autoplay muet, façon TikTok)' },
-  { label: 'Vidéos verticales et horizontales acceptées' },
-  { label: 'Demande de devis express (formulaire intégré → email + SMS)' },
-  { label: 'Mise en avant prioritaire (haut des résultats catégorie)' },
-  { label: 'Pastille « Sélection Hilmy »' },
-  { label: 'Apparition mensuelle dans la newsletter « Coups de cœur »' },
-  { label: 'Portrait Sara par an (IG long + story)' },
-  { label: 'Stats avancées (carte villes, pics horaires, benchmark catégorie)' },
-  { label: 'Boost saisonnier illimité' },
-  { label: 'Accès anticipé aux nouvelles features' },
-  { label: 'Module « Mes recommandations » entre prestataires' },
+const DIALOGUE_QA = [
+  {
+    q: 'Et si ça marche pas pour moi ?',
+    a: (
+      <>
+        Tu résilies en deux clics depuis ton dashboard.{' '}
+        <em className="not-italic font-medium text-vert">
+          Pas de mauvaise surprise, pas de petit caractère.
+        </em>{' '}
+        Ta fiche reste visible jusqu'à la fin de ta période payée, tes données sont
+        conservées si tu veux revenir un jour.
+      </>
+    ),
+  },
+  {
+    q: "Pourquoi l'annuaire est réservé aux femmes ?",
+    a: (
+      <>
+        Parce que c'est{' '}
+        <em className="not-italic font-medium text-vert">notre ADN</em>. Hilmy donne
+        une vitrine aux femmes prestataires francophones, et on tient à cette promesse.
+        Pour les lieux, on accueille tout le monde dans 6 catégories choisies — pour
+        ne pas concurrencer nos prestataires.
+      </>
+    ),
+  },
+  {
+    q: "Je n'ai pas de site, c'est gênant ?",
+    a: (
+      <>
+        Pas du tout.{' '}
+        <em className="not-italic font-medium text-vert">
+          Beaucoup de prestataires n'ont que leur fiche Hilmy + leur Instagram, ça
+          suffit largement.
+        </em>{' '}
+        Hilmy peut même être ton seul canal de visibilité.
+      </>
+    ),
+  },
+  {
+    q: 'Combien de temps avant que ma fiche soit en ligne ?',
+    a: (
+      <>
+        Tu paies, tu reçois un email de bienvenue dans la minute avec le lien pour
+        créer ta fiche.{' '}
+        <em className="not-italic font-medium text-vert">
+          On valide ton profil sous 24h, et tu es dans la team.
+        </em>
+      </>
+    ),
+  },
 ]
 
-const FAQ_ITEMS = [
-  {
-    q: 'Puis-je changer de palier ?',
-    a: 'Oui, à tout moment. Tu nous écris, on bascule ta fiche le mois suivant — sans frais ni paperasse.',
-  },
-  {
-    q: 'Engagement minimum ?',
-    a: 'Aucun. C’est mois par mois. Tu testes, tu restes, tu pars : c’est toi qui décides.',
-  },
-  {
-    q: 'Quand ma fiche est-elle visible ?',
-    a: 'Dès validation par notre équipe, sous 48h ouvrées. On regarde chaque candidature à la main avant publication.',
-  },
-  {
-    q: 'Est-ce que je peux essayer gratuitement ?',
-    a: 'On t’invite à candidater librement. Si ta fiche est validée, tu démarres le mois où tu veux. Aucun paiement avant publication.',
-  },
-  {
-    q: 'Quelle différence avec un annuaire classique ?',
-    a: 'Hilmy, c’est une team de copines qui se recommandent. Ta fiche est animée par une vraie communauté de femmes — pas juste listée dans une base de données.',
-  },
-  {
-    q: 'Comment se passe le paiement ?',
-    a: 'Virement bancaire ou lien Stripe sur demande. La facture est émise par Hilmy après validation, et le paiement déclenche la mise en ligne.',
-  },
-]
+// TODO accessibilité — couleur or (#C9A961) sur fond crème (#F5F0E6) :
+// ratio de contraste ~2.0:1, sous le seuil WCAG AA (4.5:1). Décision
+// Jiji batch 3.2 Q3 : porter à l'identique, le or-sur-crème est la
+// signature visuelle systémique du site. Fix global tokens couleur
+// dans un batch design dédié, pas un patch silencieux ici.
 
 export default function TarifsPage() {
   return (
     <PageShell navVariant="solid">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-creme pt-32 pb-16 md:pt-40 md:pb-24">
-        <div className="mx-auto max-w-container px-6 md:px-20">
-          <FadeInSection>
-            <div className="flex items-center gap-4">
-              <GoldLine width={48} />
-              <span className="overline text-or">Tarifs prestataires</span>
-            </div>
-            <h1 className="mt-6 max-w-3xl font-serif text-[clamp(2.25rem,5vw,4rem)] font-light leading-[1.05] text-vert">
-              Rejoins l&apos;annuaire des{' '}
-              <em className="font-serif italic text-or">bonnes adresses.</em>
+      <div className="scroll-smooth">
+        {/* HERO */}
+        <section className="overflow-hidden px-6 py-28 text-center md:px-20 md:py-32">
+          <div className="mx-auto max-w-[780px]">
+            <span className="mb-7 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
+              Tarifs Hilmy
+            </span>
+            <h1 className="mb-7 font-serif text-[clamp(44px,6.5vw,80px)] font-light leading-[1.05] tracking-tight">
+              Ce que tu fais avec amour mérite{' '}
+              <em className="font-normal italic text-or">d'être vu</em>.
             </h1>
-            <p className="mt-6 max-w-2xl text-[16px] leading-[1.7] text-texte md:text-[18px]">
-              Trois paliers pensés pour toi. Choisis celui qui te ressemble.
-              Reste maîtresse de ton image et de ta visibilité dans la team.
+            <p className="mx-auto mb-11 max-w-[540px] text-[19px] leading-relaxed text-texte-sec">
+              Visibilité, entraide, bonnes adresses entre copines. Trouve ta place dans la team Hilmy.
             </p>
-            <p className="mt-3 max-w-2xl text-[13px] italic text-texte-sec">
-              Mois par mois — aucun engagement. Tu changes ou tu pars quand tu veux.
+            <div className="flex flex-wrap justify-center gap-3.5">
+              <a
+                href="#audience"
+                className="inline-block rounded-full bg-vert px-8 py-4 text-[15px] font-medium text-creme transition-all hover:-translate-y-0.5 hover:bg-vert/90 hover:shadow-[0_8px_24px_rgba(15,61,46,0.18)]"
+              >
+                Trouver ma formule
+              </a>
+              <a
+                href="#lieux"
+                className="inline-block rounded-full border border-vert bg-transparent px-8 py-4 text-[15px] font-medium text-vert transition-all hover:bg-vert hover:text-creme"
+              >
+                Je tiens un lieu
+              </a>
+            </div>
+            <div className="mt-16 flex justify-center opacity-60">
+              <span aria-hidden className="block h-px w-20 bg-or" />
+            </div>
+          </div>
+        </section>
+
+        {/* AUDIENCE SELECTOR */}
+        <section
+          id="audience"
+          className="bg-[#f0e3d0] px-6 py-20 scroll-mt-24 md:px-20"
+        >
+          <div className="mx-auto max-w-[1200px]">
+            <div className="mx-auto mb-14 max-w-[680px] text-center">
+              <span className="mb-4 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
+                D'abord, dis-nous
+              </span>
+              <h2 className="font-serif text-[clamp(32px,4.5vw,48px)] font-light leading-tight tracking-tight">
+                Tu es <em className="italic text-or">qui</em> dans l'histoire ?
+              </h2>
+            </div>
+
+            <div className="mx-auto grid max-w-[900px] grid-cols-1 gap-6 md:grid-cols-2">
+              <a
+                href="#wizard"
+                className="group relative overflow-hidden rounded-3xl border border-vert/8 bg-white p-10 text-left transition-all duration-300 hover:-translate-y-1 hover:border-or hover:shadow-[0_16px_40px_rgba(15,61,46,0.08)]"
+                aria-label="Je suis prestataire — trouver ma formule"
+              >
+                <span className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-creme-deep font-serif text-[22px] text-vert">
+                  P
+                </span>
+                <h3 className="mb-2 font-serif text-2xl font-normal text-vert">
+                  Je suis prestataire
+                </h3>
+                <p className="mb-6 text-sm leading-relaxed text-texte-sec">
+                  Coiffeuse, ostéo, coach, traiteur, avocate, conseillère de marque… Tu
+                  as ta pratique, tu veux que les copines te trouvent.
+                </p>
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-vert">
+                  Trouver ma formule
+                  <span aria-hidden className="transition-transform group-hover:translate-x-1">→</span>
+                </span>
+              </a>
+
+              <a
+                href="#lieux"
+                className="group relative overflow-hidden rounded-3xl border border-vert/8 bg-white p-10 text-left transition-all duration-300 hover:-translate-y-1 hover:border-or hover:shadow-[0_16px_40px_rgba(15,61,46,0.08)]"
+                aria-label="Je tiens un lieu — découvrir Sélection Hilmy"
+              >
+                <span className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-vert font-serif text-[22px] text-or">
+                  L
+                </span>
+                <h3 className="mb-2 font-serif text-2xl font-normal text-vert">
+                  Je tiens un lieu
+                </h3>
+                <p className="mb-6 text-sm leading-relaxed text-texte-sec">
+                  Café, resto, hôtel, librairie, espace culturel, sortie enfants, lieu
+                  nature. Tu veux apparaître dans les recos de la team.
+                </p>
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-vert">
+                  Découvrir Sélection Hilmy
+                  <span aria-hidden className="transition-transform group-hover:translate-x-1">→</span>
+                </span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* WIZARD GUIDÉ */}
+        <section id="wizard" className="bg-creme py-24 scroll-mt-24 md:py-28">
+          <div className="mx-auto mb-14 max-w-[680px] px-6 text-center md:px-20">
+            <span className="mb-4 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
+              Pour les prestataires
+            </span>
+            <h2 className="mb-4 font-serif text-[clamp(32px,4.5vw,48px)] font-light leading-tight tracking-tight">
+              On te trouve <em className="italic text-or">la bonne formule</em> en 30 secondes.
+            </h2>
+            <p className="text-[17px] leading-relaxed text-texte-sec">
+              Trois questions, une recommandation. Pas de calcul, pas de comparaison.
             </p>
-          </FadeInSection>
-        </div>
-      </section>
-
-      {/* 3 cards */}
-      <section className="bg-creme pb-20 md:pb-28">
-        <div className="mx-auto max-w-container px-6 md:px-20">
-          <div className="grid gap-6 md:grid-cols-3 md:items-stretch md:gap-5 lg:gap-7">
-            {/* STANDARD */}
-            <FadeInSection delay={0.05}>
-              <TierCard
-                emoji="🌿"
-                tier="Standard"
-                price="19"
-                tagline="Pour démarrer proprement et exister dans le carnet."
-                features={STANDARD_FEATURES}
-                cta="Discuter de mon inscription"
-                href={mailto('Standard')}
-                variant="standard"
-              />
-            </FadeInSection>
-
-            {/* PREMIUM — middle, highlighted */}
-            <FadeInSection delay={0.1}>
-              <TierCard
-                emoji="💛"
-                tier="Premium"
-                price="49"
-                tagline="Pour celles qui veulent piloter leur visibilité finement."
-                features={PREMIUM_FEATURES}
-                cta="Discuter de mon inscription"
-                href={mailto('Premium')}
-                variant="premium"
-                badge="Le plus choisi"
-              />
-            </FadeInSection>
-
-            {/* CERCLE PRO — dark, golden accents */}
-            <FadeInSection delay={0.15}>
-              <TierCard
-                emoji="⭐"
-                tier="Cercle Pro"
-                price="99"
-                tagline="Pour les prestataires qui veulent rayonner et faire team."
-                features={CERCLE_PRO_FEATURES}
-                cta="Discuter de mon inscription"
-                href={mailto('Cercle Pro')}
-                variant="cercle"
-              />
-            </FadeInSection>
           </div>
 
-          <p className="mt-10 text-center text-[12px] italic text-texte-sec">
-            Tarifs en euros, TTC. Hilmy n&apos;encaisse aucune commission sur tes prestations.
-          </p>
-        </div>
-      </section>
+          <WizardSection />
+        </section>
 
-      {/* Comment ça marche */}
-      <section className="bg-blanc py-20 md:py-28">
-        <div className="mx-auto max-w-container px-6 md:px-20">
-          <FadeInSection>
-            <div className="flex items-center gap-5">
-              <span className="font-serif text-[44px] font-light leading-none text-or">
-                02
+        {/* CTA STRIP 1 */}
+        <section className="bg-creme-deep px-6 py-16 text-center md:px-20">
+          <div className="mx-auto max-w-[1200px]">
+            <h3 className="mb-7 font-serif text-[clamp(26px,3.5vw,36px)] font-light leading-tight text-vert">
+              Tu tiens un lieu plutôt qu'une pratique ?{' '}
+              <em className="italic text-or">On t'attend aussi.</em>
+            </h3>
+            <a
+              href="#lieux"
+              className="inline-block rounded-full bg-vert px-8 py-4 text-[15px] font-medium text-creme transition-all hover:-translate-y-0.5 hover:bg-vert/90 hover:shadow-[0_8px_24px_rgba(15,61,46,0.18)]"
+            >
+              Découvrir Sélection Hilmy
+            </a>
+          </div>
+        </section>
+
+        {/* SECTION LIEUX */}
+        <section
+          id="lieux"
+          className="px-6 py-24 scroll-mt-24 md:px-20 md:py-28"
+          style={{
+            background:
+              'linear-gradient(180deg, #f0e3d0 0%, #ebe3d2 100%)',
+          }}
+        >
+          <div className="mx-auto max-w-[1200px]">
+            <div className="mx-auto mb-14 max-w-[680px] text-center">
+              <span className="mb-4 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
+                Pour les lieux
               </span>
-              <GoldLine width={60} />
-              <span className="overline text-or">Comment ça marche</span>
+              <h2 className="mb-4 font-serif text-[clamp(32px,4.5vw,48px)] font-light leading-tight tracking-tight">
+                Apparaître dans les <em className="italic text-or">recos</em> de la team.
+              </h2>
+              <p className="text-[17px] leading-relaxed text-texte-sec">
+                Café, resto, hôtel, librairie, espace culturel, sortie enfants, lieu
+                nature : Sélection Hilmy te met en avant auprès des francophones qui
+                cherchent les bonnes adresses.
+              </p>
             </div>
-            <h2 className="mt-6 max-w-2xl font-serif text-[clamp(1.875rem,3vw,2.75rem)] font-light leading-[1.15] text-vert">
-              Trois étapes,{' '}
-              <em className="font-serif italic text-or">faites à la main.</em>
-            </h2>
-          </FadeInSection>
 
-          <ol className="mt-12 grid gap-8 md:grid-cols-3 md:gap-10">
-            {[
-              {
-                n: '01',
-                t: 'Tu choisis ton palier.',
-                p: 'Tu cliques sur le CTA de la card qui te correspond et tu nous écris. Une vraie personne te lit.',
-              },
-              {
-                n: '02',
-                t: 'On valide ta fiche.',
-                p: 'Notre équipe regarde chaque candidature à la main et te répond sous 48h. Qualité avant tout.',
-              },
-              {
-                n: '03',
-                t: 'Tu reçois ton lien.',
-                p: 'Lien de paiement par virement ou Stripe sur demande. Ta fiche est mise en ligne dès réception.',
-              },
-            ].map((step) => (
-              <li key={step.n} className="flex gap-5">
-                <span className="shrink-0 font-serif text-[40px] font-light italic leading-none text-or">
-                  {step.n}
-                </span>
-                <div>
-                  <h3 className="font-serif text-[20px] italic text-vert md:text-[22px]">
-                    {step.t}
-                  </h3>
-                  <p className="mt-3 text-[14px] leading-[1.7] text-texte-sec md:text-[15px]">
-                    {step.p}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Quote / Manifesto bridge */}
-      <section className="bg-vert py-24 md:py-32">
-        <div className="mx-auto max-w-3xl px-6 text-center md:px-20">
-          <FadeInSection>
-            <div className="flex justify-center">
-              <GoldLine width={48} />
-            </div>
-            <p className="mt-8 font-serif text-[clamp(1.5rem,3vw,2.25rem)] font-light italic leading-[1.4] text-creme">
-              « Tu ne paies pas une visibilité. Tu rejoins une team
-              de copines qui se passent les bonnes adresses, pour de vrai. »
-            </p>
-            <p className="mt-8 text-[11px] tracking-[0.22em] text-or-light uppercase">
-              — L&apos;équipe Hilmy
-            </p>
-          </FadeInSection>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="bg-blanc py-20 md:py-28">
-        <div className="mx-auto max-w-container px-6 md:px-20">
-          <div className="grid gap-12 md:grid-cols-[400px_1fr] md:gap-20">
-            <FadeInSection>
-              <div className="md:sticky md:top-32">
-                <div className="flex items-center gap-5">
-                  <span className="font-serif text-[44px] font-light leading-none text-or">
-                    03
+            {/* Bon à savoir */}
+            <div className="mx-auto mb-12 max-w-[760px] rounded-[20px] border-l-[3px] border-or bg-white p-9 shadow-[0_8px_24px_rgba(15,61,46,0.04)]">
+              <strong className="font-serif text-[17px] font-normal text-vert">
+                Bon à savoir.
+              </strong>
+              <p className="mt-2 text-[15px] leading-relaxed text-texte-sec">
+                L'annuaire prestataires reste exclusivement féminin, c'est notre ADN.
+                Pour les recommandations de lieux, on accueille tous les établissements
+                peu importe la direction, dans 6 catégories soigneusement choisies :
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {SELECTION_HILMY_CATEGORIES.map((cat) => (
+                  <span
+                    key={cat}
+                    className="rounded-full bg-creme px-3.5 py-1.5 text-xs font-medium text-vert"
+                  >
+                    {cat}
                   </span>
-                  <GoldLine width={60} />
-                  <span className="overline text-or">Tu te demandes</span>
-                </div>
-                <h2 className="mt-6 font-serif text-[clamp(1.875rem,3vw,2.75rem)] font-light leading-[1.15] text-vert">
-                  On répond,{' '}
-                  <em className="font-serif italic text-or">sans détour.</em>
-                </h2>
-                <p className="mt-6 text-[14px] leading-[1.65] text-texte-sec">
-                  Une autre question ?{' '}
-                  <a
-                    href={`mailto:${HELLO}`}
-                    className="text-vert underline-offset-4 transition-colors hover:text-or hover:underline"
-                  >
-                    {HELLO}
-                  </a>
-                </p>
-              </div>
-            </FadeInSection>
-
-            <FadeInSection delay={0.1}>
-              <div className="border-t border-or/30">
-                {FAQ_ITEMS.map((faq, i) => (
-                  <details
-                    key={i}
-                    className="group border-b border-or/30 py-5"
-                    {...(i === 0 ? { open: true } : {})}
-                  >
-                    <summary className="flex cursor-pointer items-center justify-between gap-6 py-1 text-left transition-colors hover:text-or [&::-webkit-details-marker]:hidden">
-                      <h3 className="text-[15px] font-medium text-vert md:text-[17px]">
-                        {faq.q}
-                      </h3>
-                      <span
-                        aria-hidden="true"
-                        className="shrink-0 font-serif text-[22px] font-light text-or transition-transform duration-300 group-open:rotate-45"
-                      >
-                        +
-                      </span>
-                    </summary>
-                    <p className="mt-3 pb-2 text-[14px] leading-[1.75] text-texte-sec md:pr-12 md:text-[15px]">
-                      {faq.a}
-                    </p>
-                  </details>
                 ))}
               </div>
-            </FadeInSection>
+            </div>
+
+            <LieuPricing />
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Final CTA */}
-      <section className="bg-creme-deep py-20 md:py-28">
-        <div className="mx-auto max-w-3xl px-6 text-center md:px-20">
-          <FadeInSection>
-            <div className="flex justify-center">
-              <GoldLine width={40} />
+        {/* POURQUOI HILMY */}
+        <section className="bg-white px-6 py-24 md:px-20 md:py-28">
+          <div className="mx-auto max-w-[1200px]">
+            <div className="mx-auto mb-14 max-w-[680px] text-center">
+              <span className="mb-4 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
+                Pourquoi Hilmy
+              </span>
+              <h2 className="font-serif text-[clamp(32px,4.5vw,48px)] font-light leading-tight tracking-tight">
+                Pas du corporate. <em className="italic text-or">Une team.</em>
+              </h2>
             </div>
-            <h2 className="mt-6 font-serif text-[clamp(1.875rem,3.5vw,3rem)] font-light leading-[1.1] text-vert">
-              Prête à rejoindre{' '}
-              <em className="font-serif italic text-or">le carnet ?</em>
-            </h2>
-            <p className="mt-6 text-[15px] leading-[1.7] text-texte md:text-[16px]">
-              Écris-nous en deux lignes. On te répond sous 48h, à la main,
-              sans formulaire interminable.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+
+            <div className="mx-auto mt-14 grid max-w-[1000px] grid-cols-1 gap-12 md:grid-cols-3">
+              {POURQUOI_ITEMS.map((item) => (
+                <div key={item.num} className="pt-2">
+                  <p
+                    aria-hidden
+                    className="mb-4 font-serif text-5xl font-light leading-none text-or"
+                  >
+                    {item.num}
+                  </p>
+                  <h3 className="mb-3 font-serif text-[22px] font-normal leading-tight text-vert">
+                    {item.title}
+                  </h3>
+                  <p className="text-[15px] leading-relaxed text-texte-sec">{item.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-16 flex flex-wrap justify-center gap-3.5">
               <a
-                href={`mailto:${HELLO}?subject=${encodeURIComponent('Candidature prestataire Hilmy')}`}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-vert px-8 text-[12px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark"
+                href="#wizard"
+                className="inline-block rounded-full bg-vert px-8 py-4 text-[15px] font-medium text-creme transition-all hover:-translate-y-0.5 hover:bg-vert/90 hover:shadow-[0_8px_24px_rgba(15,61,46,0.18)]"
               >
-                Écrire à Hilmy
-                <span className="text-or-light" aria-hidden="true">→</span>
+                Trouver ma formule
               </a>
-              <Link
-                href="/annuaire"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-or px-7 text-[12px] font-medium tracking-[0.22em] text-or-deep uppercase transition-all hover:bg-or/10"
+              <a
+                href="#lieux"
+                className="inline-block rounded-full border border-vert bg-transparent px-8 py-4 text-[15px] font-medium text-vert transition-all hover:bg-vert hover:text-creme"
               >
-                Voir l&apos;annuaire
-                <span aria-hidden="true">→</span>
-              </Link>
+                Je tiens un lieu
+              </a>
             </div>
-            <p className="mt-8 text-[12px] italic text-texte-sec">
-              <Link href="/" className="hover:text-or transition-colors">
-                ← Retour à la home
-              </Link>
+          </div>
+        </section>
+
+        {/* DIALOGUE / FAQ */}
+        <section className="bg-[#f0e3d0] px-6 py-24 md:px-20 md:py-28">
+          <div className="mx-auto max-w-[1200px]">
+            <div className="mx-auto mb-14 max-w-[680px] text-center">
+              <span className="mb-4 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
+                Tu te demandes quoi
+              </span>
+              <h2 className="font-serif text-[clamp(32px,4.5vw,48px)] font-light leading-tight tracking-tight">
+                On te répond <em className="italic text-or">franchement</em>.
+              </h2>
+            </div>
+
+            <div className="mx-auto grid max-w-[760px] gap-6">
+              {DIALOGUE_QA.map(({ q, a }, i) => (
+                <div key={i} className="rounded-[20px] bg-white p-8">
+                  <p className="mb-3.5 flex items-start gap-3.5 font-serif text-[19px] font-normal leading-snug text-vert">
+                    <span
+                      aria-hidden
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-or font-sans text-sm font-semibold text-vert"
+                    >
+                      ?
+                    </span>
+                    {q}
+                  </p>
+                  <p className="pl-[46px] text-[15px] leading-relaxed text-texte-sec">{a}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-14 flex flex-wrap justify-center gap-3.5">
+              <a
+                href="#wizard"
+                className="inline-block rounded-full bg-vert px-8 py-4 text-[15px] font-medium text-creme transition-all hover:-translate-y-0.5 hover:bg-vert/90 hover:shadow-[0_8px_24px_rgba(15,61,46,0.18)]"
+              >
+                Choisir ma formule
+              </a>
+              <a
+                href="mailto:hilmy.io@hotmail.com"
+                className="inline-block rounded-full border border-vert bg-transparent px-8 py-4 text-[15px] font-medium text-vert transition-all hover:bg-vert hover:text-creme"
+              >
+                Poser ma question
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA FINAL */}
+        <section className="relative overflow-hidden bg-vert px-6 py-28 text-center text-creme md:px-20 md:py-32">
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-or to-transparent"
+          />
+          <div className="mx-auto max-w-[1200px]">
+            <span className="mb-6 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or-light">
+              Pour finir
+            </span>
+            <h2 className="mb-5 font-serif text-[clamp(36px,5vw,52px)] font-light leading-tight tracking-tight text-creme">
+              Prête à <em className="italic text-or">rejoindre la team</em> ?
+            </h2>
+            <p className="mx-auto mb-12 max-w-[560px] text-[18px] leading-relaxed text-creme/75">
+              Choisis ta formule, paie en ligne, ta fiche est validée sous 24h. C'est aussi simple que ça.
             </p>
-          </FadeInSection>
-        </div>
-      </section>
-    </PageShell>
-  )
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   TierCard — composant local, pas réutilisé ailleurs.
-   3 variants : standard (clair, neutre), premium (mis en avant,
-   blanc relief + badge), cercle (dark vert, accents or).
-   ───────────────────────────────────────────────────────────── */
-
-interface TierCardProps {
-  emoji: string
-  tier: string
-  price: string
-  tagline: string
-  features: Feature[]
-  cta: string
-  href: string
-  variant: 'standard' | 'premium' | 'cercle'
-  badge?: string
-}
-
-function TierCard({
-  emoji,
-  tier,
-  price,
-  tagline,
-  features,
-  cta,
-  href,
-  variant,
-  badge,
-}: TierCardProps) {
-  // Charte par variant
-  const isCercle = variant === 'cercle'
-  const isPremium = variant === 'premium'
-
-  const containerBase =
-    'relative flex h-full flex-col rounded-sm border p-7 md:p-8 transition-all'
-  const containerVariant = isCercle
-    ? 'bg-vert border-or text-creme shadow-[0_30px_60px_-40px_rgba(15,61,46,0.5)]'
-    : isPremium
-      ? 'bg-blanc border-or shadow-[0_24px_50px_-30px_rgba(15,61,46,0.25)] md:scale-[1.03]'
-      : 'bg-blanc border-or/20'
-
-  const labelColor = isCercle ? 'text-or' : 'text-or'
-  const titleColor = isCercle ? 'text-creme' : 'text-vert'
-  const priceColor = isCercle ? 'text-creme' : 'text-vert'
-  const taglineColor = isCercle ? 'text-creme/80' : 'text-texte-sec'
-  const dividerColor = isCercle ? 'border-or/30' : 'border-or/20'
-  const featureColor = isCercle ? 'text-creme/95' : 'text-texte'
-  const checkColor = isCercle
-    ? 'border-or bg-or text-vert'
-    : isPremium
-      ? 'border-or bg-or/15 text-or-deep'
-      : 'border-vert/30 bg-creme-soft text-vert'
-
-  const ctaClass = isCercle
-    ? 'inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-or px-6 text-[12px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:bg-or-light'
-    : isPremium
-      ? 'inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-vert px-6 text-[12px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark'
-      : 'inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-vert px-6 text-[12px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:bg-vert hover:text-creme'
-
-  return (
-    <article className={`${containerBase} ${containerVariant}`}>
-      {/* Badge "Le plus choisi" pour Premium */}
-      {badge && (
-        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-or px-4 py-1.5 text-[10px] font-semibold tracking-[0.22em] text-vert uppercase shadow-md">
-          <span className="text-vert" aria-hidden="true">★</span>
-          {badge}
-        </span>
-      )}
-
-      {/* Couronne au-dessus de Cercle Pro */}
-      {isCercle && (
-        <span
-          aria-hidden="true"
-          className="absolute -top-4 left-1/2 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-or bg-vert text-[16px] text-or"
-        >
-          ★
-        </span>
-      )}
-
-      {/* Header palier */}
-      <header className="mt-1">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl" aria-hidden="true">{emoji}</span>
-          <span className={`overline ${labelColor}`}>{tier}</span>
-        </div>
-        <div className="mt-5 flex items-baseline gap-2">
-          <span className={`font-serif text-[56px] font-light leading-none ${priceColor}`}>
-            {price}
-          </span>
-          <span className={`font-serif text-[20px] font-light italic ${priceColor}`}>
-            €
-          </span>
-          <span className={`text-[13px] ${taglineColor}`}>/mois</span>
-        </div>
-        <p className={`mt-4 font-serif text-[15px] italic leading-[1.5] ${taglineColor}`}>
-          {tagline}
-        </p>
-      </header>
-
-      <hr className={`mt-7 mb-6 border-t ${dividerColor}`} />
-
-      {/* Features */}
-      <ul className="space-y-3.5">
-        {features.map((f, i) => (
-          <li key={i} className="flex items-start gap-3">
-            <span
-              className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${checkColor}`}
-              aria-hidden="true"
-            >
-              ✓
-            </span>
-            <span
-              className={`text-[13.5px] leading-[1.55] ${featureColor} ${
-                f.emphasis ? 'font-medium' : ''
-              }`}
-            >
-              {f.label}
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      {/* CTA pinned to bottom */}
-      <div className="mt-auto pt-8">
-        <a href={href} className={ctaClass}>
-          {cta}
-          <span aria-hidden="true">→</span>
-        </a>
+            <div className="flex flex-wrap justify-center gap-3.5">
+              <a
+                href="#wizard"
+                className="inline-block rounded-full bg-or px-8 py-4 text-[15px] font-semibold text-vert transition-all hover:-translate-y-0.5 hover:bg-or-light hover:shadow-[0_8px_24px_rgba(201,169,97,0.3)]"
+              >
+                Je choisis ma formule
+              </a>
+              <a
+                href="#lieux"
+                className="inline-block rounded-full border border-creme bg-transparent px-8 py-4 text-[15px] font-medium text-creme transition-all hover:bg-creme hover:text-vert"
+              >
+                Je veux ma fiche lieu
+              </a>
+            </div>
+          </div>
+        </section>
       </div>
-    </article>
+    </PageShell>
   )
 }
