@@ -38,7 +38,8 @@ export default function ConfidentialitePage() {
           <p>Nous collectons les données suivantes&nbsp;:</p>
           <ul className="mt-3 space-y-2 pl-5">
             <LegalListItem strong="Utilisatrices">
-              adresse email, prénom, ville.
+              adresse email, prénom, ville, tranche d&apos;âge (optionnelle, par
+              tranches non identifiantes).
             </LegalListItem>
             <LegalListItem strong="Prestataires">
               adresse email, nom ou raison sociale, catégorie d&apos;activité,
@@ -57,6 +58,18 @@ export default function ConfidentialitePage() {
               identifiant du contenu signalé, motif du signalement.
             </LegalListItem>
           </ul>
+          <p className="mt-6">
+            <strong className="font-medium text-vert">
+              Données démographiques.
+            </strong>{' '}
+            Pour mieux comprendre la team Hilmy et adapter ce que nous
+            construisons, nous collectons à l&apos;inscription un prénom et
+            une tranche d&apos;âge (18-24, 25-34, 35-44, 45-54, 55+). Ces
+            données sont pseudonymisées — nous ne stockons pas l&apos;âge
+            exact, juste la tranche. Tu peux refuser de les communiquer
+            sans perdre l&apos;accès à Hilmy. Tu peux les modifier ou les
+            supprimer à tout moment depuis ton profil.
+          </p>
         </LegalSection>
 
         <LegalSection numero="03" titre="Finalités du traitement">
