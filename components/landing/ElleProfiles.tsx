@@ -74,9 +74,9 @@ export async function ElleProfiles() {
             <div className="mb-8 md:mb-0">
               <GoldLine width={40} />
               <p className="mt-5 overline text-or">Prestataire&nbsp;?</p>
-              <p className="mt-3 font-serif text-2xl font-light leading-tight text-creme md:text-3xl">
+              <h2 className="mt-3 font-serif text-2xl font-light leading-tight text-creme md:text-3xl">
                 Trouve ta place dans la team.
-              </p>
+              </h2>
               <p className="mt-4 text-[13px] leading-[1.7] text-creme/70">
                 Trois paliers pour démarrer petit ou viser grand. Tu choisis
                 ce qui te ressemble, tu changes quand tu veux.
