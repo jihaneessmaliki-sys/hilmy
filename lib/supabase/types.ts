@@ -255,6 +255,10 @@ export interface EventInscription {
    user_profiles (méta user — table existante, intouchée Stage 4)
    ───────────────────────────────────────────────────────────── */
 
+/** Tranche d'âge collectée à l'onboarding (Batch B 04/2026) ou via
+ *  modale opt-in (Batch C 04/2026). Pseudonymisée — pas d'âge exact. */
+export type AgeRange = '18-24' | '25-34' | '35-44' | '45-54' | '55+';
+
 export interface UserProfile {
   id: string;
   user_id: string;
@@ -264,6 +268,9 @@ export interface UserProfile {
   signupType: string | null;
   bio: string | null;
   avatar_url: string | null;
+  /** Optionnel — nullable côté DB depuis migration 22. Les utilisatrices
+   *  existantes ont NULL tant qu'elles n'ont pas complété la modale opt-in. */
+  age_range: AgeRange | null;
   created_at: string;
 }
 
