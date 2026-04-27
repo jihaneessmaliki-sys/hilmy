@@ -1,14 +1,18 @@
 import Link from 'next/link'
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { GoldLine } from '@/components/ui/GoldLine'
+import { HilmyButton } from '@/components/ui/HilmyButton'
 import { getPionnieres } from '@/lib/supabase/queries/prestataires'
 import { categoryLabel } from '@/lib/constants'
 import type { Prestataire } from '@/lib/supabase/types'
 
+// Bandeau prestataire aligné avec /tarifs (commit 923fd8c batch 3.2 brief tarifs).
+// Anciens bullets "Aucun abonnement, aucune commission, jamais" retirés —
+// contredisaient frontalement les paliers payants Standard/Premium/Cercle Pro.
 const PROVIDER_VALUE_PROP = [
-  'Inscription gratuite, validation sous 48h',
-  'Aucun abonnement, aucune commission',
-  'Tu es trouvée par les femmes de ta ville',
+  'Validation sous 48h, par de vraies copines',
+  'Trois formules, dès 19€/mois',
+  "Pas d'engagement, tu pars quand tu veux",
   'Ton profil importé en 2 min (Google, Instagram, LinkedIn)',
 ]
 
@@ -71,12 +75,17 @@ export async function ElleProfiles() {
               <GoldLine width={40} />
               <p className="mt-5 overline text-or">Prestataire&nbsp;?</p>
               <p className="mt-3 font-serif text-2xl font-light leading-tight text-creme md:text-3xl">
-                Fais-toi trouver par celles qui te cherchent.
+                Trouve ta place dans la team.
               </p>
               <p className="mt-4 text-[13px] leading-[1.7] text-creme/70">
-                HILMY ouvre ses pages. Aucun abonnement, aucune commission,
-                jamais.
+                Trois paliers pour démarrer petit ou viser grand. Tu choisis
+                ce qui te ressemble, tu changes quand tu veux.
               </p>
+              <div className="mt-6">
+                <HilmyButton variant="gold" withArrow href="/tarifs">
+                  Voir les tarifs
+                </HilmyButton>
+              </div>
             </div>
             <ul className="grid gap-3 sm:grid-cols-2">
               {PROVIDER_VALUE_PROP.map((b) => (
