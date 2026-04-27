@@ -1,5 +1,9 @@
 -- =====================================================================
--- HILMY · 18 — content_reports
+-- HILMY · 20 — content_reports
+-- (Renommé depuis 18_content_reports.sql après collision avec
+-- 18_notifications.sql ajouté en parallèle Sprint 1. La table a déjà
+-- été appliquée en prod sous l'ancien nom — le rename est purement
+-- cosmétique côté repo, pas besoin de re-exécuter le SQL.)
 -- Table polymorphe ultra-light pour signaler un contenu (place, event,
 -- recommendation) depuis le mobile. Modération admin via une page dédiée
 -- du site Next.js (à câbler dans un batch ultérieur — la table existante
