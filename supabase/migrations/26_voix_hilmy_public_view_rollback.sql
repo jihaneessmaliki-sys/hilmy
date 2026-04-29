@@ -1,0 +1,32 @@
+-- =====================================================================
+-- HILMY · 26 — ROLLBACK migration vue voix_hilmy_public
+--
+-- ⚠️ Pré-check :
+--   1. Vérifier qu'aucun code applicatif (Next.js, Expo, scripts) ne
+--      lit voix_hilmy_public — un grep dans hilmy-muslim et hilmy-mobile
+--      sur 'voix_hilmy_public' suffit.
+--   2. Vérifier qu'aucune autre migration / vue / fonction ne dépend
+--      de cette vue :
+--          SELECT dependent_ns.nspname || '.' || dependent_view.relname
+--                 AS dependent_object,
+--                 dependent_view.relkind AS object_type
+--          FROM pg_depend d
+--          JOIN pg_rewrite r ON d.objid = r.oid
+--          JOIN pg_class dependent_view ON r.ev_class = dependent_view.oid
+--          JOIN pg_namespace dependent_ns
+--            ON dependent_view.relnamespace = dependent_ns.oid
+--          JOIN pg_class source_table ON d.refobjid = source_table.oid
+--          WHERE source_table.relname = 'voix_hilmy_public'
+--            AND source_table.relnamespace = 'public'::regnamespace;
+--      En Phase 1 : aucun consumer externe → ok.
+--
+-- ──────────────────────────────────────────────────────────────────
+-- ORDRE D'EXÉCUTION :
+--   Ce fichier seul. La vue n'a pas de dépendances inverses (rien ne
+--   pointe vers elle au niveau DB). Si tu rollback aussi 25 ou 24,
+--   exécute ce fichier en premier (la vue dépend de la fonction
+--   get_voix_followers_count de 25 et des colonnes voix_hilmy_* de 24).
+-- ──────────────────────────────────────────────────────────────────
+-- =====================================================================
+
+drop view if exists public.voix_hilmy_public;
