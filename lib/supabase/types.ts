@@ -275,6 +275,51 @@ export interface UserProfile {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   voix_hilmy_public (vue SECURITY DEFINER, migration 26)
+   ───────────────────────────────────────────────────────────── */
+
+/** Ligne de la vue voix_hilmy_public — données publiques d'une Voix. */
+export interface VoixPublic {
+  /** auth.users.id, clé d'agrégation pour follow/recos/counter */
+  user_id: string;
+  prenom: string;
+  slug: string;
+  bio: string;
+  activated_at: string;
+  recos_count: number;
+  followers_count: number;
+}
+
+/**
+ * Ligne de la vue voix_hilmy_recos_public (mig 27) — reco publiée par
+ * une Voix Hilmy active, jointe avec place ou profile selon type.
+ *
+ * Edge cases : les colonnes place_* sont NULL si type='prestataire'
+ * ou si le place a été supprimé. Les colonnes profile_* sont NULL si
+ * type='place' ou si profile.status != 'approved'. Le frontend doit
+ * skip / fallback les rows incomplètes.
+ */
+export interface VoixPublicReco {
+  id: string;
+  /** auth.users.id de la Voix auteur */
+  voix_user_id: string;
+  type: "place" | "prestataire";
+  /** Toujours non-vide (filtre dans la vue) */
+  comment: string;
+  created_at: string;
+
+  place_id: string | null;
+  place_name: string | null;
+  place_city: string | null;
+  place_slug: string | null;
+
+  profile_id: string | null;
+  profile_nom: string | null;
+  profile_ville: string | null;
+  profile_slug: string | null;
+}
+
+/* ─────────────────────────────────────────────────────────────
    Résultat standardisé des queries (gestion d'erreur uniforme)
    ───────────────────────────────────────────────────────────── */
 
