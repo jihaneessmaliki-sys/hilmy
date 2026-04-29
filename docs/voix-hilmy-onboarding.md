@@ -9,6 +9,24 @@
 > pour ne pas perdre les décisions prises pendant l'implémentation des
 > migrations 24-27.
 
+## Vocabulaire interne vs public
+
+- **Voix Hilmy** : nom INTERNE de la feature (code, DB, doc admin). Ne
+  change pas. Tous les noms techniques restent inchangés :
+  `is_voix_hilmy`, `voix_hilmy_*`, `get_featured_voix`,
+  `voix_hilmy_public`, `voix_hilmy_recos_public`, `voix_hilmy_follows`,
+  routes `/api/og/voix/...`, types `VoixPublic`, `VoixPublicReco`, etc.
+- **Créatrice / Créatrices** : mot PUBLIC affiché aux copines (UI hero,
+  badges, OG image, page perso, fiches lieux, com marketing).
+
+Quand tu rédiges du contenu pour les copines (in-app, OG, com),
+utilise toujours "Créatrice". Quand tu codes ou que tu rédiges la doc
+admin, utilise toujours "Voix Hilmy" pour respecter le naming
+technique existant.
+
+Analogie : "Premium" est interne, "abonnement" est public — les deux
+cohabitent sans contradiction.
+
 ## ⚠️ Pré-requis avant d'activer une Voix en DB
 
 **Ne PAS activer (`is_voix_hilmy = true`) une Voix tant que les commits

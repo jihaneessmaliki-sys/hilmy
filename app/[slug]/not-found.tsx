@@ -10,7 +10,7 @@ export default function VoixNotFound() {
     <main className="flex min-h-screen items-center justify-center bg-creme px-6">
       <div className="max-w-md text-center">
         <h1 className="font-serif text-3xl font-semibold text-vert">
-          Cette Voix n&apos;existe pas
+          Cette créatrice n&apos;existe pas
         </h1>
         <p className="mt-4 text-base leading-relaxed text-texte-sec">
           Le lien est peut-être périmé. Reviens à l&apos;accueil pour découvrir

@@ -68,7 +68,7 @@ function truncateBio(bio: string, max = 120): string {
  * Edge cases :
  *   • slug introuvable → PNG fallback générique (status 200) pour ne
  *     pas casser le preview Insta/WA si quelqu'un partage un mauvais
- *     lien. Le fallback dit "Voix Hilmy — page introuvable".
+ *     lien. Le fallback dit "Créatrice Hilmy — page introuvable".
  *   • recos_count = 0 → libellé "Premières recos à venir" (validé
  *     comme moins mou que "Pas encore de recos").
  *   • Voix désactivée (is_voix_hilmy = false ou slug NULL) : la vue
@@ -108,7 +108,7 @@ export async function GET(
   // L'identité visuelle de la badge passe par le fond `or`, le texte
   // uppercase et le tracking.
   const allText = [
-    "VOIX HILMY",
+    "CRÉATRICE",
     voix.prenom,
     bioTruncated,
     counterLabel,
@@ -152,7 +152,7 @@ export async function GET(
             alignSelf: "flex-start",
           }}
         >
-          VOIX HILMY
+          CRÉATRICE
         </div>
 
         <div
@@ -288,7 +288,7 @@ export async function GET(
  * tous les CDN sociaux.
  */
 async function renderFallback(): Promise<ImageResponse> {
-  const fallbackText = "Voix Hilmy Page introuvable hilmy.io";
+  const fallbackText = "Créatrice Hilmy Page introuvable hilmy.io";
   const fraunces600 = await loadFontSubset(
     "Fraunces",
     600,
@@ -319,7 +319,7 @@ async function renderFallback(): Promise<ImageResponse> {
             color: COLORS.creme,
           }}
         >
-          Voix Hilmy
+          Créatrice Hilmy
         </div>
         <div
           style={{

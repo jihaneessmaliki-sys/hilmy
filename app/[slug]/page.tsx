@@ -58,7 +58,7 @@ export async function generateMetadata({
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: `${voix.prenom}, Voix Hilmy`,
+          alt: `${voix.prenom}, Créatrice Hilmy`,
         },
       ],
     },
@@ -103,7 +103,7 @@ export default async function VoixSlugPage({
           </h1>
           <div className="mt-2 flex justify-center">
             <span className="inline-flex items-center gap-1 rounded-md bg-or px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-vert">
-              ✦ Voix Hilmy
+              ✦ Créatrice
             </span>
           </div>
           <p className="mx-4 mt-4 text-sm italic leading-relaxed text-texte">
