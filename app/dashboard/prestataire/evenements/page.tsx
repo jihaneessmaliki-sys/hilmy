@@ -39,7 +39,7 @@ export default async function MesEvenementsPrestataire() {
         lead="Ateliers, masterclass, rencontres — les moments que tu proposes à la communauté."
         actions={
           <Link
-            href="/proposer-un-evenement"
+            href="/dashboard/utilisatrice/evenements/nouveau"
             className="group inline-flex h-11 items-center gap-2 rounded-full bg-or px-5 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:bg-or-light"
           >
             Créer un événement
@@ -68,7 +68,7 @@ export default async function MesEvenementsPrestataire() {
             titre="Pas encore d'événement."
             pitch="Un atelier, un masterclass, un workshop : propose le premier. On aide à remplir les places."
             ctaLabel="Créer un événement"
-            ctaHref="/proposer-un-evenement"
+            ctaHref="/dashboard/utilisatrice/evenements/nouveau"
           />
         </section>
       ) : (
