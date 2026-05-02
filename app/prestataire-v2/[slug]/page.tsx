@@ -17,6 +17,7 @@ import {
 } from '@/lib/mock-data'
 import {
   getPrestataireBySlug,
+  getPrestataireBySlugForOwner,
   getPrestatairesByCategorie,
 } from '@/lib/supabase/queries/prestataires'
 import { createClient } from '@/lib/supabase/server'
@@ -89,20 +90,32 @@ export default async function PrestatairePage({
   }
 
   const { data: row, error } = await getPrestataireBySlug(slug)
-  if (error || !row) notFound()
-  const p: MockPrestataire = adaptDbPrestataire(row)
+
+  let isPreview = false
+  let finalRow = row
+
+  if (!row && !error) {
+    const { data: previewRow } = await getPrestataireBySlugForOwner(slug, user!.id)
+    if (!previewRow) notFound()
+    isPreview = true
+    finalRow = previewRow
+  } else if (error || !row) {
+    notFound()
+  }
+
+  const p: MockPrestataire = adaptDbPrestataire(finalRow!)
 
   const [
     { data: rowsSim },
     avisRes,
   ] = await Promise.all([
-    getPrestatairesByCategorie(row.categorie),
+    getPrestatairesByCategorie(finalRow!.categorie),
     supabase
       .from('recommendations')
       .select(
         'id, comment, rating, created_at, reponse_pro, reponse_date, user:user_profiles ( prenom, avatar_url )',
       )
-      .eq('profile_id', row.id)
+      .eq('profile_id', finalRow!.id)
       .eq('type', 'prestataire')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
@@ -119,7 +132,7 @@ export default async function PrestatairePage({
     user: Array.isArray(a.user) ? a.user[0] : a.user,
   }))
 
-  const isOwner = !!user && user.id === row.user_id
+  const isOwner = !!user && user.id === finalRow!.user_id
   const isAuthenticated = !!user
 
   // Enrichir les avis avec likes_count + liked_by_me
@@ -152,7 +165,23 @@ export default async function PrestatairePage({
 
   return (
     <PageShell>
-      <TrackPageView profileId={row.id} />
+      {!isPreview && <TrackPageView profileId={finalRow!.id} />}
+      {isPreview && (
+        <div className="border-b border-or/30 bg-or/10 px-6 py-4 md:px-12">
+          <div className="mx-auto flex max-w-container flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <p className="text-[13px] text-vert">
+              <span className="font-serif italic">Aperçu privé —</span>{' '}
+              ta fiche n&apos;est pas encore en ligne. Seule toi peux la voir pour l&apos;instant.
+            </p>
+            <Link
+              href="/dashboard/prestataire/fiche"
+              className="text-[11px] tracking-[0.22em] text-or-deep uppercase hover:text-or"
+            >
+              Modifier ma fiche →
+            </Link>
+          </div>
+        </div>
+      )}
       {/* Hero */}
       <section
         className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-24"
@@ -216,10 +245,12 @@ export default async function PrestatairePage({
                   Dès {p.tarifsDe} {devise(p.ville)}
                 </span>
                 <span className="h-4 w-px bg-or/30" />
-                <span className="inline-flex items-center gap-2 rounded-full bg-vert/10 px-3 py-1 text-[11px] font-medium text-vert">
-                  <span className="h-1.5 w-1.5 rounded-full bg-or" />
-                  Profil vérifié
-                </span>
+                {!isPreview && (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-vert/10 px-3 py-1 text-[11px] font-medium text-vert">
+                    <span className="h-1.5 w-1.5 rounded-full bg-or" />
+                    Profil vérifié
+                  </span>
+                )}
               </div>
             </div>
 
@@ -228,23 +259,25 @@ export default async function PrestatairePage({
               <div className="mt-4">
                 <SocialChannelsButtons
                   values={{
-                    whatsapp: row.whatsapp,
-                    phone_public: row.phone_public,
-                    email: row.email,
-                    instagram: row.instagram,
-                    tiktok: row.tiktok,
-                    linkedin: row.linkedin,
-                    facebook: row.facebook,
-                    youtube: row.youtube,
-                    site_web: row.site_web,
+                    whatsapp: finalRow!.whatsapp,
+                    phone_public: finalRow!.phone_public,
+                    email: finalRow!.email,
+                    instagram: finalRow!.instagram,
+                    tiktok: finalRow!.tiktok,
+                    linkedin: finalRow!.linkedin,
+                    facebook: finalRow!.facebook,
+                    youtube: finalRow!.youtube,
+                    site_web: finalRow!.site_web,
                   }}
                   variant="stack"
-                  profileId={row.id}
+                  profileId={finalRow!.id}
                 />
               </div>
-              <div className="mt-6">
-                <FavoriteButton />
-              </div>
+              {!isPreview && (
+                <div className="mt-6">
+                  <FavoriteButton />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -322,7 +355,7 @@ export default async function PrestatairePage({
                 </header>
 
                 <AvisSection
-                  profileId={row.id}
+                  profileId={finalRow!.id}
                   profileSlug={slug}
                   profileNom={p.nom}
                   isOwner={isOwner}
@@ -355,11 +388,11 @@ export default async function PrestatairePage({
                       {p.tarifsDe} {devise(p.ville)}
                     </dd>
                   </div>
-                  {row.nb_vues > 0 && (
+                  {finalRow!.nb_vues > 0 && (
                     <div className="flex items-center justify-between border-b border-or/10 pb-3">
                       <dt className="text-texte-sec">Vues fiche</dt>
                       <dd className="font-medium text-vert">
-                        {row.nb_vues.toLocaleString('fr-FR')}
+                        {finalRow!.nb_vues.toLocaleString('fr-FR')}
                       </dd>
                     </div>
                   )}

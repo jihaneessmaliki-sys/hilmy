@@ -110,6 +110,31 @@ export async function getPrestataireBySlug(
   }
 }
 
+/**
+ * Récupère la fiche d'une prestataire par slug + user_id, sans filtre de statut.
+ * Réservé à la prévisualisation owner-side (fiche en attente ou pausée).
+ * Le double filtre slug + user_id garantit qu'on ne lit que sa propre fiche.
+ */
+export async function getPrestataireBySlugForOwner(
+  slug: string,
+  userId: string
+): Promise<QueryResult<Prestataire | null>> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(PRESTATAIRE_SELECT)
+      .eq("slug", slug)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) return { data: null, error: error.message };
+    return { data: (data as unknown as Prestataire) ?? null, error: null };
+  } catch (err) {
+    return { data: null, error: errorMessage(err) };
+  }
+}
+
 /** Liste les prestataires d'une catégorie donnée (approuvées uniquement). */
 export async function getPrestatairesByCategorie(
   categorie: PrestataireCategorie
