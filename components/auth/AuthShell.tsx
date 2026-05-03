@@ -68,7 +68,7 @@ export function AuthShell({
 
           <div className="relative flex flex-wrap items-center justify-between gap-6 text-[11px] tracking-[0.22em] text-or uppercase">
             <span>Suisse · France · Belgique · Luxembourg · Monaco</span>
-            <span>Zéro commission · Zéro pub · Zéro compromis</span>
+            <span>Curation à la main · Pas de pub tierce · Entre copines</span>
           </div>
         </motion.aside>
 
