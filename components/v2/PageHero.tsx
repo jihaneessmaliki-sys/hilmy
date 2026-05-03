@@ -11,14 +11,14 @@ interface PageHeroProps {
 
 export function PageHero({ number, kicker, titre, lead, children }: PageHeroProps) {
   return (
-    <section className="relative overflow-hidden bg-vert bg-grain pt-32 pb-16 md:pt-40 md:pb-20">
+    <section className="relative overflow-hidden bg-vert bg-grain pt-28 pb-12 sm:pt-32 sm:pb-16 md:pt-40 md:pb-20">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-40 top-10 h-[420px] w-[420px] rounded-full bg-or/10 blur-3xl"
       />
-      <div className="relative mx-auto max-w-container px-6 md:px-20">
-        <div className="flex items-center gap-5">
-          <span className="font-serif text-[44px] font-light leading-none text-or">
+      <div className="relative mx-auto max-w-container px-4 sm:px-6 md:px-20">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-5">
+          <span className="font-serif text-[36px] font-light leading-none text-or sm:text-[44px]">
             {number}
           </span>
           <GoldLine width={60} />

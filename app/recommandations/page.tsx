@@ -210,8 +210,8 @@ export default function RecommandationsPage() {
         ]}
       />
 
-      <section className="py-14 md:py-20">
-        <div className="mx-auto max-w-container px-6 md:px-20">
+      <section className="py-10 sm:py-14 md:py-20">
+        <div className="mx-auto max-w-container px-4 sm:px-6 md:px-20">
           <AnimatePresence mode="wait">
             {filtered.length > 0 ? (
               <motion.div

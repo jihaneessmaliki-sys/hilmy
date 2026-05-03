@@ -98,7 +98,7 @@ export function Navigation({ variant = 'transparent' }: NavigationProps = {}) {
           {user ? (
             <Link
               href={dashboardPathFor(user)}
-              className={`inline-flex h-10 items-center gap-2 rounded-full border px-5 text-[13px] font-semibold transition-all ${
+              className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[13px] font-semibold transition-all ${
                 scrolled
                   ? 'border-vert text-vert hover:bg-vert hover:text-creme'
                   : 'border-or text-or hover:bg-or hover:text-vert'
@@ -119,7 +119,7 @@ export function Navigation({ variant = 'transparent' }: NavigationProps = {}) {
               </Link>
               <Link
                 href="/auth/signup"
-                className={`inline-flex h-10 items-center rounded-full border px-5 text-[13px] font-semibold transition-all ${
+                className={`inline-flex h-11 items-center rounded-full border px-5 text-[13px] font-semibold transition-all ${
                   scrolled
                     ? 'border-vert text-vert hover:bg-vert hover:text-creme'
                     : 'border-or text-or hover:bg-or hover:text-vert'

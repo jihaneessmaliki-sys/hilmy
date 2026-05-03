@@ -255,11 +255,11 @@ export function HeroV2({ variant }: { variant?: VariantKey } = {}) {
             delay: ctaDelay,
             ease: 'easeOut',
           }}
-          className="mt-2 flex flex-col items-center gap-3 sm:flex-row sm:gap-4"
+          className="mt-2 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4"
         >
           <Link
             href="/inscription"
-            className="group inline-flex h-[58px] items-center gap-2.5 rounded-full bg-or px-8 text-[11px] font-medium tracking-[0.28em] text-vert uppercase transition-all duration-300 hover:bg-or-light"
+            className="group inline-flex h-[58px] items-center justify-center gap-2.5 rounded-full bg-or px-6 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all duration-300 hover:bg-or-light sm:px-8 sm:tracking-[0.28em]"
           >
             Rejoindre
             <span
@@ -271,7 +271,7 @@ export function HeroV2({ variant }: { variant?: VariantKey } = {}) {
           </Link>
           <Link
             href="/onboarding/prestataire"
-            className="group inline-flex h-[58px] items-center gap-2.5 rounded-full border border-creme/50 bg-transparent px-8 text-[11px] font-medium tracking-[0.28em] text-creme uppercase transition-all duration-300 hover:border-or hover:bg-or/10 hover:text-or-light"
+            className="group inline-flex h-[58px] items-center justify-center gap-2.5 rounded-full border border-creme/50 bg-transparent px-6 text-[11px] font-medium tracking-[0.22em] text-creme uppercase transition-all duration-300 hover:border-or hover:bg-or/10 hover:text-or-light sm:px-8 sm:tracking-[0.28em]"
           >
             Je suis prestataire
             <span
