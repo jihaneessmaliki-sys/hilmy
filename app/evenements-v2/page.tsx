@@ -178,7 +178,7 @@ export default function EvenementsV2Page() {
           titre="Propose le premier."
           pitch="Un brunch, un book club, une balade. L'équipe HILMY t'aide à remplir les places."
           ctaLabel="Proposer un événement"
-          ctaHref="/proposer-un-evenement"
+          ctaHref="/dashboard/utilisatrice/evenements/nouveau"
         />
       </PageShell>
     )
@@ -205,7 +205,7 @@ export default function EvenementsV2Page() {
         }
       >
         <Link
-          href="/proposer-un-evenement"
+          href="/dashboard/utilisatrice/evenements/nouveau"
           className="group inline-flex h-12 items-center gap-2.5 rounded-full bg-or px-6 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:bg-or-light"
         >
           Proposer un événement
@@ -296,7 +296,7 @@ export default function EvenementsV2Page() {
                     Tout réinitialiser
                   </button>
                   <Link
-                    href="/proposer-un-evenement"
+                    href="/dashboard/utilisatrice/evenements/nouveau"
                     className="inline-flex h-11 items-center gap-2 rounded-full bg-vert px-6 text-[11px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark"
                   >
                     Proposer un événement
