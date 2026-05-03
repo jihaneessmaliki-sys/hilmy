@@ -135,9 +135,16 @@ export function PrestataireMethodsClient() {
               }
               subtitle={
                 <>
-                  Ta fiche est complètement gratuite, sans commission. On te
-                  demande juste quelques infos et tu es en ligne. Les imports
-                  automatiques arriveront bientôt.
+                  Quelques infos et tu es prête à rejoindre la team. Trois
+                  formules d&apos;abonnement à partir de 19€/mois, sans
+                  commission sur tes prestations — le détail sur{' '}
+                  <a
+                    href="/tarifs"
+                    className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+                  >
+                    /tarifs
+                  </a>
+                  . Les imports automatiques arriveront bientôt.
                 </>
               }
             />
