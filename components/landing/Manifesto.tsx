@@ -24,7 +24,7 @@ export function Manifesto() {
           </p>
         </FadeInSection>
         <FadeInSection delay={0.4}>
-          <p className="mt-12 text-xs tracking-[0.05em] text-or-light">— L'équipe Hilmy</p>
+          <p className="mt-12 text-xs tracking-[0.05em] text-or-light">— La team Hilmy</p>
         </FadeInSection>
       </div>
     </section>
