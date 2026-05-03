@@ -10,6 +10,8 @@ function catLabel(slug: string) {
 }
 
 // varied heights for editorial masonry feel
+// values are min-height in px — appliquées en min-height pour préserver le ratio
+// d'image et permettre au CSS d'adapter sur les viewports étroits sans dépasser.
 const heights = [360, 440, 380, 460, 400, 480]
 
 interface Props {
@@ -55,7 +57,7 @@ export function LieuCard({ lieu, index = 0 }: Props) {
             />
           )}
           <div className="absolute inset-0 bg-grain opacity-[0.08]" />
-          <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
+          <div className="absolute left-5 top-5 inline-flex max-w-[60%] items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
             {catLabel(lieu.categorie)}
           </div>
           {lieu.recommandePar.length > 0 && (
@@ -75,13 +77,13 @@ export function LieuCard({ lieu, index = 0 }: Props) {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-3 p-6">
-          <h3 className="font-serif text-2xl font-light leading-tight text-vert">
+        <div className="flex flex-col gap-3 p-5 sm:p-6">
+          <h3 className="font-serif text-xl font-light leading-tight text-vert break-words sm:text-2xl">
             {lieu.nom}
           </h3>
-          <div className="flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-or" aria-hidden="true" />
-            <span className="text-[11px] font-medium text-texte-sec">{lieu.ville}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="h-1 w-1 shrink-0 rounded-full bg-or" aria-hidden="true" />
+            <span className="truncate text-[11px] font-medium text-texte-sec">{lieu.ville}</span>
           </div>
           {lieu.commentaires[0] && (
             <p className="mt-1 font-serif text-[13px] italic leading-[1.55] text-texte-sec line-clamp-3">

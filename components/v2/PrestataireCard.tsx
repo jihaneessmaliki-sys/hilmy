@@ -50,11 +50,11 @@ export function PrestataireCard({ p, index = 0 }: Props) {
             />
           )}
           <div className="absolute inset-0 bg-grain opacity-[0.08]" />
-          <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
+          <div className="absolute left-5 top-5 inline-flex max-w-[60%] items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
             {categorieLabel(p.categorie)}
           </div>
           {p.lesAvis && p.lesAvis.length > 0 && (
-            <div className="absolute right-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-vert/85 px-3 py-1 text-[11px] text-creme backdrop-blur">
+            <div className="absolute right-5 top-5 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-vert/85 px-3 py-1 text-[11px] text-creme backdrop-blur">
               <span className="text-or">★</span>
               {p.note.toFixed(1)}
             </div>
@@ -68,23 +68,23 @@ export function PrestataireCard({ p, index = 0 }: Props) {
             </div>
           )}
         </div>
-        <div className="flex flex-1 flex-col gap-4 p-7">
+        <div className="flex flex-1 flex-col gap-4 p-6 sm:p-7">
           <div>
             <p className="text-[11px] tracking-[0.22em] text-or-deep uppercase">{p.metier}</p>
-            <h3 className="mt-2 font-serif text-[26px] font-light leading-tight text-vert">
+            <h3 className="mt-2 font-serif text-[22px] font-light leading-tight text-vert break-words sm:text-[26px]">
               {p.nom}
             </h3>
           </div>
-          <p className="font-serif text-[15px] italic leading-[1.5] text-texte-sec">
+          <p className="font-serif text-[15px] italic leading-[1.5] text-texte-sec break-words">
             « {p.tagline} »
           </p>
-          <div className="mt-auto flex items-center justify-between border-t border-or/10 pt-4">
-            <div className="flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-or" aria-hidden="true" />
-              <span className="text-[11px] font-medium text-texte-sec">{p.ville}</span>
+          <div className="mt-auto flex items-center justify-between gap-3 border-t border-or/10 pt-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="h-1 w-1 shrink-0 rounded-full bg-or" aria-hidden="true" />
+              <span className="truncate text-[11px] font-medium text-texte-sec">{p.ville}</span>
             </div>
             <span
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-vert transition-all group-hover:text-or group-hover:gap-2.5"
+              className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-vert transition-all group-hover:gap-2.5 group-hover:text-or"
               aria-hidden="true"
             >
               Dès {p.tarifsDe} {p.ville === 'Paris' || p.ville === 'Lyon' || p.ville === 'Bruxelles' || p.ville === 'Luxembourg' ? '€' : 'CHF'}
