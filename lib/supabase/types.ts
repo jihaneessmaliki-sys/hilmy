@@ -259,6 +259,21 @@ export interface EventInscription {
  *  modale opt-in (Batch C 04/2026). Pseudonymisée — pas d'âge exact. */
 export type AgeRange = '18-24' | '25-34' | '35-44' | '45-54' | '55+';
 
+/** Clés stockées dans user_profiles.preferences.notifications (migration 33). */
+export interface NotificationPrefs {
+  emailWeekly: boolean;
+  emailEvenements: boolean;
+  emailNouvelles: boolean;
+  notifCommentaires: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  emailWeekly: true,
+  emailEvenements: true,
+  emailNouvelles: false,
+  notifCommentaires: true,
+};
+
 export interface UserProfile {
   id: string;
   user_id: string;
@@ -271,6 +286,9 @@ export interface UserProfile {
   /** Optionnel — nullable côté DB depuis migration 22. Les utilisatrices
    *  existantes ont NULL tant qu'elles n'ont pas complété la modale opt-in. */
   age_range: AgeRange | null;
+  /** Préférences évolutives (jsonb, default {}). Clés notifications dans .notifications.
+   *  Type ouvert pour autres clés futures sans casser le typage. */
+  preferences: { notifications?: Partial<NotificationPrefs>; [key: string]: unknown } | null;
   created_at: string;
 }
 
