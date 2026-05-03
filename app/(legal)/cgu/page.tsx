@@ -13,7 +13,7 @@ export default function CguPage() {
       }
       lead={
         <>
-          Dernière mise à jour&nbsp;: avril 2026. L&apos;utilisation du site
+          Dernière mise à jour&nbsp;: mai 2026. L&apos;utilisation du site
           Hilmy implique l&apos;acceptation pleine et entière des présentes
           conditions.
         </>
@@ -22,10 +22,13 @@ export default function CguPage() {
       <div className="grid max-w-3xl gap-10">
         <LegalSection numero="01" titre="Objet">
           <p>
-            Hilmy est un annuaire en ligne gratuit permettant la mise en relation
-            entre des utilisatrices à la recherche de prestataires de services et
-            des prestataires femmes proposant leurs services en Suisse, en
-            France, en Belgique, au Luxembourg et à Monaco.
+            Hilmy est un annuaire en ligne permettant la mise en relation entre
+            des utilisatrices à la recherche de prestataires de services et des
+            prestataires femmes proposant leurs services en Suisse, en France,
+            en Belgique, au Luxembourg et à Monaco. L&apos;accès et la
+            consultation sont gratuits pour les utilisatrices. La création
+            d&apos;une fiche prestataire dans l&apos;annuaire fait l&apos;objet
+            d&apos;un abonnement (article 06).
           </p>
         </LegalSection>
 
@@ -51,11 +54,11 @@ export default function CguPage() {
 
         <LegalSection numero="04" titre="Modération et signalement">
           <p>
-            Chaque fiche prestataire est soumise à validation par l&apos;équipe
-            Hilmy avant publication. Les utilisatrices peuvent signaler tout
-            profil qui leur semble inapproprié. L&apos;équipe Hilmy se réserve
-            le droit de suspendre ou supprimer tout compte ne respectant pas les
-            présentes conditions.
+            Chaque fiche prestataire est soumise à validation par la team Hilmy
+            avant publication. Les utilisatrices peuvent signaler tout profil
+            qui leur semble inapproprié. La team Hilmy se réserve le droit de
+            suspendre ou supprimer tout compte ne respectant pas les présentes
+            conditions.
           </p>
         </LegalSection>
 
@@ -69,11 +72,61 @@ export default function CguPage() {
           </p>
         </LegalSection>
 
-        <LegalSection numero="06" titre="Gratuité">
+        <LegalSection numero="06" titre="Modèle économique et abonnements">
           <p>
-            L&apos;inscription et l&apos;utilisation de Hilmy sont entièrement
-            gratuites, tant pour les utilisatrices que pour les prestataires.
-            Aucune commission n&apos;est prélevée sur les prestations.
+            <strong className="font-medium text-vert">
+              Côté utilisatrices&nbsp;:
+            </strong>{' '}
+            l&apos;inscription, la consultation de l&apos;annuaire, la lecture
+            et le dépôt de recommandations, ainsi que la participation aux
+            événements sont entièrement gratuits, sans paywall et sans
+            limitation.
+          </p>
+          <p>
+            <strong className="font-medium text-vert">
+              Côté prestataires&nbsp;:
+            </strong>{' '}
+            la publication d&apos;une fiche dans l&apos;annuaire prestataires
+            fait l&apos;objet d&apos;un abonnement payant, proposé en trois
+            formules&nbsp;: Standard (19&nbsp;€/mois), Premium (49&nbsp;€/mois)
+            et Cercle Pro (99&nbsp;€/mois). La grille tarifaire complète,
+            ainsi que les durées d&apos;engagement (mensuel, 3&nbsp;mois,
+            6&nbsp;mois, 1&nbsp;an) et les remises associées, sont détaillées
+            sur la page{' '}
+            <a
+              href="/tarifs"
+              className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+            >
+              /tarifs
+            </a>
+            . Une fiche {`"Sélection Hilmy"`} dédiée aux lieux est également
+            proposée à 39&nbsp;€/mois.
+          </p>
+          <p>
+            <strong className="font-medium text-vert">
+              Pas de commission sur les prestations.
+            </strong>{' '}
+            Hilmy ne prélève aucun pourcentage sur le chiffre d&apos;affaires
+            généré par les prestataires auprès de leurs clientes&nbsp;: le
+            modèle est uniquement fondé sur l&apos;abonnement plat.
+          </p>
+          <p>
+            <strong className="font-medium text-vert">
+              Sans engagement de durée minimale obligatoire.
+            </strong>{' '}
+            Les abonnements mensuels sont reconductibles tacitement chaque
+            mois&nbsp;; ils peuvent être résiliés à tout moment depuis le
+            tableau de bord prestataire ou en écrivant à{' '}
+            <a
+              href="mailto:hello@hilmy.io"
+              className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+            >
+              hello@hilmy.io
+            </a>
+            . La résiliation prend effet à la fin de la période payée en cours,
+            sans remboursement prorata. Les abonnements annuels (3, 6 ou
+            12&nbsp;mois) couvrent la période choisie sans tacite reconduction
+            au-delà.
           </p>
         </LegalSection>
 
@@ -87,7 +140,10 @@ export default function CguPage() {
             >
               hello@hilmy.io
             </a>
-            . Vos données seront effacées dans un délai de 30 jours.
+            . Vos données seront effacées dans un délai de 30 jours. Pour les
+            comptes prestataires en cours d&apos;abonnement, la suppression
+            entraîne la résiliation immédiate de l&apos;abonnement à la fin de
+            la période payée, sans remboursement prorata.
           </p>
         </LegalSection>
 
