@@ -176,7 +176,7 @@ export default function EvenementsV2Page() {
         <LiveEmptyState
           kicker="Zéro événement à venir"
           titre="Propose le premier."
-          pitch="Un brunch, un book club, une balade. L'équipe HILMY t'aide à remplir les places."
+          pitch="Un brunch, un book club, une balade. La team Hilmy t'aide à remplir les places."
           ctaLabel="Proposer un événement"
           ctaHref="/dashboard/utilisatrice/evenements/nouveau"
         />
