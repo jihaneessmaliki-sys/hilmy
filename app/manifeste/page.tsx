@@ -74,12 +74,12 @@ export default function ManifestePage() {
               </span>
               <div>
                 <p className="font-serif text-[18px] italic text-vert">
-                  Zéro commission.
+                  Pas de commission sur tes prestations.
                 </p>
                 <p className="mt-1 text-texte-sec">
-                  Les prestataires ne nous paient rien sur leurs prestations. Ce
-                  que tu paies va entièrement dans leur poche. Notre business
-                  model, c&apos;est elles — pas nous sur leur dos.
+                  Ta fiche prestataire fonctionne par abonnement plat (3
+                  formules dès 19€/mois). Ce que ta cliente te paie, tu le
+                  gardes en entier. On ne prend rien sur tes prestations.
                 </p>
               </div>
             </li>
@@ -89,12 +89,13 @@ export default function ManifestePage() {
               </span>
               <div>
                 <p className="font-serif text-[18px] italic text-vert">
-                  Zéro pub.
+                  Pas de pub tierce.
                 </p>
                 <p className="mt-1 text-texte-sec">
-                  Aucune fiche n&apos;est mise en avant contre argent. L&apos;algorithme,
-                  c&apos;est la qualité de la recommandation et la proximité
-                  géographique, rien d&apos;autre.
+                  Aucune marque extérieure ne s&apos;affiche dans le carnet.
+                  Les seules mises en avant sont éditoriales (Sélection Hilmy,
+                  Voix de la semaine) ou intégrées aux paliers prestataires —
+                  jamais d&apos;achat publicitaire externe.
                 </p>
               </div>
             </li>
@@ -107,7 +108,7 @@ export default function ManifestePage() {
                   Zéro compromis.
                 </p>
                 <p className="mt-1 text-texte-sec">
-                  Chaque fiche passe entre les mains de notre équipe avant
+                  Chaque fiche passe entre les mains de la team Hilmy avant
                   d&apos;être visible. Si ça ne tient pas la route, ça ne passe
                   pas. C&apos;est notre seul filtre, et il ne bougera pas.
                 </p>
