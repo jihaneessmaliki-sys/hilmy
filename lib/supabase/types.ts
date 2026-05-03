@@ -286,8 +286,9 @@ export interface UserProfile {
   /** Optionnel — nullable côté DB depuis migration 22. Les utilisatrices
    *  existantes ont NULL tant qu'elles n'ont pas complété la modale opt-in. */
   age_range: AgeRange | null;
-  /** Préférences évolutives (jsonb, default {}). Clés notifications dans .notifications. */
-  preferences: { notifications?: Partial<NotificationPrefs> } | null;
+  /** Préférences évolutives (jsonb, default {}). Clés notifications dans .notifications.
+   *  Type ouvert pour autres clés futures sans casser le typage. */
+  preferences: { notifications?: Partial<NotificationPrefs>; [key: string]: unknown } | null;
   created_at: string;
 }
 

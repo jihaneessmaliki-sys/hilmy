@@ -135,6 +135,12 @@ export default function ParametresClient({
               checked={toggles.emailNouvelles}
               onChange={() => handleToggle('emailNouvelles')}
             />
+            <Toggle
+              label="Activité sur tes recos"
+              hint="Quand une copine commente ou réagit à une adresse que tu as partagée."
+              checked={toggles.notifCommentaires}
+              onChange={() => handleToggle('notifCommentaires')}
+            />
           </SettingsGroup>
 
           <SettingsGroup

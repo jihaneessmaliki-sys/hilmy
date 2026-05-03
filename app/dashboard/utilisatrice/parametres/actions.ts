@@ -25,9 +25,20 @@ export async function updateNotificationPrefs(
   } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Non connectée.' }
 
+  const { data: existing, error: readError } = await supabase
+    .from('user_profiles')
+    .select('preferences')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (readError) return { success: false, error: readError.message }
+
+  const current = (existing?.preferences ?? {}) as Record<string, unknown>
+  const merged = { ...current, notifications: raw }
+
   const { error } = await supabase
     .from('user_profiles')
-    .update({ preferences: { notifications: raw } })
+    .update({ preferences: merged })
     .eq('user_id', user.id)
 
   if (error) return { success: false, error: error.message }
