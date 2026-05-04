@@ -217,24 +217,27 @@ export default async function PrestataireAccueilPage() {
           </div>
         )}
 
-        {/* Bandeau "stats avancées coming soon" Cercle Pro */}
+        {/* Bandeau Stats avancées Cercle Pro — actif depuis Phase 4 */}
         {palier === 'cercle_pro' && (
           <div className="mt-6 rounded-sm bg-vert p-6 text-creme md:p-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
               <div>
-                <p className="overline text-or">Stats avancées · à venir</p>
+                <p className="overline text-or">Stats avancées · disponibles</p>
                 <p className="mt-2 font-serif text-[18px] italic leading-[1.4] text-creme md:text-[20px]">
                   Carte des villes, pics horaires, benchmark catégorie.
                 </p>
                 <p className="mt-2 text-[13px] leading-[1.6] text-creme/75">
-                  Tu fais partie du Cercle Pro : ces vues plus fines
-                  arrivent dans la V1.2. On te prévient dès qu&apos;elles
-                  sont prêtes.
+                  Tu fais partie du Cercle Pro — voici la vue 30 jours
+                  glissants pour piloter ton audience en profondeur.
                 </p>
               </div>
-              <span className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-or/40 px-4 text-[11px] font-medium tracking-[0.22em] text-or-light uppercase">
-                Bientôt
-              </span>
+              <Link
+                href="/dashboard/prestataire/stats-avancees"
+                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-or px-5 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:bg-or-light"
+              >
+                Voir mes stats avancées
+                <span aria-hidden="true">→</span>
+              </Link>
             </div>
           </div>
         )}
