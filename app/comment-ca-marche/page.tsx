@@ -84,8 +84,16 @@ export default function CommentCaMarchePage() {
               texte={
                 <>
                   Choisis ta méthode&nbsp;: depuis Google Places (2 minutes) ou en
-                  remplissant toi-même (8 minutes). Tout est gratuit, et ça le
-                  restera.
+                  remplissant toi-même (8 minutes). Trois formules d&apos;abonnement
+                  pour exister dans l&apos;annuaire — à partir de 19€/mois, sans
+                  engagement (
+                  <a
+                    href="/tarifs"
+                    className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+                  >
+                    voir les tarifs
+                  </a>
+                  ).
                 </>
               }
             />
@@ -94,7 +102,7 @@ export default function CommentCaMarchePage() {
               titre="On la valide"
               texte={
                 <>
-                  Notre équipe relit chaque fiche avant publication. Si quelque
+                  La team Hilmy relit chaque fiche avant publication. Si quelque
                   chose manque, on te fait des suggestions par email. C&apos;est la
                   garantie qu&apos;aucune mauvaise surprise n&apos;arrive aux
                   copines.
@@ -108,7 +116,8 @@ export default function CommentCaMarchePage() {
                 <>
                   Ta fiche apparaît dans l&apos;annuaire. Les premières clientes
                   viennent, laissent leurs avis, et ton cercle s&apos;élargit. On
-                  ne prélève rien sur tes prestations — jamais.
+                  ne prélève aucune commission sur tes prestations — ce que tu
+                  factures à ta cliente, tu le gardes en entier.
                 </>
               }
             />
