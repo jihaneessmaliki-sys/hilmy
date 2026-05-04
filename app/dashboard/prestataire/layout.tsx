@@ -21,6 +21,18 @@ export default async function PrestataireLayout({
     .eq('status', 'published')
     .is('reponse_pro', null)
 
+  // Badge "nouveaux devis" — Cercle Pro uniquement (best-effort, table peut
+  // ne pas encore exister tant que migration 36 pas appliquée).
+  let pendingDevisCount = 0
+  if (prestataire.palier === 'cercle_pro') {
+    const { count } = await supabase
+      .from('devis_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('prestataire_id', prestataire.id)
+      .eq('status', 'pending')
+    pendingDevisCount = count ?? 0
+  }
+
   const items: SidebarItem[] = [
     { href: '/dashboard/prestataire', label: 'Accueil', icon: '·' },
     { href: '/dashboard/prestataire/fiche', label: 'Ma fiche', icon: '❋' },
@@ -38,6 +50,20 @@ export default async function PrestataireLayout({
       label: 'Mes événements',
       icon: '◇',
     },
+    // Devis Express : entrée Cercle Pro uniquement
+    ...(prestataire.palier === 'cercle_pro'
+      ? ([
+          {
+            href: '/dashboard/prestataire/devis',
+            label: 'Mes devis',
+            icon: '✨',
+            badge:
+              pendingDevisCount > 0
+                ? `${pendingDevisCount} nouveau${pendingDevisCount > 1 ? 'x' : ''}`
+                : undefined,
+          },
+        ] as SidebarItem[])
+      : []),
     {
       href: '/dashboard/prestataire/abonnement',
       label: 'Mon abonnement',

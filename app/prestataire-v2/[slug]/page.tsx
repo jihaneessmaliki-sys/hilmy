@@ -7,6 +7,7 @@ import { FadeInSection } from '@/components/ui/FadeInSection'
 import { PrestataireCard } from '@/components/v2/PrestataireCard'
 import { PhotoGallery } from '@/components/v2/PhotoGallery'
 import { GalleryAutoplayCarousel } from '@/components/v2/GalleryAutoplayCarousel'
+import { DevisExpressCTA } from '@/components/v2/DevisExpressCTA'
 import { SocialChannelsButtons } from '@/components/v2/SocialChannelsButtons'
 import { TrackPageView } from '@/components/v2/TrackPageView'
 import { AvisSection, type AvisItem } from '@/components/v2/AvisSection'
@@ -274,6 +275,14 @@ export default async function PrestatairePage({
                   profileId={finalRow!.id}
                 />
               </div>
+              {p.palier === 'cercle_pro' && !isPreview && (
+                <div className="mt-6">
+                  <DevisExpressCTA
+                    prestataireId={finalRow!.id}
+                    prestataireName={finalRow!.nom}
+                  />
+                </div>
+              )}
               {!isPreview && (
                 <div className="mt-6">
                   <FavoriteButton />
