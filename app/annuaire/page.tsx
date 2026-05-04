@@ -20,6 +20,30 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import type { Prestataire as DbPrestataire } from '@/lib/supabase/types'
 
+/**
+ * Tri prioritaire annuaire (Cercle Pro 99€/mois — feature "Mise en avant prio").
+ * Cercle Pro apparaît avant Premium qui apparaît avant Standard.
+ * À tier égal, on conserve l'ordre serveur (approved_at desc, déterministe).
+ *
+ * Implémenté côté client après l'adaptation pour éviter une migration SQL
+ * (Supabase ne supporte pas facilement ORDER BY CASE sans vue dédiée).
+ * Array.prototype.sort est stable en JS depuis ES2019 → tri secondaire
+ * approved_at desc préservé naturellement.
+ */
+const PALIER_RANK: Record<string, number> = {
+  cercle_pro: 0,
+  premium: 1,
+  standard: 2,
+}
+
+function sortByPalierThenServerOrder(list: MockPrestataire[]): MockPrestataire[] {
+  return [...list].sort((a, b) => {
+    const ra = PALIER_RANK[a.palier ?? 'standard'] ?? 2
+    const rb = PALIER_RANK[b.palier ?? 'standard'] ?? 2
+    return ra - rb
+  })
+}
+
 // Adapte une ligne DB profiles → shape attendue par PrestataireCard (même shape que mock).
 function adaptPrestataireFromDb(p: DbPrestataire): MockPrestataire {
   const galerie =
@@ -87,7 +111,7 @@ export default function AnnuairePage() {
         const adapted = (data ?? []).map((row) =>
           adaptPrestataireFromDb(row as unknown as DbPrestataire),
         )
-        setLivePrestataires(adapted)
+        setLivePrestataires(sortByPalierThenServerOrder(adapted))
         setLoading(false)
       } catch (e) {
         if (cancelled) return
