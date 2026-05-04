@@ -6,6 +6,7 @@ import { GoldLine } from '@/components/ui/GoldLine'
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { PrestataireCard } from '@/components/v2/PrestataireCard'
 import { PhotoGallery } from '@/components/v2/PhotoGallery'
+import { GalleryAutoplayCarousel } from '@/components/v2/GalleryAutoplayCarousel'
 import { SocialChannelsButtons } from '@/components/v2/SocialChannelsButtons'
 import { TrackPageView } from '@/components/v2/TrackPageView'
 import { AvisSection, type AvisItem } from '@/components/v2/AvisSection'
@@ -338,7 +339,14 @@ export default async function PrestatairePage({
                     <span className="overline text-or">Galerie</span>
                   </header>
                   <div className="mt-6">
-                    <PhotoGallery items={p.galerie} ariaLabel={`Galerie ${p.nom}`} />
+                    {p.palier === 'cercle_pro' && p.galerie.filter((u) => typeof u === 'string' && u.startsWith('http')).length >= 2 ? (
+                      <GalleryAutoplayCarousel
+                        items={p.galerie}
+                        ariaLabel={`Galerie ${p.nom}`}
+                      />
+                    ) : (
+                      <PhotoGallery items={p.galerie} ariaLabel={`Galerie ${p.nom}`} />
+                    )}
                   </div>
                 </FadeInSection>
               )}
