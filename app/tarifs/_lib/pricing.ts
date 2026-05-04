@@ -138,7 +138,7 @@ export function formatPrice(value: number): string {
     : `${value.toFixed(2).replace('.', ',')}€`;
 }
 
-const HELLO = 'hello@hilmy.io';
+const HELLO = 'hilmy.io@hotmail.com';
 
 /** Mailto pour les CTAs de commit prestataires (post-wizard ou switch).
  *  Si un `promoCode` est fourni (validé côté client en amont), il est

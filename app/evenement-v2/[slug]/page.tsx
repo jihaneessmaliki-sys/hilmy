@@ -378,10 +378,10 @@ export default async function EvenementV2Page({
                 <p className="mt-3 text-[13px] leading-[1.65] text-texte-sec">
                   Écris à{' '}
                   <a
-                    href="mailto:hello@hilmy.io"
+                    href="mailto:hilmy.io@hotmail.com"
                     className="font-medium text-vert hover:text-or"
                   >
-                    hello@hilmy.io
+                    hilmy.io@hotmail.com
                   </a>
                   . On te répond sous 48h ouvrées.
                 </p>

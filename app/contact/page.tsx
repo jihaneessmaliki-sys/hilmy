@@ -23,8 +23,8 @@ export default function ContactPage() {
         <ContactCard
           kicker="L'essentiel"
           titre="Email général"
-          link="mailto:hello@hilmy.io"
-          linkLabel="hello@hilmy.io"
+          link="mailto:hilmy.io@hotmail.com"
+          linkLabel="hilmy.io@hotmail.com"
           texte="Pour toute question produit, partenariat ou retour d'expérience."
         />
 

@@ -118,10 +118,10 @@ export default function CguPage() {
             mois&nbsp;; ils peuvent être résiliés à tout moment depuis le
             tableau de bord prestataire ou en écrivant à{' '}
             <a
-              href="mailto:hello@hilmy.io"
+              href="mailto:hilmy.io@hotmail.com"
               className="text-or-deep underline-offset-4 hover:text-or hover:underline"
             >
-              hello@hilmy.io
+              hilmy.io@hotmail.com
             </a>
             . La résiliation prend effet à la fin de la période payée en cours,
             sans remboursement prorata. Les abonnements annuels (3, 6 ou
@@ -135,10 +135,10 @@ export default function CguPage() {
             Vous pouvez demander la suppression de votre compte à tout moment en
             contactant{' '}
             <a
-              href="mailto:hello@hilmy.io"
+              href="mailto:hilmy.io@hotmail.com"
               className="text-or-deep underline-offset-4 hover:text-or hover:underline"
             >
-              hello@hilmy.io
+              hilmy.io@hotmail.com
             </a>
             . Vos données seront effacées dans un délai de 30 jours. Pour les
             comptes prestataires en cours d&apos;abonnement, la suppression

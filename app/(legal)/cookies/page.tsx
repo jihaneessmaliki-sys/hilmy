@@ -59,10 +59,10 @@ export default function CookiesPage() {
           <p>
             Pour toute question relative aux cookies, écris-nous à{' '}
             <a
-              href="mailto:hello@hilmy.io"
+              href="mailto:hilmy.io@hotmail.com"
               className="text-or-deep underline-offset-4 hover:text-or hover:underline"
             >
-              hello@hilmy.io
+              hilmy.io@hotmail.com
             </a>
             .
           </p>
