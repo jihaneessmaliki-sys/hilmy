@@ -660,8 +660,5 @@ export async function markResolved(
   }
 }
 
-/**
- * Ré-export typé : catégories valides côté client (form select).
- */
-export const JE_CHERCHE_CATEGORIES: readonly DemandeCategory[] = DEMANDE_CATEGORIES
-export const JE_CHERCHE_COUNTRIES: readonly DemandeCountry[] = DEMANDE_COUNTRIES
+// JE_CHERCHE_CATEGORIES + JE_CHERCHE_COUNTRIES sont expose's depuis
+// lib/types/je-cherche.ts (safe-cote-client, pas de server import).
