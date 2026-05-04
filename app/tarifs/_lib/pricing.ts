@@ -140,11 +140,21 @@ export function formatPrice(value: number): string {
 
 const HELLO = 'hello@hilmy.io';
 
-/** Mailto pour les CTAs de commit prestataires (post-wizard ou switch). */
-export function buildMailtoPalier(palier: Palier, duree: Duree): string {
+/** Mailto pour les CTAs de commit prestataires (post-wizard ou switch).
+ *  Si un `promoCode` est fourni (validé côté client en amont), il est
+ *  injecté dans le body pour que la team Hilmy puisse l'appliquer
+ *  manuellement le temps que Stripe LIVE soit branché. */
+export function buildMailtoPalier(
+  palier: Palier,
+  duree: Duree,
+  promoCode?: string | null,
+): string {
   const name = PALIER_INFO[palier].name;
   const subject = `Je veux rejoindre la team Hilmy — ${name}`;
-  const body = `Bonjour, je suis intéressée par la formule ${name} pour ${DUREE_LABEL[duree]}.`;
+  const promoLine = promoCode
+    ? `\n\nCode promo : ${promoCode}`
+    : '';
+  const body = `Bonjour, je suis intéressée par la formule ${name} pour ${DUREE_LABEL[duree]}.${promoLine}`;
   return `mailto:${HELLO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   PRICING,
   PALIER_INFO,
@@ -11,6 +11,13 @@ import {
   type Palier,
   type Duree,
 } from '../_lib/pricing'
+import { createClient } from '@/lib/supabase/client'
+import {
+  applyDiscount,
+  promoErrorMessage,
+  validatePromoCode,
+  type PromoCodeRow,
+} from '@/lib/promo-codes'
 
 type WizardKey = 'standard' | 'premium' | 'cercle_pro'
 
@@ -116,6 +123,68 @@ export function WizardSection() {
   const [palier, setPalier] = useState<Palier>('premium')
   const [duree, setDuree] = useState<Duree>(1)
 
+  // Code promo (validation Supabase + recalcul prix)
+  const [promoInput, setPromoInput] = useState('')
+  const [promoStatus, setPromoStatus] = useState<
+    'idle' | 'checking' | 'valid' | 'invalid'
+  >('idle')
+  const [promoMessage, setPromoMessage] = useState<string | null>(null)
+  const [appliedPromo, setAppliedPromo] = useState<PromoCodeRow | null>(null)
+
+  // Reset le code si l'utilisatrice change de palier (le code peut ne plus être éligible)
+  useEffect(() => {
+    if (!appliedPromo) return
+    const check = validatePromoCode(appliedPromo, palier)
+    if (!check.ok) {
+      setAppliedPromo(null)
+      setPromoStatus('invalid')
+      setPromoMessage(
+        promoErrorMessage(check.reason, PALIER_INFO[palier].name),
+      )
+    }
+  }, [palier, appliedPromo])
+
+  const handleApplyPromo = async () => {
+    const trimmed = promoInput.trim()
+    if (!trimmed) return
+    setPromoStatus('checking')
+    setPromoMessage(null)
+    try {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('promo_codes')
+        .select('id, code, discount_pct, applies_to_palier, valid_from, valid_until, max_uses, current_uses, active')
+        .ilike('code', trimmed)
+        .maybeSingle()
+
+      const result = validatePromoCode(data as PromoCodeRow | null, palier)
+      if (result.ok) {
+        setAppliedPromo(result.code)
+        setPromoStatus('valid')
+        setPromoMessage(
+          `Code «${result.code.code}» appliqué : -${result.code.discount_pct}%.`,
+        )
+      } else {
+        setAppliedPromo(null)
+        setPromoStatus('invalid')
+        setPromoMessage(
+          promoErrorMessage(result.reason, PALIER_INFO[palier].name),
+        )
+      }
+    } catch {
+      setAppliedPromo(null)
+      setPromoStatus('invalid')
+      setPromoMessage('Petit pépin réseau. Réessaie dans un instant.')
+    }
+  }
+
+  const handleClearPromo = () => {
+    setAppliedPromo(null)
+    setPromoInput('')
+    setPromoStatus('idle')
+    setPromoMessage(null)
+  }
+
   const handleSelect = (step: 1 | 2 | 3, value: WizardKey) => {
     const nextAnswers = { ...answers, [step]: value }
     setAnswers(nextAnswers)
@@ -152,11 +221,15 @@ export function WizardSection() {
 
   const info = PALIER_INFO[palier]
   const price = PRICING[palier][duree]
+  const discountPct = appliedPromo?.discount_pct ?? 0
+  const monthlyAfterDiscount = applyDiscount(price.m, discountPct)
+  const totalAfterDiscount =
+    price.t !== null ? applyDiscount(price.t, discountPct) : null
   const totalLine =
-    price.t !== null
-      ? `Soit ${price.t}€ ${DUREE_PERIODE[duree]}`.trim()
+    totalAfterDiscount !== null
+      ? `Soit ${formatPrice(totalAfterDiscount)} ${DUREE_PERIODE[duree]}`.trim()
       : ''
-  const mailto = buildMailtoPalier(palier, duree)
+  const mailto = buildMailtoPalier(palier, duree, appliedPromo?.code ?? null)
 
   return (
     <div className="mx-auto max-w-[1200px] px-6 md:px-20">
@@ -308,13 +381,33 @@ export function WizardSection() {
                 {info.tagline}
               </p>
               <div className="mb-7 border-b border-or/25 pb-7">
-                <span className="font-serif text-[60px] font-light leading-none text-creme">
-                  {formatPrice(price.m)}
-                </span>
-                <span className="ml-1.5 text-sm text-or-light">/mois</span>
+                {appliedPromo ? (
+                  <div className="flex items-baseline gap-3">
+                    <span className="font-serif text-[60px] font-light leading-none text-creme">
+                      {formatPrice(monthlyAfterDiscount)}
+                    </span>
+                    <span className="text-sm text-or-light line-through opacity-70">
+                      {formatPrice(price.m)}
+                    </span>
+                    <span className="ml-1.5 text-sm text-or-light">/mois</span>
+                  </div>
+                ) : (
+                  <>
+                    <span className="font-serif text-[60px] font-light leading-none text-creme">
+                      {formatPrice(price.m)}
+                    </span>
+                    <span className="ml-1.5 text-sm text-or-light">/mois</span>
+                  </>
+                )}
                 <p className="mt-2 min-h-[18px] text-[13px] text-or-light">
                   {totalLine}
                 </p>
+                {appliedPromo && (
+                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-or/15 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-or uppercase">
+                    <span aria-hidden>✓</span>
+                    Code «{appliedPromo.code}» −{appliedPromo.discount_pct}%
+                  </p>
+                )}
               </div>
               <ul className="mb-8 space-y-1.5">
                 {info.features.map((f) => (
@@ -326,10 +419,84 @@ export function WizardSection() {
                   </li>
                 ))}
               </ul>
+              {/* Champ code promo "J'ai un code copine" */}
+              <div className="mb-5">
+                {!appliedPromo ? (
+                  <details className="group">
+                    <summary className="cursor-pointer list-none text-[12px] font-medium text-or-light transition-colors hover:text-or">
+                      <span className="border-b border-or-light/40 pb-0.5 group-open:hidden">
+                        + J&apos;ai un code copine
+                      </span>
+                      <span className="hidden border-b border-or-light/40 pb-0.5 group-open:inline">
+                        − Masquer le champ
+                      </span>
+                    </summary>
+                    <div className="mt-3 flex gap-2">
+                      <label className="sr-only" htmlFor="promo-input">
+                        Code copine
+                      </label>
+                      <input
+                        id="promo-input"
+                        type="text"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        value={promoInput}
+                        onChange={(e) => setPromoInput(e.target.value)}
+                        placeholder="COPINE10"
+                        disabled={promoStatus === 'checking'}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleApplyPromo()
+                          }
+                        }}
+                        className="flex-1 rounded-full border border-or/30 bg-vert-dark/40 px-4 py-2.5 text-[13px] uppercase tracking-[0.12em] text-creme placeholder:text-creme/40 placeholder:tracking-[0.18em] focus:border-or focus:outline-none focus:ring-1 focus:ring-or"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        disabled={
+                          promoStatus === 'checking' || promoInput.trim() === ''
+                        }
+                        className="rounded-full border border-or px-4 py-2.5 text-[11px] font-medium tracking-[0.22em] text-or uppercase transition-all hover:bg-or hover:text-vert disabled:opacity-50"
+                      >
+                        {promoStatus === 'checking' ? 'Vérif…' : 'Appliquer'}
+                      </button>
+                    </div>
+                    {promoMessage && (
+                      <p
+                        role="status"
+                        aria-live="polite"
+                        className={`mt-2 text-[12px] ${
+                          promoStatus === 'invalid'
+                            ? 'text-red-200'
+                            : 'text-or-light'
+                        }`}
+                      >
+                        {promoMessage}
+                      </p>
+                    )}
+                  </details>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 rounded-full border border-or/40 bg-or/10 px-4 py-2.5">
+                    <span className="text-[12px] text-or-light">
+                      ✓ {promoMessage}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleClearPromo}
+                      className="text-[11px] tracking-[0.22em] text-or-light/80 uppercase transition-colors hover:text-or"
+                    >
+                      Retirer
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <a
                 href={mailto}
                 className="block w-full rounded-full bg-or px-8 py-4 text-center text-[15px] font-semibold text-vert transition-all hover:-translate-y-0.5 hover:bg-or-light hover:shadow-[0_8px_24px_rgba(201,169,97,0.3)]"
-                aria-label={`Choisir la formule ${info.name} (${formatPrice(price.m)} par mois)`}
+                aria-label={`Choisir la formule ${info.name} (${formatPrice(monthlyAfterDiscount)} par mois)`}
               >
                 Je choisis cette formule
               </a>
