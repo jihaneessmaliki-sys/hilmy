@@ -128,3 +128,30 @@ export interface PaginatedDemandes {
   nextCursor: string | null
   hasMore: boolean
 }
+
+/**
+ * Constantes safe-côté-client (pas de server import). Pour les forms
+ * et selects React.
+ */
+export const JE_CHERCHE_CATEGORIES: readonly DemandeCategory[] = [
+  'beaute',
+  'bien-etre',
+  'sante-mentale',
+  'sport-nutrition',
+  'enfants-famille',
+  'maison',
+  'cuisine',
+  'evenementiel',
+  'mode-style',
+  'business-juridique',
+  'conseilleres-de-marque',
+  'autre',
+]
+
+export const JE_CHERCHE_COUNTRIES: readonly DemandeCountry[] = [
+  'CH',
+  'FR',
+  'BE',
+  'LU',
+  'MC',
+]
