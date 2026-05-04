@@ -4,6 +4,7 @@ import { StartingPoint } from '@/components/landing/StartingPoint'
 import { ThreePromises } from '@/components/landing/ThreePromises'
 import { ElleProfiles } from '@/components/landing/ElleProfiles'
 import { Manifesto } from '@/components/landing/Manifesto'
+import { TeamCherche } from '@/components/landing/TeamCherche'
 import { PricingTeaser } from '@/components/landing/PricingTeaser'
 import { FAQ } from '@/components/landing/FAQ'
 import { FinalCTA } from '@/components/landing/FinalCTA'
@@ -19,6 +20,7 @@ export default function HomePage() {
         <Manifesto />
         <ThreePromises />
         <ElleProfiles />
+        <TeamCherche />
         <PricingTeaser />
         <FAQ />
         <FinalCTA />
