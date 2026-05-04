@@ -700,6 +700,148 @@ export async function sendStatsHebdoPrestataire({
 }
 
 /**
+ * Module Je cherche (Phase 6) — 3 emails transactionnels.
+ */
+
+export async function sendNewResponseToDemandeuse({
+  to,
+  prenom,
+  demandeTitle,
+  demandeId,
+  responderPrenom,
+  responseExcerpt,
+  prestataireNom,
+}: {
+  to: string;
+  prenom: string;
+  demandeTitle: string;
+  demandeId: string;
+  responderPrenom: string;
+  responseExcerpt: string;
+  prestataireNom?: string | null;
+}) {
+  const url = `${getSiteUrl()}/je-cherche/${demandeId}`;
+  const excerpt =
+    responseExcerpt.length > 200
+      ? `${responseExcerpt.slice(0, 200).trim()}…`
+      : responseExcerpt;
+  await sendEmail({
+    to,
+    subject: `Une copine t'a répondu sur "${demandeTitle}"`,
+    html: buildRichLayout({
+      preview: `${responderPrenom} a partagé une reco`,
+      title: `${prenom}, ${responderPrenom} t'a répondu.`,
+      paragraphs: [
+        `Voici ce que ${responderPrenom} a partagé sur ta demande "${demandeTitle}" :`,
+      ],
+      quote: prestataireNom
+        ? `${excerpt}\n\n— Adresse recommandée : ${prestataireNom}`
+        : excerpt,
+      ctaLabel: "Voir la reco",
+      ctaHref: url,
+      footer:
+        "Tu peux marquer ta demande comme trouvée depuis la page si la reco te convient. Et n'hésite pas à remercier la copine d'un ♥.",
+    }),
+  });
+}
+
+export async function sendDemandeResolvedToFounders({
+  demandeTitle,
+  demandeId,
+  responseCount,
+  resolvedAt,
+}: {
+  demandeTitle: string;
+  demandeId: string;
+  responseCount: number;
+  resolvedAt: string;
+}) {
+  const recipients = getFounderRecipients();
+  if (recipients.length === 0) return;
+  const url = `${getSiteUrl()}/je-cherche/${demandeId}`;
+  await sendEmail({
+    to: recipients,
+    subject: `[STATS] Demande résolue : "${demandeTitle}"`,
+    html: `
+<!DOCTYPE html>
+<html lang="fr">
+  <body style="margin:0; padding:24px; background:#f5f0e6; font-family: Arial, sans-serif; color:#4a4a4a;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px; margin:0 auto;">
+      <tr>
+        <td style="padding:24px; background:#ffffff; border:1px solid rgba(201,169,97,0.2); border-radius:16px;">
+          <div style="font-size:28px; line-height:1; color:#0f3d2e; margin-bottom:20px; font-family: Georgia, serif;">Hilmy</div>
+          <h1 style="margin:0 0 16px; font-size:22px; line-height:1.2; color:#0f3d2e; font-family: Georgia, serif; font-weight:600;">Demande résolue</h1>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+            <tr><td style="padding:10px 0; border-top:1px solid #eee; font-weight:600; color:#0f3d2e; width:160px;">Titre</td><td style="padding:10px 0; border-top:1px solid #eee;">${escapeHtml(demandeTitle)}</td></tr>
+            <tr><td style="padding:10px 0; border-top:1px solid #eee; font-weight:600; color:#0f3d2e;">Réponses</td><td style="padding:10px 0; border-top:1px solid #eee;">${responseCount}</td></tr>
+            <tr><td style="padding:10px 0; border-top:1px solid #eee; font-weight:600; color:#0f3d2e; border-bottom:1px solid #eee;">Résolue à</td><td style="padding:10px 0; border-top:1px solid #eee; border-bottom:1px solid #eee;">${escapeHtml(resolvedAt)}</td></tr>
+          </table>
+          <div style="margin:24px 0 0;">
+            <a href="${url}" style="display:inline-block; padding:12px 20px; border-radius:999px; background:#0f3d2e; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600;">Voir la demande</a>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`,
+  });
+}
+
+export async function sendSignalementToFounders({
+  reason,
+  comment,
+  targetType,
+  targetId,
+  targetExcerpt,
+  reporterPrenom,
+}: {
+  reason: string;
+  comment?: string | null;
+  targetType: "demande" | "response";
+  targetId: string;
+  targetExcerpt: string;
+  reporterPrenom?: string | null;
+}) {
+  const recipients = getFounderRecipients();
+  if (recipients.length === 0) return;
+  const safeExcerpt =
+    targetExcerpt.length > 300
+      ? `${targetExcerpt.slice(0, 300).trim()}…`
+      : targetExcerpt;
+  await sendEmail({
+    to: recipients,
+    subject: `[SIGNALEMENT] ${reason} sur ${targetType}`,
+    html: `
+<!DOCTYPE html>
+<html lang="fr">
+  <body style="margin:0; padding:24px; background:#f5f0e6; font-family: Arial, sans-serif; color:#4a4a4a;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px; margin:0 auto;">
+      <tr>
+        <td style="padding:24px; background:#ffffff; border:1px solid rgba(201,169,97,0.2); border-radius:16px;">
+          <div style="font-size:28px; line-height:1; color:#0f3d2e; margin-bottom:20px; font-family: Georgia, serif;">Hilmy</div>
+          <h1 style="margin:0 0 16px; font-size:22px; line-height:1.2; color:#0f3d2e; font-family: Georgia, serif; font-weight:600;">Nouveau signalement</h1>
+          <p style="margin:0 0 12px; font-size:14px; color:#4a4a4a;">
+            <strong>Cible :</strong> ${escapeHtml(targetType)} (${escapeHtml(targetId)})<br/>
+            <strong>Raison :</strong> ${escapeHtml(reason)}<br/>
+            <strong>Reporter :</strong> ${escapeHtml(reporterPrenom ?? "anonyme")}
+          </p>
+          ${
+            comment
+              ? `<p style="margin:0 0 16px; font-size:13px; padding:12px; background:#f5f0e6; border-radius:8px;"><em>"${escapeHtml(comment)}"</em></p>`
+              : ""
+          }
+          <p style="margin:16px 0 8px; font-size:12px; font-weight:600; color:#0f3d2e;">Extrait du contenu signalé :</p>
+          <blockquote style="margin:0 0 16px; padding:12px 16px; background:#fef6f5; border-left:3px solid #d4847a; font-size:13px; line-height:1.55;">${escapeHtml(safeExcerpt)}</blockquote>
+          <a href="${getSiteUrl()}/admin/je-cherche-signalements" style="display:inline-block; padding:12px 20px; border-radius:999px; background:#0f3d2e; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600;">Voir dans l'admin</a>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`,
+  });
+}
+
+/**
  * Devis Express (Cercle Pro · Phase 4) — email envoyé à la prestataire
  * quand une utilisatrice soumet une demande de devis depuis sa fiche.
  *

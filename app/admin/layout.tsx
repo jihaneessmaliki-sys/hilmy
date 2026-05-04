@@ -20,7 +20,7 @@ export default async function AdminLayout({
   //   'published' OR owner)
   // → service_role pour avoir les vrais chiffres. Safe parce que
   // l'accès à ce layout est déjà gaté par le notFound() ci-dessus.
-  const [prestaCount, eventCount, recoCount, reportCount] = await Promise.all([
+  const [prestaCount, eventCount, recoCount, reportCount, jeChercheSignalementsCount] = await Promise.all([
     admin
       .from('profiles')
       .select('id', { count: 'exact', head: true })
@@ -37,6 +37,12 @@ export default async function AdminLayout({
       .from('recommendation_reports')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending'),
+    // Phase 6 : count des signalements Je cherche dans les 30 derniers jours
+    // (pas de status sur cette table -> on utilise une fenetre temporelle).
+    admin
+      .from('demande_signalements')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', new Date(Date.now() - 30 * 86_400_000).toISOString()),
   ])
 
   const nav = [
@@ -60,6 +66,11 @@ export default async function AdminLayout({
       href: '/admin/signalements',
       label: 'Signalements',
       badge: reportCount.count ?? 0,
+    },
+    {
+      href: '/admin/je-cherche-signalements',
+      label: 'Signalements Je cherche',
+      badge: jeChercheSignalementsCount.count ?? 0,
     },
   ]
 
