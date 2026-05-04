@@ -367,7 +367,7 @@ export default function TarifsPage() {
                 Choisir ma formule
               </a>
               <a
-                href="mailto:hello@hilmy.io"
+                href="mailto:hilmy.io@hotmail.com"
                 className="inline-block rounded-full border border-vert bg-transparent px-8 py-4 text-[15px] font-medium text-vert transition-all hover:bg-vert hover:text-creme"
               >
                 Poser ma question

@@ -45,7 +45,7 @@ export default async function AbonnementPage() {
   const supportSubject = isCerclePro
     ? '[PRIORITAIRE] Mon abonnement Hilmy'
     : 'Mon abonnement Hilmy'
-  const supportMailto = `mailto:hello@hilmy.io?subject=${encodeURIComponent(supportSubject)}`
+  const supportMailto = `mailto:hilmy.io@hotmail.com?subject=${encodeURIComponent(supportSubject)}`
   const supportSla = isCerclePro
     ? 'on te répond par email sous 12h ouvrées (support prioritaire Cercle Pro)'
     : 'on te répond par email sous 24h ouvrées'
@@ -202,7 +202,7 @@ export default async function AbonnementPage() {
             href={supportMailto}
             className="text-or-deep underline-offset-4 hover:text-or hover:underline"
           >
-            hello@hilmy.io
+            hilmy.io@hotmail.com
           </a>
           . La résiliation prend effet à la fin de ta période en cours, sans
           remboursement prorata. Aucune commission n&apos;est prélevée sur tes
