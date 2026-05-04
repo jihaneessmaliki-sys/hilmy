@@ -39,6 +39,17 @@ export default async function AbonnementPage() {
   const upsellInfo = upsell ? PALIER_INFO[upsell] : null
   const upsellPrice = upsell ? PRICING[upsell][1].m : null
 
+  // Support prioritaire Cercle Pro : préfixe [PRIORITAIRE] dans le subject
+  // mailto et SLA réponse 12h vs 24h pour les autres paliers.
+  const isCerclePro = palier === 'cercle_pro'
+  const supportSubject = isCerclePro
+    ? '[PRIORITAIRE] Mon abonnement Hilmy'
+    : 'Mon abonnement Hilmy'
+  const supportMailto = `mailto:hello@hilmy.io?subject=${encodeURIComponent(supportSubject)}`
+  const supportSla = isCerclePro
+    ? 'on te répond par email sous 12h ouvrées (support prioritaire Cercle Pro)'
+    : 'on te répond par email sous 24h ouvrées'
+
   return (
     <section className="px-6 py-12 md:px-12 md:py-16">
       {/* En-tête */}
@@ -174,6 +185,12 @@ export default async function AbonnementPage() {
         <div className="flex items-center gap-4">
           <GoldLine width={40} />
           <span className="overline text-or">Gestion</span>
+          {isCerclePro && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-or/15 px-3 py-1 text-[10px] font-medium tracking-[0.22em] text-or-deep uppercase">
+              <span className="text-or" aria-hidden="true">★</span>
+              Support prioritaire
+            </span>
+          )}
         </div>
         <h2 className="mt-4 font-serif text-2xl font-light text-vert">
           Tu veux changer ou résilier&nbsp;?
@@ -182,7 +199,7 @@ export default async function AbonnementPage() {
           Tu peux changer de palier ou arrêter ton abonnement à tout moment, en
           écrivant à{' '}
           <a
-            href="mailto:hello@hilmy.io?subject=Mon%20abonnement%20Hilmy"
+            href={supportMailto}
             className="text-or-deep underline-offset-4 hover:text-or hover:underline"
           >
             hello@hilmy.io
@@ -193,7 +210,7 @@ export default async function AbonnementPage() {
         </p>
         <p className="mt-4 max-w-2xl text-[12px] italic leading-[1.65] text-texte-sec">
           La gestion en self-service depuis le dashboard arrive bientôt. En
-          attendant, on te répond par email sous 24h ouvrées.
+          attendant, {supportSla}.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Link
@@ -204,10 +221,10 @@ export default async function AbonnementPage() {
             <span className="text-or-light" aria-hidden="true">→</span>
           </Link>
           <a
-            href="mailto:hello@hilmy.io?subject=Mon%20abonnement%20Hilmy"
+            href={supportMailto}
             className="inline-flex h-11 items-center gap-2 rounded-full border border-or/40 px-6 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-creme-deep"
           >
-            Écrire à la team
+            {isCerclePro ? 'Écrire à la team (prio)' : 'Écrire à la team'}
             <span className="text-or" aria-hidden="true">→</span>
           </a>
         </div>
