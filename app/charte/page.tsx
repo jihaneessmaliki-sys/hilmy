@@ -22,10 +22,10 @@ export default function ChartePage() {
       <div className="grid max-w-3xl gap-12">
         <CharteItem numero="01" titre="Confiance vérifiée">
           <p>
-            Chaque fiche prestataire est relue à la main par notre équipe avant
-            d&apos;être visible dans l&apos;annuaire. On ne laisse rien passer au
-            hasard — on prend le temps de vérifier les coordonnées, la cohérence
-            de l&apos;offre, le ton.
+            Chaque fiche prestataire est relue à la main par la team Hilmy
+            avant d&apos;être visible dans l&apos;annuaire. On ne laisse rien
+            passer au hasard — on prend le temps de vérifier les coordonnées,
+            la cohérence de l&apos;offre, le ton.
           </p>
           <p>
             Si quelque chose te semble bizarre, tu peux signaler une fiche en un
@@ -59,11 +59,27 @@ export default function ChartePage() {
           </p>
         </CharteItem>
 
-        <CharteItem numero="04" titre="Gratuité réelle">
+        <CharteItem numero="04" titre="Modèle clair">
           <p>
-            Hilmy est gratuit. Pour les utilisatrices comme pour les prestataires.
-            On ne prend pas de commission sur les prestations, on ne vend pas tes
-            données, on ne pousse pas de fiches contre paiement.
+            Hilmy est{' '}
+            <em className="not-italic font-medium text-vert">
+              entièrement gratuit pour les copines
+            </em>{' '}
+            qui consultent l&apos;annuaire, lisent les recos et participent
+            aux événements. Aucun paywall, aucune limite, aucune surprise.
+          </p>
+          <p>
+            Pour les prestataires, la fiche dans l&apos;annuaire fonctionne
+            par <em className="not-italic font-medium text-vert">abonnement plat</em>{' '}
+            (3 formules dès 19€/mois — détail sur{' '}
+            <a
+              href="/tarifs"
+              className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+            >
+              /tarifs
+            </a>
+            ). Pas de commission sur tes prestations, pas de revente de tes
+            données, pas de pub tierce.
           </p>
           <p>
             Notre seul rôle, c&apos;est de connecter les copines entre elles —
