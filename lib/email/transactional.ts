@@ -698,3 +698,52 @@ export async function sendStatsHebdoPrestataire({
     }),
   });
 }
+
+/**
+ * Devis Express (Cercle Pro · Phase 4) — email envoyé à la prestataire
+ * quand une utilisatrice soumet une demande de devis depuis sa fiche.
+ *
+ * Le contact (téléphone, email) de l'utilisatrice est inclus pour que
+ * la prestataire puisse répondre directement out-of-band. La trace
+ * en DB sert d'archive + dashboard.
+ */
+export async function sendDevisExpressEmail({
+  to,
+  prestaPrenom,
+  ficheNom,
+  utilisatricePrenom,
+  utilisatriceEmail,
+  utilisatriceTelephone,
+  message,
+  dashboardUrl,
+}: {
+  to: string;
+  prestaPrenom: string;
+  ficheNom: string;
+  utilisatricePrenom: string;
+  utilisatriceEmail: string;
+  utilisatriceTelephone?: string | null;
+  message: string;
+  dashboardUrl: string;
+}) {
+  const contactLines = [
+    `Email : ${utilisatriceEmail}`,
+    utilisatriceTelephone ? `Téléphone : ${utilisatriceTelephone}` : null,
+  ].filter(Boolean) as string[];
+
+  await sendEmail({
+    to,
+    subject: `Demande de devis — ${utilisatricePrenom} via Hilmy`,
+    html: buildRichLayout({
+      preview: `${utilisatricePrenom} te contacte pour un devis`,
+      title: `${prestaPrenom}, ${utilisatricePrenom} te demande un devis.`,
+      paragraphs: [
+        `Une copine vient de soumettre une demande de devis sur ta fiche ${ficheNom} via Hilmy. Voici son message :`,
+      ],
+      quote: message,
+      ctaLabel: "Voir mes demandes de devis",
+      ctaHref: dashboardUrl,
+      footer: `Pour répondre, écris-lui directement : ${contactLines.join(" · ")}. Tu peux marquer cette demande comme traitée depuis ton dashboard.`,
+    }),
+  });
+}
