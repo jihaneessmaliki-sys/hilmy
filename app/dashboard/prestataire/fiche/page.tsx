@@ -7,6 +7,12 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORIES_MAP } from '@/lib/constants'
+import {
+  PHOTO_LIMIT,
+  canUploadMorePhotos,
+  photoCountLabel,
+} from '@/lib/palier-limits'
+import type { Palier } from '@/app/tarifs/_lib/pricing'
 
 type Service = { nom: string; prix: string; duree: string }
 
@@ -43,6 +49,7 @@ export default function MaFichePage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [profileId, setProfileId] = useState<string | null>(null)
   const [status, setStatus] = useState<string>('pending')
+  const [palier, setPalier] = useState<Palier>('standard')
   const [noteMoy, setNoteMoy] = useState(0)
   const [nbAvis, setNbAvis] = useState(0)
   const [editing, setEditing] = useState(false)
@@ -102,6 +109,13 @@ export default function MaFichePage() {
 
       setProfileId(data.id)
       setStatus(data.status)
+      setPalier(
+        data.palier === 'premium'
+          ? 'premium'
+          : data.palier === 'cercle_pro'
+            ? 'cercle_pro'
+            : 'standard',
+      )
       setNoteMoy(data.note_moyenne ?? 0)
       setNbAvis(data.nb_avis ?? 0)
       setDraft({
@@ -172,6 +186,15 @@ export default function MaFichePage() {
 
   const handlePhoto = async (file: File) => {
     if (!userId || !profileId) return
+    if (!canUploadMorePhotos(palier, draft.galerie.length)) {
+      const limit = PHOTO_LIMIT[palier]
+      setError(
+        limit !== null
+          ? `Limite atteinte (${limit} photos pour le palier ${palier === 'standard' ? 'Standard' : 'Premium'}). Passe au palier supérieur depuis /tarifs pour en ajouter plus.`
+          : 'Limite atteinte.',
+      )
+      return
+    }
     if (file.size > 5 * 1024 * 1024) {
       setError('Chaque photo doit faire moins de 5 Mo.')
       return
@@ -576,14 +599,22 @@ export default function MaFichePage() {
                 <Group
                   kicker="Galerie"
                   action={
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="text-[11px] tracking-[0.22em] text-or uppercase hover:text-or-deep disabled:opacity-60"
-                    >
-                      {uploading ? 'Envoi…' : '+ Ajouter'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] tracking-[0.22em] text-texte-sec uppercase">
+                        {photoCountLabel(palier, draft.galerie.length)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={
+                          uploading ||
+                          !canUploadMorePhotos(palier, draft.galerie.length)
+                        }
+                        className="text-[11px] tracking-[0.22em] text-or uppercase hover:text-or-deep disabled:opacity-60"
+                      >
+                        {uploading ? 'Envoi…' : '+ Ajouter'}
+                      </button>
+                    </div>
                   }
                 >
                   <input
