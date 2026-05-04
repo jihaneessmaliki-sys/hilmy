@@ -1,3 +1,9 @@
 {
-  "regions": ["cdg1"]
+  "regions": ["cdg1"],
+  "crons": [
+    {
+      "path": "/api/cron/stats-hebdo",
+      "schedule": "0 9 * * 1"
+    }
+  ]
 }
