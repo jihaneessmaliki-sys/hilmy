@@ -19,6 +19,12 @@ export default function ParametresPrestatairePage() {
   const [status, setStatus] = useState<
     'pending' | 'approved' | 'rejected' | 'ghost' | 'paused'
   >('pending')
+  const [palier, setPalier] = useState<'standard' | 'premium' | 'cercle_pro'>(
+    'standard',
+  )
+  const [statsHebdoOptIn, setStatsHebdoOptIn] = useState(true)
+  const [statsHebdoSaving, setStatsHebdoSaving] = useState(false)
+  const [userIdState, setUserIdState] = useState<string | null>(null)
 
   useEffect(() => {
     const run = async () => {
@@ -32,19 +38,82 @@ export default function ParametresPrestatairePage() {
         return
       }
       setEmail(user.email ?? '')
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (data) {
-        setProfileId(data.id)
-        setStatus(data.status)
+      setUserIdState(user.id)
+
+      const [profileRes, prefsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, status, palier')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('user_profiles')
+          .select('preferences')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+      ])
+
+      if (profileRes.data) {
+        setProfileId(profileRes.data.id)
+        setStatus(profileRes.data.status)
+        const p = profileRes.data.palier
+        setPalier(
+          p === 'premium' ? 'premium' : p === 'cercle_pro' ? 'cercle_pro' : 'standard',
+        )
       }
+
+      // Opt-in stats hebdo : default true (active si pas opt-out explicite)
+      const prefs = (prefsRes.data?.preferences ?? {}) as Record<string, unknown>
+      const notifs = (prefs.notifications ?? {}) as Record<string, unknown>
+      setStatsHebdoOptIn(notifs.statsHebdoPrestataire !== false)
+
       setLoading(false)
     }
     run()
   }, [])
+
+  const toggleStatsHebdo = async () => {
+    if (!userIdState) return
+    const next = !statsHebdoOptIn
+    setStatsHebdoOptIn(next) // optimistic
+    setStatsHebdoSaving(true)
+    setError(null)
+    const supabase = createClient()
+    // Read-then-merge pour preserver les autres cles preferences (cf PR #16 fix bug 1)
+    const { data: existing, error: readErr } = await supabase
+      .from('user_profiles')
+      .select('preferences')
+      .eq('user_id', userIdState)
+      .maybeSingle()
+    if (readErr) {
+      setStatsHebdoOptIn(!next)
+      setStatsHebdoSaving(false)
+      setError(readErr.message)
+      return
+    }
+    const current = (existing?.preferences ?? {}) as Record<string, unknown>
+    const currentNotifs = (current.notifications ?? {}) as Record<string, unknown>
+    const merged = {
+      ...current,
+      notifications: { ...currentNotifs, statsHebdoPrestataire: next },
+    }
+    const { error: updErr } = await supabase
+      .from('user_profiles')
+      .update({ preferences: merged })
+      .eq('user_id', userIdState)
+    setStatsHebdoSaving(false)
+    if (updErr) {
+      setStatsHebdoOptIn(!next)
+      setError(updErr.message)
+      return
+    }
+    setMsg(
+      next
+        ? 'Tu recevras tes stats hebdo chaque lundi matin.'
+        : 'Stats hebdo désactivées. Tu peux les réactiver à tout moment.',
+    )
+    setTimeout(() => setMsg(null), 4000)
+  }
 
   const toggleVisibility = async () => {
     if (!profileId) return
@@ -170,6 +239,46 @@ export default function ParametresPrestatairePage() {
                 </div>
               )}
             </SettingsGroup>
+
+            {(palier === 'premium' || palier === 'cercle_pro') && (
+              <SettingsGroup
+                kicker="Notifications"
+                titre="Ce qu'on t'envoie."
+              >
+                <div className="flex items-start justify-between gap-6 px-6 py-5">
+                  <div className="max-w-lg">
+                    <p className="text-[14px] font-medium text-vert">
+                      Stats hebdo par email
+                    </p>
+                    <p className="mt-1 text-[12px] text-texte-sec">
+                      Chaque lundi matin, un récap des vues et des
+                      tap-to-contact de la semaine passée + comparaison avec
+                      la précédente.
+                    </p>
+                    <p className="mt-2 text-[11px] tracking-[0.22em] text-or uppercase">
+                      Inclus dans Premium et Cercle Pro
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={statsHebdoOptIn}
+                    aria-label="Activer les stats hebdo par email"
+                    disabled={statsHebdoSaving}
+                    onClick={toggleStatsHebdo}
+                    className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                      statsHebdoOptIn ? 'bg-vert' : 'bg-creme-deep'
+                    } disabled:opacity-60`}
+                  >
+                    <span
+                      className={`absolute top-1 h-5 w-5 rounded-full shadow-sm transition-all ${
+                        statsHebdoOptIn ? 'left-6 bg-or' : 'left-1 bg-blanc'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </SettingsGroup>
+            )}
 
             <SettingsGroup
               kicker="Confidentialité"

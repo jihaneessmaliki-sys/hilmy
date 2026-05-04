@@ -628,3 +628,73 @@ export async function sendFounderSignupNotification({
 </html>`,
   });
 }
+
+/**
+ * Stats hebdo prestataires Premium / Cercle Pro (Phase 4 — promesse /tarifs).
+ * Envoyée chaque lundi matin par /api/cron/stats-hebdo.
+ *
+ * Best-effort : on ne block pas le cron si une seule envoi rate (catch
+ * côté caller pour log + continuer).
+ */
+export async function sendStatsHebdoPrestataire({
+  to,
+  prenom,
+  nomFiche,
+  ficheSlug,
+  views7d,
+  views7dPrev,
+  contacts7d,
+  contacts7dPrev,
+  palierLabel,
+}: {
+  to: string;
+  prenom: string;
+  nomFiche: string;
+  ficheSlug: string;
+  views7d: number;
+  views7dPrev: number;
+  contacts7d: number;
+  contacts7dPrev: number;
+  palierLabel: string;
+}) {
+  const dashboardUrl = `${getSiteUrl()}/dashboard/prestataire`;
+
+  function trendLine(label: string, current: number, prev: number): string {
+    if (prev === 0 && current === 0) {
+      return `${label} : ${current} cette semaine.`;
+    }
+    if (prev === 0) {
+      return `${label} : ${current} cette semaine (premier signal — bravo).`;
+    }
+    const delta = current - prev;
+    const pct = Math.round((delta / prev) * 100);
+    if (delta > 0) {
+      return `${label} : ${current} cette semaine (+${pct}% vs semaine dernière).`;
+    }
+    if (delta < 0) {
+      return `${label} : ${current} cette semaine (${pct}% vs semaine dernière).`;
+    }
+    return `${label} : ${current} cette semaine (stable).`;
+  }
+
+  await sendEmail({
+    to,
+    subject: `Tes stats Hilmy de la semaine — ${nomFiche}`,
+    html: buildRichLayout({
+      preview: `${views7d} vues · ${contacts7d} contacts cette semaine`,
+      title: `${prenom}, ta semaine en chiffres.`,
+      paragraphs: [
+        `Voici un petit résumé de ce qui s'est passé sur ta fiche ${nomFiche} (palier ${palierLabel}) ces 7 derniers jours.`,
+        trendLine("Vues fiche", views7d, views7dPrev),
+        trendLine("Tap-to-contact (WhatsApp, email, réseaux…)", contacts7d, contacts7dPrev),
+        contacts7d === 0 && views7d > 0
+          ? `Beaucoup de visites mais peu de contacts ? Vérifie tes canaux (WhatsApp, Instagram) — c'est souvent là que ça bloque.`
+          : `Continue ce que tu fais — chaque semaine, ça se construit.`,
+      ],
+      ctaLabel: "Voir mon dashboard détaillé",
+      ctaHref: dashboardUrl,
+      footer:
+        "Tu reçois cet email parce que tu es abonnée Premium ou Cercle Pro. Tu peux désactiver les stats hebdo depuis tes paramètres dashboard.",
+    }),
+  });
+}
