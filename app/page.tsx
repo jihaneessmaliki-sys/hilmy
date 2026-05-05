@@ -20,7 +20,7 @@ export default function HomePage() {
         <Manifesto />
         <ThreePromises />
         <ElleProfiles />
-        <TeamCherche />
+        <TeamCherche variant="public" />
         <PricingTeaser />
         <FAQ />
         <FinalCTA />
