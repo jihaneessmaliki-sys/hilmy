@@ -6,6 +6,7 @@ import { GoldLine } from '@/components/ui/GoldLine'
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { EvenementCard } from '@/components/v2/EvenementCard'
 import { HomeMap, type MapPoint } from '@/components/v2/HomeMap'
+import { TeamCherche } from '@/components/landing/TeamCherche'
 import {
   getCentroid,
   offsetPoint,
@@ -351,8 +352,13 @@ export default async function AccueilPage() {
 
   return (
     <PageShell navVariant="solid">
+      {/* Module Je cherche : variant connected (vraies demandes) */}
+      <div className="pt-24 md:pt-32">
+        <TeamCherche />
+      </div>
+
       {/* Hero mini */}
-      <section className="relative overflow-hidden bg-creme-soft pt-28 pb-14 md:pt-36 md:pb-20">
+      <section className="relative overflow-hidden bg-creme-soft pt-14 pb-14 md:pt-20 md:pb-20">
         <div className="absolute inset-0 bg-grain opacity-[0.06]" />
         <div className="relative mx-auto max-w-container px-6 md:px-20">
           <div className="flex items-center gap-4">
