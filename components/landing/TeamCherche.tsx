@@ -22,6 +22,52 @@ function initial(prenom: string | null): string {
 }
 
 /**
+ * Capitalize première lettre d'un prénom (le reste en lowercase) — fix
+ * pour les profils stockés en minuscule (héritage signup historique).
+ * Fallback "la copine" si vide/null.
+ */
+function capitalizeFirstName(name: string | null | undefined): string {
+  if (!name || !name.trim()) return 'la copine'
+  const trimmed = name.trim()
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase()
+}
+
+/**
+ * Formate le titre d'une demande pour l'affichage card "Cherche / [titre]".
+ *
+ * Le champ `title` BDD peut être saisi de 2 façons selon l'ancienneté :
+ *   - Ancien (avant PR #65) : "Décoratrice" (juste l'objet, pas d'article)
+ *   - Nouveau (depuis PR #65) : "Une décoratrice" (article inclus)
+ *
+ * Cette fonction garantit un rendu cohérent "une décoratrice" quel que
+ * soit le format BDD :
+ *   - Si commence déjà par un article (Un/Une/Des/Le/La/Les/L') → garde
+ *     tel quel, juste lowercase la 1ère lettre.
+ *   - Sinon : déduit l'article via heuristique terminaison française
+ *     (-e, -trice, -euse, -ière, -esse → féminin "une", sinon "un").
+ *
+ * V1.0 : heuristique imparfaite (français = piège). À itérer V1.5 avec
+ * un champ "gender" optionnel sur la table demandes ou une liste de
+ * mots connus.
+ */
+function formatTitle(rawTitle: string): string {
+  const trimmed = rawTitle.trim()
+  if (trimmed.length === 0) return ''
+
+  // 1. Détection article déjà présent
+  const articlePattern = /^(une?|des|les?|la|l['’])\s/i
+  if (articlePattern.test(trimmed)) {
+    return trimmed.charAt(0).toLowerCase() + trimmed.slice(1)
+  }
+
+  // 2. Heuristique genre par terminaison
+  const feminineEndings = /(trice|euse|ière|esse|e)$/i
+  const article = feminineEndings.test(trimmed) ? 'une' : 'un'
+  const lowercased = trimmed.charAt(0).toLowerCase() + trimmed.slice(1)
+  return `${article} ${lowercased}`
+}
+
+/**
  * Cards démo statiques pour la home publique (variant="public").
  * Aucune info perso (pas de prénom réel, pas d'avatar, pas de timestamp
  * relatif) — juste un teaser pour donner envie de s'inscrire.
@@ -133,7 +179,7 @@ async function TeamCherchePrivate() {
               const ctaLabel =
                 d.response_count > 0
                   ? `${d.response_count} réponse${d.response_count > 1 ? 's' : ''} · Réponds aussi →`
-                  : `Réponds à ${d.prenom ?? 'la copine'} →`
+                  : `Réponds à ${capitalizeFirstName(d.prenom)} →`
               const ctaIsOutline = d.response_count > 0
               return (
                 <li key={d.id} className="w-[260px] shrink-0 snap-start sm:w-[280px]">
@@ -170,19 +216,17 @@ async function TeamCherchePrivate() {
                     <p className="mt-3 text-[9px] tracking-[0.22em] text-or-deep uppercase">
                       {CATEGORY_LABELS[d.category] ?? d.category}
                     </p>
-                    {/* Titre rime visuelle avec le H2 : "Cherche" italique or +
-                        objet de la demande en vert. Convention V1 : le champ
-                        title BDD contient juste l'objet ("Décoratrice", "Coach
-                        sportive"…) — le préfixe "Cherche " est ajouté ici en
-                        display. Le form /je-cherche/nouvelle cadre la copine
-                        avec label "Tu cherches quoi ?" + placeholder "Une
-                        décoratrice…" pour respecter cette convention. */}
-                    <h3 className="mt-1.5 font-serif text-[20px] font-light leading-tight md:text-[22px]">
-                      <em className="not-italic italic font-light text-or">
-                        Cherche{' '}
-                      </em>
-                      <span className="text-vert break-words line-clamp-2">
-                        {d.title}
+                    {/* Titre 2 lignes étagées : "Cherche" en italique or
+                        plus petit (joue le rôle d'eyebrow contextuel) +
+                        ligne 2 dominante avec article auto via formatTitle
+                        (gère titres BDD avec OU sans article — héritage
+                        avant le form /je-cherche/nouvelle PR #65). */}
+                    <h3 className="mt-1.5 font-serif font-light leading-tight">
+                      <span className="block text-[14px] italic text-or md:text-[15px]">
+                        Cherche
+                      </span>
+                      <span className="mt-0.5 block text-[20px] text-vert break-words line-clamp-2 md:text-[22px]">
+                        {formatTitle(d.title)}
                       </span>
                     </h3>
                     <div className="mt-auto pt-4">
