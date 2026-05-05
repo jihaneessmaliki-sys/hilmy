@@ -21,6 +21,16 @@ import {
 
 type WizardKey = 'standard' | 'premium' | 'cercle_pro'
 
+interface WizardSectionProps {
+  /** Pré-selection venue de query params /tarifs?palier=... (deep-link mobile).
+   *  Si défini, le wizard est sauté → on affiche directement le palier. */
+  initialPalier?: Palier
+  /** Code promo à appliquer automatiquement (deep-link mobile).
+   *  Tente une validation Supabase au mount, comme si l'utilisatrice avait
+   *  tapé le code à la main. */
+  initialPromo?: string
+}
+
 const STEPS: {
   step: 1 | 2 | 3
   question: { before: string; em: string; after: string }
@@ -116,20 +126,24 @@ function computeReco(answers: Record<number, WizardKey>): Palier {
   return best
 }
 
-export function WizardSection() {
+export function WizardSection({ initialPalier, initialPromo }: WizardSectionProps = {}) {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
   const [answers, setAnswers] = useState<Record<number, WizardKey>>({})
-  const [showResult, setShowResult] = useState(false)
-  const [palier, setPalier] = useState<Palier>('premium')
+  // Si un palier vient du deep-link, on saute le wizard et on affiche
+  // directement le résultat avec ce palier pré-selectionné.
+  const [showResult, setShowResult] = useState(!!initialPalier)
+  const [palier, setPalier] = useState<Palier>(initialPalier ?? 'premium')
   const [duree, setDuree] = useState<Duree>(1)
 
   // Code promo (validation Supabase + recalcul prix)
-  const [promoInput, setPromoInput] = useState('')
+  const [promoInput, setPromoInput] = useState((initialPromo ?? '').toUpperCase())
   const [promoStatus, setPromoStatus] = useState<
     'idle' | 'checking' | 'valid' | 'invalid'
   >('idle')
   const [promoMessage, setPromoMessage] = useState<string | null>(null)
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeRow | null>(null)
+  // Toast léger après auto-application du code promo (deep-link mobile).
+  const [promoToast, setPromoToast] = useState<string | null>(null)
 
   // Reset le code si l'utilisatrice change de palier (le code peut ne plus être éligible)
   useEffect(() => {
@@ -177,6 +191,33 @@ export function WizardSection() {
       setPromoMessage('Petit pépin réseau. Réessaie dans un instant.')
     }
   }
+
+  // Auto-scroll vers le résultat + auto-apply du code promo si l'arrivée
+  // est un deep-link mobile (?palier=…&promo=…). Une seule fois au mount
+  // (les deps initialPalier/initialPromo ne bougent pas — viennent de
+  // searchParams server-side).
+  useEffect(() => {
+    if (initialPalier) {
+      // Petit délai pour laisser le rendu poser le DOM avant le scroll.
+      setTimeout(() => {
+        document
+          .getElementById('reco-result')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 120)
+    }
+    if (initialPromo && initialPromo.trim().length > 0) {
+      // Auto-apply : utilise le state du composant. handleApplyPromo lit
+      // promoInput qui a été initialisé avec initialPromo.
+      ;(async () => {
+        await handleApplyPromo()
+        setPromoToast(
+          `Code promo ${initialPromo.toUpperCase()} appliqué — c'est offert.`,
+        )
+        setTimeout(() => setPromoToast(null), 4000)
+      })()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleClearPromo = () => {
     setAppliedPromo(null)
@@ -233,6 +274,25 @@ export function WizardSection() {
 
   return (
     <div className="mx-auto max-w-[1200px] px-6 md:px-20">
+      {/* Toast léger après auto-apply code promo deep-link */}
+      {promoToast ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mx-auto mb-6 max-w-[480px] rounded-2xl border border-or bg-or/10 px-5 py-3 text-center text-[13px] font-medium text-vert"
+        >
+          {promoToast}
+        </div>
+      ) : null}
+
+      {/* Keyframes pulse border (highlight card si deep-link palier) */}
+      <style jsx global>{`
+        @keyframes pulse-border {
+          0%, 100% { box-shadow: 0 24px 60px rgba(15, 61, 46, 0.2); }
+          50% { box-shadow: 0 0 0 6px rgba(201, 169, 97, 0.45), 0 24px 60px rgba(15, 61, 46, 0.2); }
+        }
+      `}</style>
+
       {/* Wizard Card */}
       <div className="mx-auto max-w-[760px] rounded-[32px] bg-white p-10 shadow-[0_24px_60px_rgba(15,61,46,0.06)] md:p-14">
         {/* Progress dots */}
@@ -372,7 +432,11 @@ export function WizardSection() {
 
           {/* Card + explanation */}
           <div className="mx-auto grid max-w-[1000px] grid-cols-1 items-center gap-12 md:grid-cols-2">
-            <div className="relative rounded-[32px] border-2 border-or bg-vert p-12 text-creme shadow-[0_24px_60px_rgba(15,61,46,0.2)]">
+            <div
+              className={`relative rounded-[32px] border-2 border-or bg-vert p-12 text-creme shadow-[0_24px_60px_rgba(15,61,46,0.2)] ${
+                initialPalier ? 'animate-[pulse-border_2s_ease-out_1]' : ''
+              }`}
+            >
               <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-or px-4 py-2 text-[11px] font-semibold uppercase tracking-[.18em] text-vert">
                 Pour toi
               </span>
