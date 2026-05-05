@@ -2,6 +2,13 @@ import type { Metadata } from 'next'
 import { PageShell } from '@/components/v2/PageShell'
 import { WizardSection } from './_components/WizardSection'
 import { LieuPricing } from './_components/LieuPricing'
+import type { Palier } from './_lib/pricing'
+
+type SearchParams = Promise<{
+  palier?: string
+  promo?: string
+  utm_source?: string
+}>
 
 export const metadata: Metadata = {
   title: 'Tarifs · Hilmy — La team des bonnes adresses',
@@ -103,7 +110,33 @@ const DIALOGUE_QA = [
 // signature visuelle systémique du site. Fix global tokens couleur
 // dans un batch design dédié, pas un patch silencieux ici.
 
-export default function TarifsPage() {
+function normalizePalier(raw: string | undefined): Palier | undefined {
+  if (!raw) return undefined
+  const lower = raw.toLowerCase()
+  if (lower === 'standard' || lower === 'premium' || lower === 'cercle_pro') {
+    return lower
+  }
+  return undefined
+}
+
+export default async function TarifsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
+  const params = await searchParams
+  const initialPalier = normalizePalier(params.palier)
+  const initialPromo = params.promo?.trim().toUpperCase() || undefined
+
+  // Log analytics dev mode (deep-link mobile UTM tracking).
+  if (process.env.NODE_ENV !== 'production' && params.utm_source) {
+    console.log('[tarifs] deep-link', {
+      palier: initialPalier,
+      promo: initialPromo,
+      utm_source: params.utm_source,
+    })
+  }
+
   return (
     <PageShell navVariant="solid">
       <div className="scroll-smooth">
@@ -215,7 +248,7 @@ export default function TarifsPage() {
             </p>
           </div>
 
-          <WizardSection />
+          <WizardSection initialPalier={initialPalier} initialPromo={initialPromo} />
         </section>
 
         {/* CTA STRIP 1 */}
