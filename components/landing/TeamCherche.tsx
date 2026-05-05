@@ -106,6 +106,10 @@ async function TeamCherchePrivate() {
               <em className="italic text-or">cherche</em>
               <span className="text-or">…</span>
             </h2>
+            {/* Intro module : explique en une ligne ce qu'on peut faire ici. */}
+            <p className="mt-4 text-[14px] leading-[1.55] text-vert/70 md:text-[15px]">
+              Tu cherches une adresse&nbsp;? Demande à la team.
+            </p>
           </div>
           <Link
             href="/je-cherche"
@@ -119,18 +123,24 @@ async function TeamCherchePrivate() {
         </div>
 
         {/* Carrousel scroll-snap */}
-        <div className="mt-10 -mx-6 md:-mx-20">
+        <div className="mt-8 -mx-6 md:-mx-20">
           <ul
             className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:px-20 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             aria-label="Demandes récentes des copines"
           >
             {demandes.map((d) => {
               const isUrgent = d.urgency === 'urgent' && d.status === 'open'
+              const ctaLabel =
+                d.response_count > 0
+                  ? `${d.response_count} réponse${d.response_count > 1 ? 's' : ''} · Réponds aussi →`
+                  : `Réponds à ${d.prenom ?? 'la copine'} →`
+              const ctaIsOutline = d.response_count > 0
               return (
                 <li key={d.id} className="w-[260px] shrink-0 snap-start sm:w-[280px]">
                   <Link
                     href={`/je-cherche/${d.id}`}
                     className="group flex h-full flex-col rounded-sm border border-or/15 bg-blanc p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-or/40 hover:shadow-[0_16px_32px_-20px_rgba(15,61,46,0.25)]"
+                    aria-label={`Demande de ${d.prenom ?? 'une copine'} — ${d.title}. Cliquer pour répondre.`}
                   >
                     <div className="flex items-start gap-2.5">
                       <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-creme-deep">
@@ -160,18 +170,38 @@ async function TeamCherchePrivate() {
                     <p className="mt-3 text-[9px] tracking-[0.22em] text-or-deep uppercase">
                       {CATEGORY_LABELS[d.category] ?? d.category}
                     </p>
-                    <h3 className="mt-1.5 line-clamp-3 font-serif text-[16px] font-light leading-tight text-vert break-words">
-                      {d.title}
+                    {/* Titre rime visuelle avec le H2 : "Cherche" italique or +
+                        objet de la demande en vert. Convention V1 : le champ
+                        title BDD contient juste l'objet ("Décoratrice", "Coach
+                        sportive"…) — le préfixe "Cherche " est ajouté ici en
+                        display. Le form /je-cherche/nouvelle cadre la copine
+                        avec label "Tu cherches quoi ?" + placeholder "Une
+                        décoratrice…" pour respecter cette convention. */}
+                    <h3 className="mt-1.5 font-serif text-[20px] font-light leading-tight md:text-[22px]">
+                      <em className="not-italic italic font-light text-or">
+                        Cherche{' '}
+                      </em>
+                      <span className="text-vert break-words line-clamp-2">
+                        {d.title}
+                      </span>
                     </h3>
-                    <div className="mt-auto pt-4 text-[11px] font-medium text-texte-sec">
-                      {d.response_count} reco{d.response_count > 1 ? 's' : ''}
+                    <div className="mt-auto pt-4">
+                      <span
+                        className={`flex w-full items-center justify-center rounded-full px-4 py-2.5 text-[12px] font-medium transition-colors ${
+                          ctaIsOutline
+                            ? 'border border-vert text-vert group-hover:bg-vert group-hover:text-creme'
+                            : 'bg-vert text-creme group-hover:bg-vert-dark'
+                        }`}
+                      >
+                        {ctaLabel}
+                      </span>
                     </div>
                   </Link>
                 </li>
               )
             })}
 
-            {/* Card CTA finale : poster une demande */}
+            {/* Card CTA finale : poster une demande (intacte vs spec) */}
             <li className="w-[260px] shrink-0 snap-start sm:w-[280px]">
               <Link
                 href="/je-cherche/nouvelle"

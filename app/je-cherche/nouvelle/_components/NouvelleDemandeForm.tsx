@@ -127,7 +127,7 @@ export function NouvelleDemandeForm({ defaultCountry, defaultCity }: Props) {
         {/* Titre */}
         <label className="flex flex-col gap-1.5">
           <span className="text-[11px] tracking-[0.22em] text-or uppercase">
-            Titre
+            Tu cherches quoi&nbsp;?
           </span>
           <input
             type="text"
@@ -136,10 +136,16 @@ export function NouvelleDemandeForm({ defaultCountry, defaultCity }: Props) {
             required
             minLength={5}
             maxLength={120}
-            placeholder="Ostéo enceinte sur Lausanne"
+            placeholder="Une décoratrice, un photographe, un coach…"
             className="border-b border-or/30 bg-transparent py-2 text-[16px] text-vert placeholder:text-texte-sec/50 focus:border-or focus:outline-none"
             aria-required="true"
           />
+          {/* Helper : cadre la copine sur l'objet seul. Le préfixe "Cherche"
+              est ajouté en display sur les cards (cf TeamCherche.tsx variant
+              connected). Convention V1 : titre = juste l'objet, pas de phrase. */}
+          <span className="text-[11px] italic text-texte-sec">
+            Juste l&apos;essentiel — pas besoin d&apos;écrire «&nbsp;je cherche&nbsp;», on s&apos;en occupe.
+          </span>
           <span className="text-[11px] text-texte-sec">
             {title.trim().length} / 120
           </span>
