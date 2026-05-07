@@ -8,6 +8,17 @@ Copier
 > En cas de doute, demande avant d'agir.
  
 ---
+
+## ⚠️ Distinction critique : `profiles` vs `user_profiles`
+
+Deux tables distinctes existent — ne pas confondre :
+
+- **`profiles`** = table **prestataires** (commerces référencés dans l'annuaire). Colonnes : `nom`, `ville`, `categorie`, `palier`, `status`, `services`, `tagline`, `is_founder`, etc.
+- **`user_profiles`** = table **membres** (utilisatrices de la communauté Hilmy). Colonnes : `prenom`, `bio`, `avatar`, intérêts, `voix_hilmy`, `expo_push_token`, etc.
+
+Toute migration / requête / server action doit cibler la bonne table selon le contexte (prestataire vs membre).
+
+---
  
 ## ⚠️ This is NOT the Next.js you know
  
@@ -359,7 +370,8 @@ Format : invitation, pas injonction.
 # 7. Tables Supabase (état actuel)
  
 ## Tables existantes en prod (NE PAS RECRÉER)
-- `user_profiles` — profils utilisatrices
+- `profiles` — prestataires (commerces de l'annuaire : nom, ville, categorie, palier, status, services, is_founder…)
+- `user_profiles` — membres / utilisatrices de la communauté (prenom, bio, avatar, voix_hilmy, expo_push_token…)
 - `places` — lieux (annuaire + recommandations)
 - `recommendations` — recommandations communautaires
 - `place_reports` — signalements lieux
@@ -424,7 +436,7 @@ Toujours demander confirmation à l'utilisatrice avant :
 - Modifier les policies RLS existantes
 - Toucher au CI/CD ou aux env vars Vercel
 - Supprimer ou remplacer des assets dans `/public`
-- Modifier la structure des tables existantes (`user_profiles`, `places`, `recommendations`, `events`)
+- Modifier la structure des tables existantes (`profiles`, `user_profiles`, `places`, `recommendations`, `events`)
 - Ajouter une nouvelle dépendance externe (API tierce)
 - Modifier le schéma de `package.json` (engines, scripts critiques)
 ---
