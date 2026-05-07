@@ -102,6 +102,10 @@ export interface Prestataire {
 
   // Palier d'abonnement (display-only V1 — sera renommé `tier` au Chantier 3)
   palier?: "standard" | "premium" | "cercle_pro";
+
+  // Founder flag — accès Cercle Pro à vie (gratuit, sans abonnement Stripe).
+  // ⚠️ Ne JAMAIS exposer côté public : strippé via toPublicPrestataire().
+  is_founder?: boolean;
 }
 
 /* ─────────────────────────────────────────────────────────────

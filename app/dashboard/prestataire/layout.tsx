@@ -2,6 +2,7 @@ import { Sidebar, type SidebarItem } from '@/components/dashboard/Sidebar'
 import { requirePrestataire } from '@/lib/supabase/session'
 import { createClient } from '@/lib/supabase/server'
 import { CATEGORIES_MAP } from '@/lib/constants'
+import { hasCerclePro } from '@/lib/permissions'
 
 export default async function PrestataireLayout({
   children,
@@ -11,6 +12,7 @@ export default async function PrestataireLayout({
   const { user, prestataire } = await requirePrestataire()
   const isAdmin = Boolean(user.user_metadata?.is_admin)
   const supabase = await createClient()
+  const isCerclePro = hasCerclePro(prestataire)
 
   // Badge "nouveaux avis" = recommendations sans reponse_pro, publiées
   const { count: newReviewsCount } = await supabase
@@ -24,7 +26,7 @@ export default async function PrestataireLayout({
   // Badge "nouveaux devis" — Cercle Pro uniquement (best-effort, table peut
   // ne pas encore exister tant que migration 36 pas appliquée).
   let pendingDevisCount = 0
-  if (prestataire.palier === 'cercle_pro') {
+  if (isCerclePro) {
     const { count } = await supabase
       .from('devis_requests')
       .select('id', { count: 'exact', head: true })
@@ -51,7 +53,7 @@ export default async function PrestataireLayout({
       icon: '◇',
     },
     // Devis Express : entrée Cercle Pro uniquement
-    ...(prestataire.palier === 'cercle_pro'
+    ...(isCerclePro
       ? ([
           {
             href: '/dashboard/prestataire/devis',

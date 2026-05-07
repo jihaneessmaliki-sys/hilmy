@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { createClient } from '@/lib/supabase/client'
+import { hasPremiumFeatures } from '@/lib/permissions'
 
 export default function ParametresPrestatairePage() {
   const router = useRouter()
@@ -22,6 +23,7 @@ export default function ParametresPrestatairePage() {
   const [palier, setPalier] = useState<'standard' | 'premium' | 'cercle_pro'>(
     'standard',
   )
+  const [isFounderState, setIsFounderState] = useState(false)
   const [statsHebdoOptIn, setStatsHebdoOptIn] = useState(true)
   const [statsHebdoSaving, setStatsHebdoSaving] = useState(false)
   const [userIdState, setUserIdState] = useState<string | null>(null)
@@ -43,7 +45,7 @@ export default function ParametresPrestatairePage() {
       const [profileRes, prefsRes] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, status, palier')
+          .select('id, status, palier, is_founder')
           .eq('user_id', user.id)
           .maybeSingle(),
         supabase
@@ -60,6 +62,7 @@ export default function ParametresPrestatairePage() {
         setPalier(
           p === 'premium' ? 'premium' : p === 'cercle_pro' ? 'cercle_pro' : 'standard',
         )
+        setIsFounderState(profileRes.data.is_founder === true)
       }
 
       // Opt-in stats hebdo : default true (active si pas opt-out explicite)
@@ -240,7 +243,7 @@ export default function ParametresPrestatairePage() {
               )}
             </SettingsGroup>
 
-            {(palier === 'premium' || palier === 'cercle_pro') && (
+            {hasPremiumFeatures({ palier, is_founder: isFounderState }) && (
               <SettingsGroup
                 kicker="Notifications"
                 titre="Ce qu'on t'envoie."

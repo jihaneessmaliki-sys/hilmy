@@ -5,13 +5,14 @@ import { GoldLine } from '@/components/ui/GoldLine'
 import { EmptyState } from '@/components/dashboard/EmptyState'
 import { requirePrestataire } from '@/lib/supabase/session'
 import { createClient } from '@/lib/supabase/server'
+import { hasCerclePro } from '@/lib/permissions'
 import { DevisRow } from './_components/DevisRow'
 
 export default async function MesDevisPage() {
   const { prestataire } = await requirePrestataire()
 
-  // Garde Cercle Pro : si pas Cercle Pro, redirige vers tarifs
-  if (prestataire.palier !== 'cercle_pro') {
+  // Garde Cercle Pro : si pas Cercle Pro (et pas founder), redirige vers tarifs
+  if (!hasCerclePro(prestataire)) {
     redirect('/dashboard/prestataire/abonnement')
   }
 
