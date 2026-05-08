@@ -12,6 +12,7 @@ import {
   canUploadMorePhotos,
   photoCountLabel,
 } from '@/lib/palier-limits'
+import { getEffectivePalier } from '@/lib/permissions'
 import type { Palier } from '@/app/tarifs/_lib/pricing'
 
 type Service = { nom: string; prix: string; duree: string }
@@ -109,12 +110,13 @@ export default function MaFichePage() {
 
       setProfileId(data.id)
       setStatus(data.status)
+      // Palier effectif : founders → cercle_pro même si palier stocké = standard.
+      // Le helper applique la règle métier centralisée.
       setPalier(
-        data.palier === 'premium'
-          ? 'premium'
-          : data.palier === 'cercle_pro'
-            ? 'cercle_pro'
-            : 'standard',
+        getEffectivePalier({
+          palier: data.palier,
+          is_founder: data.is_founder === true,
+        }),
       )
       setNoteMoy(data.note_moyenne ?? 0)
       setNbAvis(data.nb_avis ?? 0)

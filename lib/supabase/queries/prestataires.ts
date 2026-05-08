@@ -2,6 +2,13 @@
  * Queries prestataires (table : profiles).
  * Respecte les RLS : seules les fiches status='approved' sont visibles
  * publiquement. Pas de bypass admin côté client.
+ *
+ * ⚠️ Privacy is_founder : tous les helpers de ce fichier appliquent
+ * `toPublicPrestataire` qui strippe le champ `is_founder` et substitue
+ * `palier` par sa valeur effective (cercle_pro pour les founders).
+ * Le champ brut `is_founder` ne doit JAMAIS transiter via ces helpers
+ * vers un consumer SSR/CSR. Pour le code server-trusted (dashboard owner,
+ * API routes), utiliser `requirePrestataire` ou un select dédié.
  */
 
 import { createClient } from "@/lib/supabase/server";
@@ -10,6 +17,7 @@ import type {
   PrestataireCategorie,
   QueryResult,
 } from "@/lib/supabase/types";
+import { getEffectivePalier } from "@/lib/permissions";
 
 // ⚠️ On ne sélectionne que les colonnes qui existent vraiment dans la DB.
 // Les champs pays/region/code_postal/zone_intervention du type TS Prestataire
@@ -45,8 +53,26 @@ const PRESTATAIRE_SELECT = `
   note_moyenne,
   nb_avis,
   nb_vues,
-  palier
+  palier,
+  is_founder
 `;
+
+/**
+ * Projection publique d'une ligne `profiles` :
+ *  - strippe `is_founder` du résultat (donnée business interne, ne doit pas
+ *    transiter dans un bundle SSR/CSR public)
+ *  - remplace `palier` par sa valeur effective (founder → cercle_pro)
+ *
+ * Le consumer reçoit un `Prestataire` dont `palier` reflète directement le
+ * niveau d'accès appliqué — plus besoin d'appeler getEffectivePalier côté UI.
+ */
+function toPublicPrestataire(raw: Prestataire & { is_founder?: boolean }): Prestataire {
+  const { is_founder, palier, ...rest } = raw;
+  return {
+    ...rest,
+    palier: getEffectivePalier({ palier, is_founder }),
+  };
+}
 
 /**
  * Les N premières vraies inscrites (prestataires réelles, pas les seeds
@@ -67,7 +93,8 @@ export async function getPionnieres(
       .limit(limit);
 
     if (error) return { data: null, error: error.message };
-    return { data: (data ?? []) as unknown as Prestataire[], error: null };
+    const rows = (data ?? []) as unknown as (Prestataire & { is_founder?: boolean })[];
+    return { data: rows.map(toPublicPrestataire), error: null };
   } catch (err) {
     return { data: null, error: errorMessage(err) };
   }
@@ -84,7 +111,8 @@ export async function getAllPrestataires(): Promise<QueryResult<Prestataire[]>> 
       .order("approved_at", { ascending: false, nullsFirst: false });
 
     if (error) return { data: null, error: error.message };
-    return { data: (data ?? []) as unknown as Prestataire[], error: null };
+    const rows = (data ?? []) as unknown as (Prestataire & { is_founder?: boolean })[];
+    return { data: rows.map(toPublicPrestataire), error: null };
   } catch (err) {
     return { data: null, error: errorMessage(err) };
   }
@@ -104,7 +132,11 @@ export async function getPrestataireBySlug(
       .maybeSingle();
 
     if (error) return { data: null, error: error.message };
-    return { data: (data as unknown as Prestataire) ?? null, error: null };
+    if (!data) return { data: null, error: null };
+    return {
+      data: toPublicPrestataire(data as unknown as Prestataire & { is_founder?: boolean }),
+      error: null,
+    };
   } catch (err) {
     return { data: null, error: errorMessage(err) };
   }
@@ -114,6 +146,10 @@ export async function getPrestataireBySlug(
  * Récupère la fiche d'une prestataire par slug + user_id, sans filtre de statut.
  * Réservé à la prévisualisation owner-side (fiche en attente ou pausée).
  * Le double filtre slug + user_id garantit qu'on ne lit que sa propre fiche.
+ *
+ * Note : applique aussi `toPublicPrestataire` car le résultat alimente la
+ * même page publique en mode preview — l'owner doit voir sa fiche telle
+ * qu'elle apparaîtra publiquement (palier effectif, pas de is_founder).
  */
 export async function getPrestataireBySlugForOwner(
   slug: string,
@@ -129,7 +165,11 @@ export async function getPrestataireBySlugForOwner(
       .maybeSingle();
 
     if (error) return { data: null, error: error.message };
-    return { data: (data as unknown as Prestataire) ?? null, error: null };
+    if (!data) return { data: null, error: null };
+    return {
+      data: toPublicPrestataire(data as unknown as Prestataire & { is_founder?: boolean }),
+      error: null,
+    };
   } catch (err) {
     return { data: null, error: errorMessage(err) };
   }
@@ -149,7 +189,8 @@ export async function getPrestatairesByCategorie(
       .order("approved_at", { ascending: false, nullsFirst: false });
 
     if (error) return { data: null, error: error.message };
-    return { data: (data ?? []) as unknown as Prestataire[], error: null };
+    const rows = (data ?? []) as unknown as (Prestataire & { is_founder?: boolean })[];
+    return { data: rows.map(toPublicPrestataire), error: null };
   } catch (err) {
     return { data: null, error: errorMessage(err) };
   }
@@ -169,7 +210,8 @@ export async function getPrestatairesByVille(
       .order("approved_at", { ascending: false, nullsFirst: false });
 
     if (error) return { data: null, error: error.message };
-    return { data: (data ?? []) as unknown as Prestataire[], error: null };
+    const rows = (data ?? []) as unknown as (Prestataire & { is_founder?: boolean })[];
+    return { data: rows.map(toPublicPrestataire), error: null };
   } catch (err) {
     return { data: null, error: errorMessage(err) };
   }

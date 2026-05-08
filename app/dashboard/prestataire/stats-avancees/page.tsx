@@ -10,6 +10,7 @@ import {
 import { requirePrestataire } from '@/lib/supabase/session'
 import { createClient } from '@/lib/supabase/server'
 import { CATEGORIES_MAP } from '@/lib/constants'
+import { hasCerclePro } from '@/lib/permissions'
 import {
   aggregateByVille,
   aggregateByHeure,
@@ -23,8 +24,8 @@ const SINCE_DAYS = 30
 export default async function StatsAvanceesPage() {
   const { prestataire } = await requirePrestataire()
 
-  // Garde Cercle Pro
-  if (prestataire.palier !== 'cercle_pro') {
+  // Garde Cercle Pro (founders incluses via hasCerclePro)
+  if (!hasCerclePro(prestataire)) {
     redirect('/dashboard/prestataire/abonnement')
   }
 
@@ -43,13 +44,14 @@ export default async function StatsAvanceesPage() {
   const myRows: VueRow[] = (myViewsRows ?? []) as VueRow[]
   const myViewsCount = myRows.length
 
-  // 2. Pairs : autres prestataires de même catégorie (Premium + Cercle Pro)
+  // 2. Pairs : autres prestataires de même catégorie (Premium + Cercle Pro,
+  //    incluant les founders qui bénéficient d'un Cercle Pro effectif).
   //    On count leurs vues 30j pour bench. On exclut soi-même.
   const { data: peers } = await supabase
     .from('profiles')
     .select('id')
     .eq('categorie', prestataire.categorie)
-    .in('palier', ['premium', 'cercle_pro'])
+    .or('palier.in.(premium,cercle_pro),is_founder.eq.true')
     .eq('status', 'approved')
     .neq('id', prestataire.id)
 

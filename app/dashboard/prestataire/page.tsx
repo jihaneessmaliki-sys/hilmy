@@ -8,13 +8,20 @@ import { PalierBadge } from '@/components/v2/PalierBadge'
 import { PastilleSelectionHilmy } from '@/components/v2/PastilleSelectionHilmy'
 import { createClient } from '@/lib/supabase/server'
 import { requirePrestataire } from '@/lib/supabase/session'
+import {
+  getEffectivePalier,
+  hasCerclePro,
+  hasPremiumFeatures,
+} from '@/lib/permissions'
 
 export default async function PrestataireAccueilPage() {
   const { prestataire } = await requirePrestataire()
   const supabase = await createClient()
 
-  const palier = prestataire.palier ?? 'standard'
-  const isPremiumOrAbove = palier === 'premium' || palier === 'cercle_pro'
+  // Palier effectif : founders → cercle_pro même si palier stocké = standard.
+  const palier = getEffectivePalier(prestataire)
+  const isPremiumOrAbove = hasPremiumFeatures(prestataire)
+  const isCerclePro = hasCerclePro(prestataire)
 
   const since7d = new Date(Date.now() - 7 * 86_400_000).toISOString()
   const since30d = new Date(Date.now() - 30 * 86_400_000).toISOString()
@@ -99,7 +106,7 @@ export default async function PrestataireAccueilPage() {
         lead="Les chiffres depuis la création de ta fiche. Vues, contacts, avis."
         actions={
           <div className="flex flex-wrap items-center gap-3">
-            {palier === 'cercle_pro' && <PastilleSelectionHilmy />}
+            {isCerclePro && <PastilleSelectionHilmy />}
             <PalierBadge palier={palier} size="medium" />
             <Link
               href={`/prestataire-v2/${prestataire.slug}`}
@@ -141,11 +148,11 @@ export default async function PrestataireAccueilPage() {
         <div className="mb-8 flex items-center gap-4">
           <GoldLine width={40} />
           <span className="overline text-or">
-            {palier === 'standard' ? 'Mes chiffres' : 'Mes chiffres détaillés'}
+            {!isPremiumOrAbove ? 'Mes chiffres' : 'Mes chiffres détaillés'}
           </span>
         </div>
 
-        {palier === 'standard' ? (
+        {!isPremiumOrAbove ? (
           <div className="grid gap-4 md:grid-cols-2">
             <StatCard
               kicker="Vues totales"
@@ -193,7 +200,7 @@ export default async function PrestataireAccueilPage() {
         )}
 
         {/* Bandeau upsell Standard → Premium */}
-        {palier === 'standard' && (
+        {!isPremiumOrAbove && (
           <div className="mt-6 rounded-sm border border-or/30 bg-or/10 p-6 md:p-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
               <div>
@@ -218,7 +225,7 @@ export default async function PrestataireAccueilPage() {
         )}
 
         {/* Bandeau Stats avancées Cercle Pro — actif depuis Phase 4 */}
-        {palier === 'cercle_pro' && (
+        {isCerclePro && (
           <div className="mt-6 rounded-sm bg-vert p-6 text-creme md:p-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
               <div>

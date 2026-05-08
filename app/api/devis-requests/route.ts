@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendDevisExpressEmail } from '@/lib/email/transactional'
 import { enforceRateLimit } from '@/lib/rate-limit'
+import { hasCerclePro } from '@/lib/permissions'
 
 export const runtime = 'nodejs'
 
@@ -16,7 +17,8 @@ export const runtime = 'nodejs'
  *
  * Validations :
  *  - Auth utilisatrice obligatoire
- *  - prestataire_id existe ET palier === 'cercle_pro' ET status === 'approved'
+ *  - prestataire_id existe ET palier effectif === 'cercle_pro' (incluant
+ *    les founders) ET status === 'approved'
  *  - prenom 1-80 / email format simple / message 5-2000 chars
  *  - Rate limit : max 3 soumissions / 5 min / utilisatrice (anti spam)
  *
@@ -87,7 +89,7 @@ export async function POST(request: Request) {
   // ─── Vérifie que la prestataire est bien Cercle Pro & approuvée ───
   const { data: presta, error: pErr } = await supabase
     .from('profiles')
-    .select('id, user_id, nom, palier, status')
+    .select('id, user_id, nom, palier, is_founder, status')
     .eq('id', prestataire_id)
     .maybeSingle()
 
@@ -97,7 +99,7 @@ export async function POST(request: Request) {
       { status: 404 },
     )
   }
-  if (presta.palier !== 'cercle_pro') {
+  if (!hasCerclePro(presta)) {
     return NextResponse.json(
       { error: 'Devis express réservé aux fiches Cercle Pro.' },
       { status: 403 },

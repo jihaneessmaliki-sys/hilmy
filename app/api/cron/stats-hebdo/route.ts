@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendStatsHebdoPrestataire } from '@/lib/email/transactional'
 import { isAuthorizedCronRequest } from '@/lib/cron-auth'
+import { getEffectivePalier } from '@/lib/permissions'
 
 export const runtime = 'nodejs'
 // Pas de cache : appelé par Vercel Cron, doit toujours s'exécuter frais.
@@ -15,8 +16,9 @@ const PALIER_LABEL: Record<string, string> = {
 /**
  * Cron Vercel hebdomadaire (lundi 9h UTC, cf vercel.json).
  *
- * Pour chaque prestataire approved et payante (Premium / Cercle Pro)
- * qui n'a PAS opt-out (preferences.notifications.statsHebdoPrestataire !== false),
+ * Pour chaque prestataire approved et payante (Premium / Cercle Pro,
+ * incluant les founders qui bénéficient d'un Cercle Pro effectif) qui n'a
+ * PAS opt-out (preferences.notifications.statsHebdoPrestataire !== false),
  * envoie un email résumant les stats de la semaine.
  *
  * Utilise service-role pour bypasser RLS (cron interne, pas de session
@@ -37,11 +39,12 @@ export async function GET(request: Request) {
   const since7d = new Date(now.getTime() - 7 * 86_400_000).toISOString()
   const since14d = new Date(now.getTime() - 14 * 86_400_000).toISOString()
 
-  // 1. Liste des prestataires éligibles (Premium + Cercle Pro, approved)
+  // 1. Liste des prestataires éligibles (Premium + Cercle Pro, approved,
+  //    incluant les founders qui bénéficient d'un Cercle Pro effectif).
   const { data: prestataires, error: pErr } = await admin
     .from('profiles')
-    .select('id, user_id, nom, slug, palier')
-    .in('palier', ['premium', 'cercle_pro'])
+    .select('id, user_id, nom, slug, palier, is_founder')
+    .or('palier.in.(premium,cercle_pro),is_founder.eq.true')
     .eq('status', 'approved')
 
   if (pErr) {
@@ -117,6 +120,8 @@ export async function GET(request: Request) {
         p.nom.split(' ')[0] ??
         'Toi'
 
+      // Label affiché dans l'email = palier effectif (founders → Cercle Pro)
+      const effectivePalier = getEffectivePalier(p)
       await sendStatsHebdoPrestataire({
         to: email,
         prenom,
@@ -126,7 +131,7 @@ export async function GET(request: Request) {
         views7dPrev: views7dPrev ?? 0,
         contacts7d: contacts7d ?? 0,
         contacts7dPrev: contacts7dPrev ?? 0,
-        palierLabel: PALIER_LABEL[p.palier] ?? p.palier,
+        palierLabel: PALIER_LABEL[effectivePalier] ?? effectivePalier,
       })
       sent++
     } catch (err) {
