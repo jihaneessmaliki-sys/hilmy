@@ -18,6 +18,12 @@ import {
   validatePromoCode,
   type PromoCodeRow,
 } from '@/lib/promo-codes'
+import {
+  PROMO_LANCEMENT_BADGE_LABEL,
+  PROMO_LANCEMENT_PRICE_NOTE,
+  applyPromoLancement,
+  isPromoLancementActive,
+} from '@/lib/promo-lancement'
 
 type WizardKey = 'standard' | 'premium' | 'cercle_pro'
 
@@ -266,10 +272,25 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
   const monthlyAfterDiscount = applyDiscount(price.m, discountPct)
   const totalAfterDiscount =
     price.t !== null ? applyDiscount(price.t, discountPct) : null
-  const totalLine =
-    totalAfterDiscount !== null
+
+  // Promo lancement -50% : exclusive avec un code copine saisi (la promo
+  // lancement coupe l'affichage du champ code). Quand active, on remplace
+  // le prix affiché par le prix -50% et on barre l'original.
+  const promoLancActive = isPromoLancementActive() && !appliedPromo
+  const lancMonthly = promoLancActive ? applyPromoLancement(price.m) : price.m
+  const lancTotal =
+    promoLancActive && price.t !== null
+      ? applyPromoLancement(price.t)
+      : price.t
+
+  const totalLine = appliedPromo
+    ? totalAfterDiscount !== null
       ? `Soit ${formatPrice(totalAfterDiscount)} ${DUREE_PERIODE[duree]}`.trim()
       : ''
+    : lancTotal !== null
+      ? `Soit ${formatPrice(lancTotal)} ${DUREE_PERIODE[duree]}`.trim()
+      : ''
+
   const mailto = buildMailtoPalier(palier, duree, appliedPromo?.code ?? null)
 
   return (
@@ -434,9 +455,16 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
           <div className="mx-auto grid max-w-[1000px] grid-cols-1 items-center gap-12 md:grid-cols-2">
             <div
               className={`relative rounded-[32px] border-2 border-or bg-vert p-12 text-creme shadow-[0_24px_60px_rgba(15,61,46,0.2)] ${
+                promoLancActive ? 'mt-10' : ''
+              } ${
                 initialPalier ? 'animate-[pulse-border_2s_ease-out_1]' : ''
               }`}
             >
+              {promoLancActive ? (
+                <span className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-creme px-5 py-2 text-[11px] font-semibold uppercase tracking-[.18em] text-or shadow-[0_4px_12px_rgba(15,61,46,0.08)]">
+                  {PROMO_LANCEMENT_BADGE_LABEL}
+                </span>
+              ) : null}
               <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-or px-4 py-2 text-[11px] font-semibold uppercase tracking-[.18em] text-vert">
                 Pour toi
               </span>
@@ -449,6 +477,16 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
                   <div className="flex items-baseline gap-3">
                     <span className="font-serif text-[60px] font-light leading-none text-creme">
                       {formatPrice(monthlyAfterDiscount)}
+                    </span>
+                    <span className="text-sm text-or-light line-through opacity-70">
+                      {formatPrice(price.m)}
+                    </span>
+                    <span className="ml-1.5 text-sm text-or-light">/mois</span>
+                  </div>
+                ) : promoLancActive ? (
+                  <div className="flex items-baseline gap-3">
+                    <span className="font-serif text-[60px] font-light leading-none text-creme">
+                      {formatPrice(lancMonthly)}
                     </span>
                     <span className="text-sm text-or-light line-through opacity-70">
                       {formatPrice(price.m)}
@@ -472,6 +510,11 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
                     Code «{appliedPromo.code}» −{appliedPromo.discount_pct}%
                   </p>
                 )}
+                {promoLancActive && (
+                  <p className="mt-2 text-[11px] italic text-or-light/80">
+                    {PROMO_LANCEMENT_PRICE_NOTE}
+                  </p>
+                )}
               </div>
               <ul className="mb-8 space-y-1.5">
                 {info.features.map((f) => (
@@ -483,9 +526,11 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
                   </li>
                 ))}
               </ul>
-              {/* Champ code promo "J'ai un code copine" */}
+              {/* Champ code promo "J'ai un code copine" — masqué pendant la
+                   promo lancement -50% (la remise est déjà appliquée pour
+                   tout le monde, pas de stacking). */}
               <div className="mb-5">
-                {!appliedPromo ? (
+                {promoLancActive ? null : !appliedPromo ? (
                   <details className="group">
                     <summary className="cursor-pointer list-none text-[12px] font-medium text-or-light transition-colors hover:text-or">
                       <span className="border-b border-or-light/40 pb-0.5 group-open:hidden">
@@ -506,7 +551,7 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
                         spellCheck={false}
                         value={promoInput}
                         onChange={(e) => setPromoInput(e.target.value)}
-                        placeholder="COPINE10"
+                        placeholder="TON CODE"
                         disabled={promoStatus === 'checking'}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -560,7 +605,9 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
               <a
                 href={mailto}
                 className="block w-full rounded-full bg-or px-8 py-4 text-center text-[15px] font-semibold text-vert transition-all hover:-translate-y-0.5 hover:bg-or-light hover:shadow-[0_8px_24px_rgba(201,169,97,0.3)]"
-                aria-label={`Choisir la formule ${info.name} (${formatPrice(monthlyAfterDiscount)} par mois)`}
+                aria-label={`Choisir la formule ${info.name} (${formatPrice(
+                  appliedPromo ? monthlyAfterDiscount : lancMonthly,
+                )} par mois)`}
               >
                 Je choisis cette formule
               </a>
@@ -582,17 +629,32 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
               </button>
 
               <div className="mt-6 flex flex-col">
-                {(['standard', 'premium', 'cercle_pro'] as Palier[]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPalier(p)}
-                    className="flex cursor-pointer justify-between border-t border-vert/8 py-3.5 text-[13px] text-texte-sec transition-colors hover:text-vert"
-                  >
-                    <span>Voir {PALIER_INFO[p].name}</span>
-                    <span className="font-medium text-vert">{PALIER_PRICES_LABEL[p]}</span>
-                  </button>
-                ))}
+                {(['standard', 'premium', 'cercle_pro'] as Palier[]).map((p) => {
+                  const monthly = PRICING[p][1].m
+                  const monthlyLanc = applyPromoLancement(monthly)
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPalier(p)}
+                      className="flex cursor-pointer justify-between border-t border-vert/8 py-3.5 text-[13px] text-texte-sec transition-colors hover:text-vert"
+                    >
+                      <span>Voir {PALIER_INFO[p].name}</span>
+                      {promoLancActive ? (
+                        <span className="flex items-baseline gap-2 font-medium text-vert">
+                          <span>{formatPrice(monthlyLanc)}/mois</span>
+                          <span className="text-[11px] text-texte-sec line-through">
+                            {formatPrice(monthly)}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="font-medium text-vert">
+                          {PALIER_PRICES_LABEL[p]}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>

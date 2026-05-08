@@ -131,6 +131,14 @@ Sans validation explicite.
 ### Lieux (Recommandations payantes)
 - **Sélection Hilmy** : 39€/mois · 3m 110€ · 6m 210€ · 1an 374€
 Ne pas modifier les prix, les noms de tiers, ni les durées sans validation explicite.
+
+### Promo lancement -50% (en cours, jusqu'à la sortie de l'app mobile)
+- Feature flag : `NEXT_PUBLIC_PROMO_LANCEMENT=true`
+- Helpers : [lib/promo-lancement.ts](lib/promo-lancement.ts) (UI) + [lib/stripe-promo.ts](lib/stripe-promo.ts) (futur Stripe checkout)
+- Coupon Stripe : `LANCEMENT50` (créé manuellement par Jiji dans le dashboard Stripe — **ne pas créer via API**)
+- UI affecte : [/tarifs](app/tarifs) wizard + homepage [PricingTeaser](components/landing/PricingTeaser.tsx)
+- **À désactiver le jour de sortie de l'app mobile** : passer la var à `false` (ou retirer) côté Vercel + `.env.local`. Aucune autre modif code nécessaire.
+- Coexistence avec le système promo_codes Supabase : pendant la promo lancement, le champ « J'ai un code copine » est masqué (pas de stacking).
  
 ## 🔒 Workflow Git
 - Toujours créer une nouvelle branche par tâche.
