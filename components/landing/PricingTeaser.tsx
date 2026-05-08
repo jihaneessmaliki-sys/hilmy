@@ -1,6 +1,12 @@
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { HilmyButton } from '@/components/ui/HilmyButton'
-import { PRICING, PALIER_INFO, type Palier } from '@/app/tarifs/_lib/pricing'
+import { PRICING, PALIER_INFO, formatPrice, type Palier } from '@/app/tarifs/_lib/pricing'
+import {
+  PROMO_LANCEMENT_BADGE_LABEL,
+  PROMO_LANCEMENT_PRICE_NOTE,
+  applyPromoLancement,
+  isPromoLancementActive,
+} from '@/lib/promo-lancement'
 
 // Teaser homepage des 3 paliers prestataires. Source de vérité prix +
 // labels = app/tarifs/_lib/pricing.ts (option B brief batch 3.2 home).
@@ -37,6 +43,8 @@ const TEASER_CARDS: TeaserCard[] = [
 ]
 
 export function PricingTeaser() {
+  const promoLancActive = isPromoLancementActive()
+
   return (
     <section className="bg-creme py-28 md:py-36">
       <div className="mx-auto max-w-container px-6 md:px-20">
@@ -52,10 +60,15 @@ export function PricingTeaser() {
           </div>
         </FadeInSection>
 
-        <div className="mt-14 grid gap-6 md:mt-16 md:grid-cols-3 md:gap-8">
+        <div
+          className={`grid gap-6 md:grid-cols-3 md:gap-8 ${
+            promoLancActive ? 'mt-20 md:mt-24' : 'mt-14 md:mt-16'
+          }`}
+        >
           {TEASER_CARDS.map((card, i) => {
             const info = PALIER_INFO[card.palier]
             const price = PRICING[card.palier][1].m
+            const lancPrice = applyPromoLancement(price)
             return (
               <FadeInSection key={card.palier} delay={i * 0.08}>
                 <div
@@ -65,18 +78,39 @@ export function PricingTeaser() {
                       : 'border border-creme-deep'
                   }`}
                 >
-                  {card.highlight && card.badge ? (
+                  {promoLancActive ? (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-creme px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-or shadow-[0_4px_12px_rgba(15,61,46,0.06)]">
+                      {PROMO_LANCEMENT_BADGE_LABEL}
+                    </span>
+                  ) : card.highlight && card.badge ? (
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-or px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-vert">
                       {card.badge}
                     </span>
                   ) : null}
                   <p className="font-serif text-lg font-medium text-vert">{info.name}</p>
-                  <p className="mt-3 flex items-baseline gap-1.5">
-                    <span className="font-serif text-[48px] font-light leading-none text-vert md:text-5xl">
-                      {price}€
-                    </span>
-                    <span className="text-sm text-texte-sec">/ mois</span>
-                  </p>
+                  {promoLancActive ? (
+                    <>
+                      <p className="mt-3 flex items-baseline gap-2">
+                        <span className="font-serif text-[48px] font-light leading-none text-vert md:text-5xl">
+                          {formatPrice(lancPrice)}
+                        </span>
+                        <span className="text-sm text-texte-sec line-through">
+                          {price}€
+                        </span>
+                        <span className="text-sm text-texte-sec">/ mois</span>
+                      </p>
+                      <p className="mt-2 text-[11px] italic text-texte-sec/80">
+                        {PROMO_LANCEMENT_PRICE_NOTE}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-3 flex items-baseline gap-1.5">
+                      <span className="font-serif text-[48px] font-light leading-none text-vert md:text-5xl">
+                        {price}€
+                      </span>
+                      <span className="text-sm text-texte-sec">/ mois</span>
+                    </p>
+                  )}
                   <p className="mt-4 text-[14px] leading-relaxed text-texte-sec">
                     {card.tagline}
                   </p>
