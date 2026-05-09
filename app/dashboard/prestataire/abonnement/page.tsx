@@ -3,6 +3,7 @@ import { GoldLine } from '@/components/ui/GoldLine'
 import { PalierBadge } from '@/components/v2/PalierBadge'
 import { PastilleSelectionHilmy } from '@/components/v2/PastilleSelectionHilmy'
 import { requirePrestataire } from '@/lib/supabase/session'
+import { getEffectivePalier, isFounder } from '@/lib/permissions'
 import {
   PALIER_INFO,
   PRICING,
@@ -18,12 +19,14 @@ const NEXT_PALIER: Record<Palier, Palier | null> = {
 export default async function AbonnementPage() {
   const { prestataire } = await requirePrestataire()
 
-  const palier: Palier =
-    prestataire.palier === 'premium'
-      ? 'premium'
-      : prestataire.palier === 'cercle_pro'
-        ? 'cercle_pro'
-        : 'standard'
+  // Source de vérité unique pour le palier affiché : `getEffectivePalier`
+  // mappe les founders (is_founder = true) vers cercle_pro même si la colonne
+  // `palier` en BDD vaut 'standard'. Lire `prestataire.palier` directement
+  // ferait apparaître la mauvaise formule pour les founders.
+  const palier: Palier = getEffectivePalier(prestataire)
+  // Founder = accès Cercle Pro à vie sans abonnement Stripe. On adapte la
+  // copie (prix, CTAs) en conséquence — pas d'upsell, pas de "résiliation".
+  const isFounderUser = isFounder(prestataire)
 
   const info = PALIER_INFO[palier]
   const monthlyPrice = PRICING[palier][1].m
@@ -82,17 +85,33 @@ export default async function AbonnementPage() {
         <div className="rounded-sm border border-or/20 bg-creme-soft p-8 md:p-10">
           <div className="flex items-center gap-4">
             <GoldLine width={40} />
-            <span className="overline text-or">Ce que tu paies</span>
-          </div>
-          <p className="mt-4 flex items-baseline gap-1.5">
-            <span className="font-serif text-[48px] font-light leading-none text-vert md:text-[56px]">
-              {monthlyPrice}€
+            <span className="overline text-or">
+              {isFounderUser ? 'Ton statut' : 'Ce que tu paies'}
             </span>
-            <span className="text-sm text-texte-sec">/ mois</span>
-          </p>
-          <p className="mt-2 text-[12px] italic text-texte-sec">
-            Sans engagement de durée. Tu peux résilier à tout moment.
-          </p>
+          </div>
+          {isFounderUser ? (
+            <>
+              <p className="mt-4 font-serif text-[40px] font-light leading-[1.05] text-vert md:text-[48px]">
+                Cercle Pro à vie
+              </p>
+              <p className="mt-2 text-[12px] italic text-texte-sec">
+                En tant que founder Hilmy, tu accèdes à toutes les fonctionnalités
+                Cercle Pro gratuitement, sans limite de durée. 💚
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mt-4 flex items-baseline gap-1.5">
+                <span className="font-serif text-[48px] font-light leading-none text-vert md:text-[56px]">
+                  {monthlyPrice}€
+                </span>
+                <span className="text-sm text-texte-sec">/ mois</span>
+              </p>
+              <p className="mt-2 text-[12px] italic text-texte-sec">
+                Sans engagement de durée. Tu peux résilier à tout moment.
+              </p>
+            </>
+          )}
 
           <h2 className="mt-8 font-serif text-xl font-light text-vert">
             Inclus dans ton palier&nbsp;:
@@ -112,8 +131,36 @@ export default async function AbonnementPage() {
           </ul>
         </div>
 
-        {/* Card 2 — Upsell ou message Cercle Pro */}
-        {upsell && upsellInfo && upsellPrice !== null ? (
+        {/* Card 2 — Upsell, message founder, ou message Cercle Pro */}
+        {/* Note : pour les founders, `palier` vaut toujours 'cercle_pro' via
+            getEffectivePalier → la branche upsell ne se déclenche pas, on
+            tombe directement sur le bloc founder/sommet. */}
+        {isFounderUser ? (
+          <div className="relative overflow-hidden rounded-sm bg-vert p-8 text-creme md:p-10">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-20 -right-20 h-60 w-60 rounded-full bg-or/15 blur-3xl"
+            />
+            <div className="relative">
+              <div className="flex items-center gap-4">
+                <GoldLine width={40} />
+                <span className="overline text-or">Founder Hilmy</span>
+              </div>
+              <h2 className="mt-4 font-serif text-2xl font-light italic text-or">
+                Tu as Cercle Pro à vie en tant que founder Hilmy 💚
+              </h2>
+              <p className="mt-3 text-[14px] leading-[1.65] text-creme/85">
+                Toutes les fonctionnalités Cercle Pro, sans abonnement, sans
+                date de fin. C&apos;est notre façon de remercier celles qui
+                nous ont fait confiance les premières.
+              </p>
+              <p className="mt-4 text-[13px] leading-[1.6] text-creme/75">
+                Les nouvelles fonctionnalités te sont ajoutées en priorité,
+                sans surcoût.
+              </p>
+            </div>
+          </div>
+        ) : upsell && upsellInfo && upsellPrice !== null ? (
           <div className="relative overflow-hidden rounded-sm bg-vert p-8 text-creme md:p-10">
             <div
               aria-hidden="true"
@@ -193,33 +240,51 @@ export default async function AbonnementPage() {
           )}
         </div>
         <h2 className="mt-4 font-serif text-2xl font-light text-vert">
-          Tu veux changer ou résilier&nbsp;?
+          {isFounderUser ? 'Une question, un besoin ?' : 'Tu veux changer ou résilier ?'}
         </h2>
-        <p className="mt-4 max-w-2xl text-[14px] leading-[1.7] text-texte">
-          Tu peux changer de palier ou arrêter ton abonnement à tout moment, en
-          écrivant à{' '}
-          <a
-            href={supportMailto}
-            className="text-or-deep underline-offset-4 hover:text-or hover:underline"
-          >
-            hilmy.io@hotmail.com
-          </a>
-          . La résiliation prend effet à la fin de ta période en cours, sans
-          remboursement prorata. Aucune commission n&apos;est prélevée sur tes
-          prestations — seul l&apos;abonnement plat te lie à Hilmy.
-        </p>
-        <p className="mt-4 max-w-2xl text-[12px] italic leading-[1.65] text-texte-sec">
-          La gestion en self-service depuis le dashboard arrive bientôt. En
-          attendant, {supportSla}.
-        </p>
+        {isFounderUser ? (
+          <p className="mt-4 max-w-2xl text-[14px] leading-[1.7] text-texte">
+            Ton accès Cercle Pro est offert à vie — pas d&apos;abonnement à
+            gérer ni à résilier. Pour toute question, écris à{' '}
+            <a
+              href={supportMailto}
+              className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+            >
+              hilmy.io@hotmail.com
+            </a>
+            , {supportSla}.
+          </p>
+        ) : (
+          <>
+            <p className="mt-4 max-w-2xl text-[14px] leading-[1.7] text-texte">
+              Tu peux changer de palier ou arrêter ton abonnement à tout moment, en
+              écrivant à{' '}
+              <a
+                href={supportMailto}
+                className="text-or-deep underline-offset-4 hover:text-or hover:underline"
+              >
+                hilmy.io@hotmail.com
+              </a>
+              . La résiliation prend effet à la fin de ta période en cours, sans
+              remboursement prorata. Aucune commission n&apos;est prélevée sur tes
+              prestations — seul l&apos;abonnement plat te lie à Hilmy.
+            </p>
+            <p className="mt-4 max-w-2xl text-[12px] italic leading-[1.65] text-texte-sec">
+              La gestion en self-service depuis le dashboard arrive bientôt. En
+              attendant, {supportSla}.
+            </p>
+          </>
+        )}
         <div className="mt-7 flex flex-wrap gap-3">
-          <Link
-            href="/tarifs"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-vert px-6 text-[11px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark"
-          >
-            Comparer les paliers
-            <span className="text-or-light" aria-hidden="true">→</span>
-          </Link>
+          {!isFounderUser && (
+            <Link
+              href="/tarifs"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-vert px-6 text-[11px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark"
+            >
+              Comparer les paliers
+              <span className="text-or-light" aria-hidden="true">→</span>
+            </Link>
+          )}
           <a
             href={supportMailto}
             className="inline-flex h-11 items-center gap-2 rounded-full border border-or/40 px-6 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-creme-deep"
@@ -232,8 +297,9 @@ export default async function AbonnementPage() {
 
       {/* Footer reassurance */}
       <p className="mt-12 text-center font-sans text-[12px] italic text-texte-sec">
-        Pas de commission sur tes prestations · Sans engagement minimum ·
-        Résiliation libre
+        {isFounderUser
+          ? 'Founder Hilmy · Cercle Pro à vie · Pas de commission sur tes prestations'
+          : 'Pas de commission sur tes prestations · Sans engagement minimum · Résiliation libre'}
       </p>
     </section>
   )
