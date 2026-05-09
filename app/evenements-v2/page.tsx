@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PageShell } from '@/components/v2/PageShell'
 import { PageHero } from '@/components/v2/PageHero'
@@ -56,7 +57,17 @@ function relativeFr(iso: string): string {
   return `dans ${Math.round(diffDays / 30)} mois`
 }
 
-function adaptEvenementFromDb(e: HilmyEvent): MockEvenement {
+type DbEventWithCategory = HilmyEvent & {
+  event_seasonal_category?: {
+    id: string
+    slug: string
+    label: string
+    emoji: string
+  } | null
+}
+
+function adaptEvenementFromDb(e: DbEventWithCategory): MockEvenement {
+  const seasonal = e.event_seasonal_category
   return {
     slug: e.slug ?? e.id,
     titre: e.title,
@@ -71,12 +82,35 @@ function adaptEvenementFromDb(e: HilmyEvent): MockEvenement {
     flyer: e.flyer_url ?? null,
     places: e.places_max ?? 20,
     inscrites: e.inscrites_count ?? 0,
+    seasonal_category: seasonal
+      ? { slug: seasonal.slug, label: seasonal.label, emoji: seasonal.emoji }
+      : null,
   }
 }
 
-export default function EvenementsV2Page() {
+function EvenementsV2PageInner() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [categorie, setCategorie] = useState('all')
   const [ville, setVille] = useState('all')
+  const [seasonalSlug, setSeasonalSlug] = useState<string>(
+    searchParams.get('seasonal') ?? 'all',
+  )
+
+  // Keep URL ?seasonal=... synced with state for deep-link partage
+  // (use case Hilmy : whatsapp share "events Ramadan").
+  const updateSeasonalSlug = (next: string) => {
+    setSeasonalSlug(next)
+    const params = new URLSearchParams(searchParams.toString())
+    if (next === 'all') {
+      params.delete('seasonal')
+    } else {
+      params.set('seasonal', next)
+    }
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -94,7 +128,10 @@ export default function EvenementsV2Page() {
         const { data, error: err } = await supabase
           .from('events')
           .select(
-            'id, user_id, prestataire_id, title, slug, description, event_type, format, visibility, start_date, end_date, country, region, city, address, online_link, flyer_url, external_signup_url, price_type, price_amount, price_currency, places_max, inscrites_count, status, created_at, updated_at',
+            // mig 46 PR-F : event_seasonal_category_id + LEFT JOIN
+            // event_seasonal_categories (relation auto-détectée par PostgREST
+            // via la FK). Le LEFT JOIN renvoie null si pas de catégorie.
+            'id, user_id, prestataire_id, title, slug, description, event_type, format, visibility, start_date, end_date, country, region, city, address, online_link, flyer_url, external_signup_url, price_type, price_amount, price_currency, places_max, inscrites_count, status, created_at, updated_at, event_seasonal_category_id, event_seasonal_category:event_seasonal_categories(id, slug, label, emoji)',
           )
           .eq('status', 'published')
           .gte('start_date', now)
@@ -107,7 +144,7 @@ export default function EvenementsV2Page() {
           return
         }
         const adapted = (data ?? []).map((row) =>
-          adaptEvenementFromDb(row as unknown as HilmyEvent),
+          adaptEvenementFromDb(row as unknown as DbEventWithCategory),
         )
         setLiveEvents(adapted)
         setLoading(false)
@@ -130,16 +167,42 @@ export default function EvenementsV2Page() {
     return dataSource.filter((e) => {
       if (categorie !== 'all' && e.categorie !== categorie) return false
       if (ville !== 'all' && e.ville !== ville) return false
+      if (
+        seasonalSlug !== 'all' &&
+        e.seasonal_category?.slug !== seasonalSlug
+      )
+        return false
       return true
     })
-  }, [dataSource, categorie, ville])
+  }, [dataSource, categorie, ville, seasonalSlug])
 
   const categories = Array.from(new Set(dataSource.map((e) => e.categorie)))
   const villesPresentes = Array.from(new Set(dataSource.map((e) => e.ville)))
 
+  // Pré-filtre dynamique : afficher uniquement les catégories saisonnières
+  // qui ont des events à venir (pattern villes — évite "Halloween" en mai).
+  // Map clé→{label,emoji} pour dédupliquer + préserver l'affichage.
+  const seasonalsPresent = useMemo(() => {
+    const m = new Map<string, { label: string; emoji: string }>()
+    for (const e of dataSource) {
+      if (e.seasonal_category) {
+        m.set(e.seasonal_category.slug, {
+          label: e.seasonal_category.label,
+          emoji: e.seasonal_category.emoji,
+        })
+      }
+    }
+    return Array.from(m.entries()).map(([slug, v]) => ({
+      slug,
+      label: v.label,
+      emoji: v.emoji,
+    }))
+  }, [dataSource])
+
   const reset = () => {
     setCategorie('all')
     setVille('all')
+    updateSeasonalSlug('all')
   }
 
   const featured = filtered[0]
@@ -222,6 +285,23 @@ export default function EvenementsV2Page() {
         resultCount={filtered.length}
         onReset={reset}
         groups={[
+          ...(seasonalsPresent.length > 0
+            ? [
+                {
+                  id: 'seasonal',
+                  label: 'Période',
+                  value: seasonalSlug,
+                  onChange: updateSeasonalSlug,
+                  options: [
+                    { value: 'all', label: 'Toutes' },
+                    ...seasonalsPresent.map((s) => ({
+                      value: s.slug,
+                      label: `${s.emoji} ${s.label}`,
+                    })),
+                  ],
+                },
+              ]
+            : []),
           {
             id: 'categorie',
             label: 'Catégorie',
@@ -311,5 +391,27 @@ export default function EvenementsV2Page() {
         </div>
       </section>
     </PageShell>
+  )
+}
+
+// useSearchParams() requiert un boundary <Suspense> côté Next 14 app router
+// pour la pre-render statique. Wrap minimal — le contenu reste rendu côté
+// client après hydration.
+export default function EvenementsV2Page() {
+  return (
+    <Suspense
+      fallback={
+        <PageShell>
+          <PageHero
+            number="03"
+            kicker="Les événements"
+            titre={<>Les moments qu&apos;on vit ensemble.</>}
+          />
+          <SkeletonListGrid count={4} />
+        </PageShell>
+      }
+    >
+      <EvenementsV2PageInner />
+    </Suspense>
   )
 }

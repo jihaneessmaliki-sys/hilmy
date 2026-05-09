@@ -219,6 +219,18 @@ export interface HilmyEvent {
   registration_mode: EventRegistrationMode;
   created_at: string;
   updated_at: string;
+
+  /** FK optionnelle vers event_seasonal_categories (mig 46 PR-F).
+   *  Drive les filtres saisonniers /événements + badge card. */
+  event_seasonal_category_id?: string | null;
+  /** Pré-fetché via LEFT JOIN PostgREST quand utile (page feed
+   *  /evenements-v2). NULL si pas de catégorie saisonnière sélectionnée. */
+  event_seasonal_category?: {
+    id: string;
+    slug: string;
+    label: string;
+    emoji: string;
+  } | null;
 }
 
 /* ─────────────────────────────────────────────────────────────

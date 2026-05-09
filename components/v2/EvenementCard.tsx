@@ -53,8 +53,19 @@ export function EvenementCard({ e, index = 0, variant = 'default' }: Props) {
             />
           )}
           <div className="absolute inset-0 bg-grain opacity-[0.08]" />
-          <div className="absolute left-5 top-5 inline-flex max-w-[60%] items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
-            {e.categorie}
+          <div className="absolute left-5 top-5 flex max-w-[60%] flex-col items-start gap-1.5">
+            {e.seasonal_category && (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full bg-or/95 px-2.5 py-1 text-[10px] font-medium tracking-[0.22em] text-vert backdrop-blur uppercase"
+                aria-label={`Période ${e.seasonal_category.label}`}
+              >
+                <span aria-hidden="true">{e.seasonal_category.emoji}</span>
+                {e.seasonal_category.label}
+              </span>
+            )}
+            <span className="inline-flex max-w-full items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
+              {e.categorie}
+            </span>
           </div>
           <div className="absolute bottom-5 left-5 rounded-sm bg-vert/85 px-4 py-3 text-center backdrop-blur">
             <p className="font-serif text-3xl font-light leading-none text-creme">{jour}</p>

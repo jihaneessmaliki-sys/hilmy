@@ -60,6 +60,12 @@ export default function NouveauEvenementPage() {
   const [endDate, setEndDate] = useState('')
   const [endTime, setEndTime] = useState('')
 
+  // Catégorie saisonnière (mig 46 PR-F) — optionnel, alimentée depuis BDD
+  const [seasonalCategoryId, setSeasonalCategoryId] = useState<string>('')
+  const [seasonalCategories, setSeasonalCategories] = useState<
+    { id: string; slug: string; label: string; emoji: string }[]
+  >([])
+
   useEffect(() => {
     const run = async () => {
       const {
@@ -70,6 +76,17 @@ export default function NouveauEvenementPage() {
         return
       }
       setUserId(user.id)
+      // Pré-fetch des catégories saisonnières actives (mig 46 PR-F).
+      // Ordre starts_at ASC pour que les fenêtres prochaines arrivent
+      // en premier dans le select.
+      const { data: cats } = await supabase
+        .from('event_seasonal_categories')
+        .select('id, slug, label, emoji')
+        .eq('is_active', true)
+        .order('starts_at', { ascending: true, nullsFirst: false })
+      setSeasonalCategories(
+        (cats ?? []) as { id: string; slug: string; label: string; emoji: string }[],
+      )
       setChecking(false)
     }
     run()
@@ -172,6 +189,7 @@ export default function NouveauEvenementPage() {
       price_currency: priceType === 'payant' ? priceCurrency : null,
       places_max:
         placesMax && Number(placesMax) > 0 ? Number(placesMax) : null,
+      event_seasonal_category_id: seasonalCategoryId || null,
       status: 'published' as const,
       // quartier non stocké en DB pour Stage 2A — privacy gérée côté UI :
       // l'adresse précise est masquée publiquement, on n'affiche que ville
@@ -267,6 +285,30 @@ export default function NouveauEvenementPage() {
               </select>
             </Field>
           </div>
+
+          {seasonalCategories.length > 0 && (
+            <div className="mt-6 grid gap-2 md:grid-cols-2">
+              <Field label="Catégorie saisonnière">
+                <select
+                  value={seasonalCategoryId}
+                  onChange={(e) => setSeasonalCategoryId(e.target.value)}
+                  className="line"
+                >
+                  <option value="">Aucune (par défaut)</option>
+                  {seasonalCategories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.emoji} {c.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <p className="self-end pb-1 text-[12px] italic leading-[1.5] text-texte-sec md:pl-2">
+                Optionnel. Ton événement tombe pendant le Ramadan ? La
+                Saint-Valentin ? Choisis la période — les copines te
+                trouveront plus facilement.
+              </p>
+            </div>
+          )}
 
           <div className="mt-6">
             <p className="overline text-or">Format</p>
