@@ -434,6 +434,45 @@ export interface EventsConfigAdmin {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   profile_videos (vidéos prestataires — mig 43)
+   ───────────────────────────────────────────────────────────── */
+
+/** Vidéo MP4 attachée à une fiche prestataire (Premium 60s × 1,
+ *  Cercle Pro 90s × illimitées). Cap par palier appliqué côté API
+ *  route en PR-3. Le CHECK BDD borne dur à 90s / 50MB. */
+export interface ProfileVideo {
+  id: string;
+  profile_id: string;
+  /** Path interne au bucket profile-videos, format `{user_id}/{nanoid}.mp4`
+   *  (cf storage_owner_from_path mig 08 + storage convention). */
+  storage_path: string;
+  /** Path interne au bucket profile-videos pour le thumbnail JPEG.
+   *  NULL si la génération ffmpeg.wasm a échoué (vidéo reste utilisable). */
+  thumbnail_storage_path: string | null;
+  duration_seconds: number;
+  size_bytes: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   place_videos (vidéos lieux Sélection Hilmy — mig 43)
+   ───────────────────────────────────────────────────────────── */
+
+/** Vidéo MP4 attachée à une fiche lieu Sélection Hilmy (90s × illimitées).
+ *  Mirror ProfileVideo. Owner = places.created_by_user_id (mig 28). */
+export interface PlaceVideo {
+  id: string;
+  place_id: string;
+  storage_path: string;
+  thumbnail_storage_path: string | null;
+  duration_seconds: number;
+  size_bytes: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/* ─────────────────────────────────────────────────────────────
    Résultat standardisé des queries (gestion d'erreur uniforme)
    ───────────────────────────────────────────────────────────── */
 
