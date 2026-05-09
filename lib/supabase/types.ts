@@ -144,9 +144,25 @@ export interface Place {
   main_photo_url: string | null;
   photos: string[];
 
+  // Tracking créateur (mig 28). NULL pour les fiches anté-Phase 1.
+  created_by_user_id?: string | null;
+
+  // Sélection Hilmy (mig 41) — gating produit payant 39€/mois.
+  // Default 'aucun'. Lecture via getEffectivePalierLieu / hasSelectionHilmy
+  // (lib/permissions-lieux.ts) — ne PAS lire palier brut côté UI.
+  palier?: LieuPalier;
+
+  // Compteur cumulé des vues (mig 41), bumpé atomiquement par trigger
+  // sur place_views. Default 0.
+  nb_vues?: number;
+
   created_at: string;
   updated_at: string;
 }
+
+/* Type re-export aligné avec lib/permissions-lieux.ts. Source unique
+ * du set de valeurs : `LieuPalier` côté permissions-lieux. */
+export type LieuPalier = 'aucun' | 'selection_hilmy';
 
 /* ─────────────────────────────────────────────────────────────
    events
@@ -162,11 +178,21 @@ export interface HilmyEvent {
   id: string;
   user_id: string;
   prestataire_id: string | null;
+  // FK vers places(id) — mig 41. NULL pour les events historiques ou
+  // ceux non rattachés à un lieu. Un event peut être tied à un presta
+  // ET/OU à un lieu (pas de XOR).
+  place_id?: string | null;
 
   title: string;
   slug: string | null;
   description: string;
+  /** Free-text, affiché par eventTypeLabel() — préservé pour back-compat
+   *  UI (home, dashboard, admin). Voir aussi boost_event_type. */
   event_type: string;
+  /** Slug taxonomique (25 valeurs, mig 41) pour l'auto-boost lieu PR-D.
+   *  NULL si event antérieur à mig 41 ou sans rattachement Sélection Hilmy.
+   *  Type strict importé depuis lib/event-types.ts pour éviter dérive. */
+  boost_event_type?: import('@/lib/event-types').EventType | null;
   format: EventFormat;
   visibility: EventVisibility;
 
@@ -339,6 +365,72 @@ export interface VoixPublicReco {
   profile_nom: string | null;
   profile_ville: string | null;
   profile_slug: string | null;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   place_views (tracking pageview lieu — mig 41)
+   ───────────────────────────────────────────────────────────── */
+
+/** Une ligne = une visite de fiche lieu. Anonyme OK (viewer_id NULL).
+ *  Mirror de profile_views (mig 15). */
+export interface PlaceView {
+  id: string;
+  place_id: string;
+  viewer_id: string | null;
+  viewed_at: string;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  referer: string | null;
+  user_agent_hash: string | null;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   place_contacts (tracking tap-to-contact lieu — mig 41)
+   ───────────────────────────────────────────────────────────── */
+
+export type PlaceContactType =
+  | 'phone'
+  | 'website'
+  | 'email'
+  | 'instagram'
+  | 'tiktok'
+  | 'facebook'
+  | 'youtube'
+  | 'google_maps'
+  | 'whatsapp';
+
+/** Une ligne = un clic sur un canal contact d'une fiche lieu.
+ *  Mirror profile_contacts (mig 15). */
+export interface PlaceContact {
+  id: string;
+  place_id: string;
+  clicker_id: string | null;
+  contact_type: PlaceContactType;
+  clicked_at: string;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  referer: string | null;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   events_config_admin (config auto-boost par catégorie — mig 41)
+   ───────────────────────────────────────────────────────────── */
+
+/** Ligne par event_type (les 25 slugs). Modifiable côté admin via
+ *  /admin/events-config (PR-D). Lue par is_lieu_boosted (PR-D). */
+export interface EventsConfigAdmin {
+  id: string;
+  /** L'un des 25 slugs — type strict importé depuis lib/event-types.ts. */
+  event_type: import('@/lib/event-types').EventType;
+  boost_enabled: boolean;
+  /** Nombre de jours avant l'event où la fiche lieu est mise en avant. */
+  boost_days_before: number;
+  /** Si true, la mise en avant se prolonge jusqu'à end_date (ou +1j si NULL). */
+  boost_until_event_end: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 /* ─────────────────────────────────────────────────────────────
