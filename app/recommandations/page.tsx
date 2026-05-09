@@ -40,6 +40,7 @@ function adaptPlaceFromDb(p: Place): MockLieu {
     galerie: photosArr,
     recommandePar: [],
     commentaires: [],
+    palier: p.palier ?? 'aucun',
   }
 }
 
@@ -62,8 +63,12 @@ export default function RecommandationsPage() {
         const { data, error: err } = await supabase
           .from('places')
           .select(
-            'id, google_place_id, name, slug, description, address, city, region, country, latitude, longitude, google_category, hilmy_category, main_photo_url, photos, created_at, updated_at',
+            'id, google_place_id, name, slug, description, address, city, region, country, latitude, longitude, google_category, hilmy_category, main_photo_url, photos, palier, created_at, updated_at',
           )
+          // Tri prio Sélection Hilmy : 'selection_hilmy' > 'aucun' en
+          // ordre alphabétique DESC. Les fiches payantes remontent en
+          // tête du feed avant le tri chronologique secondaire.
+          .order('palier', { ascending: false })
           .order('created_at', { ascending: false })
 
         if (cancelled) return

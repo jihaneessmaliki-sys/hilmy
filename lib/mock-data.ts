@@ -373,6 +373,10 @@ export type Lieu = {
   /** Boolean flag pour le badge ▶ VIDÉO sur la card feed (PR-3 mig 43).
    *  Pré-fetché côté server via `getPlaceIdsWithVideos` pour éviter N+1. */
   has_videos?: boolean;
+  /** Palier lieu (mig 41 places.palier). Lu par LieuCard via
+   *  isSelectionHilmy() pour afficher le badge ✨ SÉLECTION HILMY et
+   *  par le feed pour trier les fiches payantes en haut. */
+  palier?: 'aucun' | 'selection_hilmy' | null;
 };
 
 export const lieux: Lieu[] = [

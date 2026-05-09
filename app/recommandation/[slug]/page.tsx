@@ -17,6 +17,7 @@ import {
 } from '@/lib/supabase/queries/places'
 import { getRecommendationsByPlace } from '@/lib/supabase/queries/recommendations'
 import { getPlaceVideos } from '@/lib/supabase/queries/videos'
+import { isSelectionHilmy } from '@/lib/permissions-lieux'
 import { createClient } from '@/lib/supabase/server'
 import type { Place, Recommendation } from '@/lib/supabase/types'
 import { VideoPlayer } from '@/components/v2/VideoPlayer'
@@ -195,6 +196,15 @@ export default async function RecommandationPage({
               Retour aux recommandations
             </Link>
             <div className="mt-8 flex flex-wrap items-center gap-3">
+              {isSelectionHilmy(row) && (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full bg-creme px-3 py-1.5 font-serif text-[11px] font-light italic tracking-[0.2em] text-or shadow-[0_2px_8px_-2px_rgba(15,61,46,0.25)] uppercase backdrop-blur"
+                  aria-label="Lieu Sélection Hilmy"
+                >
+                  <span aria-hidden="true">✨</span>
+                  Sélection Hilmy
+                </span>
+              )}
               <span className="inline-flex items-center gap-2 rounded-full bg-creme/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
                 {catLabel(l.categorie)}
               </span>
