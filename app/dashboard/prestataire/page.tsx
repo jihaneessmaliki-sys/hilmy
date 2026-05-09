@@ -305,6 +305,36 @@ export default async function PrestataireAccueilPage() {
           </div>
         )}
 
+        {/* Bandeau Premium → Cercle Pro — invitation à monter d'un cran
+            pour accéder au tableau tap-to-contact détaillé par canal.
+            Affiché uniquement pour les Premium pure (ni Standard, ni
+            Cercle Pro). Décision Jiji 2026-05-09 (Sprint K commit add). */}
+        {isPremiumOrAbove && !isCerclePro && (
+          <div className="mt-10 rounded-sm border border-or/40 bg-creme-soft p-6 md:p-7">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
+              <div>
+                <p className="overline text-or">
+                  Le détail des copines · disponible en Cercle Pro
+                </p>
+                <p className="mt-2 font-serif text-[18px] italic leading-[1.4] text-vert md:text-[20px]">
+                  Tu veux savoir précisément comment elles te cherchent ?
+                </p>
+                <p className="mt-2 text-[13px] leading-[1.6] text-texte-sec">
+                  Insta, WhatsApp, Maps, téléphone… Le détail par canal
+                  pour comprendre ce qui marche le mieux.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/prestataire/abonnement"
+                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-vert px-6 text-[11px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark"
+              >
+                Passer Cercle Pro
+                <span className="text-or-light" aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Bandeau Cercle Pro — page détaillée disponible */}
         {isCerclePro && (
           <div className="mt-10 rounded-sm bg-vert p-6 text-creme md:p-7">
