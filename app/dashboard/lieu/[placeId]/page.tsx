@@ -10,7 +10,8 @@ import { requireUser } from '@/lib/supabase/session'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getOwnedPlaceById } from '@/lib/supabase/queries/places'
-import { isSelectionHilmy } from '@/lib/permissions-lieux'
+import { getEffectivePalierLieu, isSelectionHilmy } from '@/lib/permissions-lieux'
+import { VideosManager } from '@/components/v2/VideosManager'
 
 const SINCE_7D_MS = 7 * 86_400_000
 const SINCE_30D_MS = 30 * 86_400_000
@@ -595,6 +596,24 @@ export default async function LieuDetailPage({
           On compte précieusement chaque pas qu&apos;une copine fait vers
           toi, depuis le 9 mai 2026.
         </p>
+      </section>
+
+      {/* ─── Mes vidéos (Sélection Hilmy seulement) ─────────────────
+          VideosManager affiche le mode "non incluse" si le lieu est
+          en palier='aucun', donc on peut le rendre inconditionnellement
+          mais ici on rend uniquement pour les Sélection Hilmy car on est
+          déjà dans la branche cas B. */}
+      <section className="bg-blanc px-6 py-12 md:px-12 md:py-16">
+        <div className="mb-6 flex items-center gap-4">
+          <GoldLine width={40} />
+          <span className="overline text-or">Mes vidéos</span>
+        </div>
+        <VideosManager
+          scope="lieu"
+          placeId={place.id}
+          userId={user.id}
+          palier={getEffectivePalierLieu(place)}
+        />
       </section>
     </>
   )

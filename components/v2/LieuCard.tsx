@@ -60,6 +60,17 @@ export function LieuCard({ lieu, index = 0 }: Props) {
           <div className="absolute left-5 top-5 inline-flex max-w-[60%] items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
             {catLabel(lieu.categorie)}
           </div>
+          {lieu.has_videos && (
+            <div
+              className="absolute right-5 top-5 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blanc/90 px-2.5 py-1 text-[10px] font-medium tracking-[0.22em] text-vert backdrop-blur uppercase"
+              aria-label="Cette fiche contient une vidéo"
+            >
+              <svg width="10" height="10" viewBox="0 0 22 22" fill="currentColor" aria-hidden="true" className="text-or">
+                <path d="M5 3l14 8-14 8z" />
+              </svg>
+              Vidéo
+            </div>
+          )}
           {lieu.recommandePar.length > 0 && (
             <div className="absolute bottom-5 left-5 flex items-center gap-2">
               <div className="flex -space-x-2">

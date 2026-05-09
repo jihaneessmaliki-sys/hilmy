@@ -7,6 +7,7 @@ import { FadeInSection } from '@/components/ui/FadeInSection'
 import { PrestataireCard } from '@/components/v2/PrestataireCard'
 import { PhotoGallery } from '@/components/v2/PhotoGallery'
 import { GalleryAutoplayCarousel } from '@/components/v2/GalleryAutoplayCarousel'
+import { VideoPlayer } from '@/components/v2/VideoPlayer'
 import { DevisExpressCTA } from '@/components/v2/DevisExpressCTA'
 import { SocialChannelsButtons } from '@/components/v2/SocialChannelsButtons'
 import { TrackPageView } from '@/components/v2/TrackPageView'
@@ -22,6 +23,7 @@ import {
   getPrestataireBySlugForOwner,
   getPrestatairesByCategorie,
 } from '@/lib/supabase/queries/prestataires'
+import { getProfileVideos } from '@/lib/supabase/queries/videos'
 import { createClient } from '@/lib/supabase/server'
 import type { Prestataire as DbPrestataire } from '@/lib/supabase/types'
 
@@ -110,6 +112,7 @@ export default async function PrestatairePage({
   const [
     { data: rowsSim },
     avisRes,
+    { data: videos },
   ] = await Promise.all([
     getPrestatairesByCategorie(finalRow!.categorie),
     supabase
@@ -122,7 +125,22 @@ export default async function PrestatairePage({
       .eq('status', 'published')
       .order('created_at', { ascending: false })
       .limit(12),
+    getProfileVideos(finalRow!.id),
   ])
+
+  // Compute public URLs pour les vidéos + thumbnails (bucket public).
+  const videoEntries = (videos ?? []).map((v) => {
+    const videoUrl = supabase.storage.from('profile-videos').getPublicUrl(v.storage_path).data.publicUrl
+    const thumbnailUrl = v.thumbnail_storage_path
+      ? supabase.storage.from('profile-videos').getPublicUrl(v.thumbnail_storage_path).data.publicUrl
+      : null
+    return {
+      id: v.id,
+      videoUrl,
+      thumbnailUrl,
+      durationSeconds: v.duration_seconds,
+    }
+  })
 
   const similaires: MockPrestataire[] = (rowsSim ?? [])
     .filter((x) => x.slug !== slug)
@@ -338,11 +356,37 @@ export default async function PrestatairePage({
                 </ul>
               </FadeInSection>
 
-              {p.galerie.length > 0 && (
+              {videoEntries.length > 0 && (
                 <FadeInSection>
                   <header className="flex items-center gap-5">
                     <span className="font-serif text-[44px] font-light leading-none text-or">
                       03
+                    </span>
+                    <GoldLine width={60} />
+                    <span className="overline text-or">
+                      Découvre {p.nom} en vidéo
+                    </span>
+                  </header>
+                  <div className="mt-6 grid gap-5 md:grid-cols-2">
+                    {videoEntries.map((v) => (
+                      <VideoPlayer
+                        key={v.id}
+                        videoUrl={v.videoUrl}
+                        thumbnailUrl={v.thumbnailUrl}
+                        durationSeconds={v.durationSeconds}
+                        ariaLabel={`Voir la vidéo de ${p.nom}`}
+                        fallbackColor={p.cover}
+                      />
+                    ))}
+                  </div>
+                </FadeInSection>
+              )}
+
+              {p.galerie.length > 0 && (
+                <FadeInSection>
+                  <header className="flex items-center gap-5">
+                    <span className="font-serif text-[44px] font-light leading-none text-or">
+                      {videoEntries.length > 0 ? '04' : '03'}
                     </span>
                     <GoldLine width={60} />
                     <span className="overline text-or">Galerie</span>
