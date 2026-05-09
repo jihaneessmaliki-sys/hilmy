@@ -479,3 +479,35 @@ export interface PlaceVideo {
 export type QueryResult<T> =
   | { data: T; error: null }
   | { data: null; error: string };
+
+
+/* ─────────────────────────────────────────────────────────────
+   Auto-boost saisonnier prestataires (mig 44 PR-D Sprint 4)
+   ───────────────────────────────────────────────────────────── */
+
+/** Fenêtre calendrier admin-CRUD (Ramadan, Aïd, Saint-Valentin, etc.). */
+export interface SeasonalEventWindow {
+  id: string;
+  slug: string;
+  label: string;
+  emoji: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** M:N sélection prestataire ↔ fenêtre. */
+export interface ProfileSeasonalBoost {
+  id: string;
+  profile_id: string;
+  window_id: string;
+  created_at: string;
+}
+
+/** Retour de get_profile_active_seasonal_window() — label+emoji ou null. */
+export interface ActiveSeasonalBoost {
+  label: string;
+  emoji: string;
+}

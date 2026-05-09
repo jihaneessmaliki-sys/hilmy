@@ -50,8 +50,19 @@ export function PrestataireCard({ p, index = 0 }: Props) {
             />
           )}
           <div className="absolute inset-0 bg-grain opacity-[0.08]" />
-          <div className="absolute left-5 top-5 inline-flex max-w-[60%] items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
-            {categorieLabel(p.categorie)}
+          <div className="absolute left-5 top-5 flex max-w-[60%] flex-col items-start gap-1.5">
+            {p.active_boost && (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full bg-or/95 px-2.5 py-1 text-[10px] font-medium tracking-[0.22em] text-vert backdrop-blur uppercase"
+                aria-label={`Boost saisonnier actif : ${p.active_boost.label}`}
+              >
+                <span aria-hidden="true">{p.active_boost.emoji}</span>
+                {p.active_boost.label}
+              </span>
+            )}
+            <span className="inline-flex max-w-full items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
+              {categorieLabel(p.categorie)}
+            </span>
           </div>
           {p.lesAvis && p.lesAvis.length > 0 && (
             <div className="absolute right-5 top-5 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-vert/85 px-3 py-1 text-[11px] text-creme backdrop-blur">

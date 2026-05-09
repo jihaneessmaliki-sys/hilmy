@@ -7,13 +7,15 @@ import {
 } from '@/lib/mock-data'
 import { getAllPrestataires } from '@/lib/supabase/queries/prestataires'
 import { getProfileIdsWithVideos } from '@/lib/supabase/queries/videos'
+import { getActiveSeasonalLabelsBatch } from '@/lib/supabase/queries/seasonal-boosts'
 import type { Prestataire as DbPrestataire } from '@/lib/supabase/types'
 import { AnnuaireClient } from './AnnuaireClient'
 
 /**
- * Tri prioritaire annuaire (Cercle Pro 99€/mois — feature "Mise en avant prio").
- * Cercle Pro apparaît avant Premium qui apparaît avant Standard.
- * À tier égal, on conserve l'ordre serveur (approved_at desc, déterministe).
+ * Tri prioritaire annuaire :
+ *  1. Boostés (auto-boost saisonnier actif PR-D mig 44) en haut
+ *  2. Puis Cercle Pro avant Premium avant Standard
+ *  3. À tier égal, ordre serveur (approved_at desc, déterministe)
  *
  * Le palier reçu ici est déjà le palier EFFECTIF (founders mappées à
  * cercle_pro côté server query helper) — donc les founders rankent
@@ -28,8 +30,13 @@ const PALIER_RANK: Record<string, number> = {
   standard: 2,
 }
 
-function sortByPalierThenServerOrder(list: MockPrestataire[]): MockPrestataire[] {
+function sortByBoostThenPalier(list: MockPrestataire[]): MockPrestataire[] {
   return [...list].sort((a, b) => {
+    // Boostés (active_boost non null) en haut
+    const aBoosted = a.active_boost ? 0 : 1
+    const bBoosted = b.active_boost ? 0 : 1
+    if (aBoosted !== bBoosted) return aBoosted - bBoosted
+    // Tie-break sur palier
     const ra = PALIER_RANK[a.palier ?? 'standard'] ?? 2
     const rb = PALIER_RANK[b.palier ?? 'standard'] ?? 2
     return ra - rb
@@ -90,15 +97,21 @@ export default async function AnnuairePage() {
 
   const rows = data ?? []
 
-  // Pré-fetch en batch des IDs prestataires qui ont au moins 1 vidéo
-  // (évite N+1 sur le badge ▶ VIDÉO côté card). Mig 43 PR-3.
-  const idsWithVideos = await getProfileIdsWithVideos(rows.map((p) => p.id))
+  // Pré-fetch batch (évite N+1) :
+  //  - vidéos → badge ▶ VIDÉO (PR-3 mig 43)
+  //  - active boost → badge saisonnier top-left (PR-D mig 44)
+  const ids = rows.map((p) => p.id)
+  const [idsWithVideos, activeBoosts] = await Promise.all([
+    getProfileIdsWithVideos(ids),
+    getActiveSeasonalLabelsBatch(ids),
+  ])
 
   const adapted = rows.map((p) => ({
     ...adaptPrestataireFromDb(p),
     has_videos: idsWithVideos.has(p.id),
+    active_boost: activeBoosts.get(p.id) ?? null,
   }))
-  const sorted = sortByPalierThenServerOrder(adapted)
+  const sorted = sortByBoostThenPalier(adapted)
 
   return <AnnuaireClient prestataires={sorted} />
 }

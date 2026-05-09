@@ -111,6 +111,10 @@ export type Prestataire = {
   /** Boolean flag pour le badge ▶ VIDÉO sur la card feed (PR-3 mig 43).
    *  Pré-fetché côté server via `getProfileIdsWithVideos` pour éviter N+1. */
   has_videos?: boolean;
+  /** Fenêtre saisonnière active du prestataire (PR-D mig 44).
+   *  Pré-fetché batch via `getActiveSeasonalLabelsBatch`. Affiché en
+   *  badge top-left sur PrestataireCard si défini. */
+  active_boost?: { label: string; emoji: string } | null;
 };
 
 export const prestataires: Prestataire[] = [

@@ -72,6 +72,11 @@ export default async function AdminLayout({
       label: 'Signalements Je cherche',
       badge: jeChercheSignalementsCount.count ?? 0,
     },
+    {
+      href: '/admin/seasonal-windows',
+      label: 'Fenêtres saisonnières',
+      badge: undefined,
+    },
   ]
 
   return (

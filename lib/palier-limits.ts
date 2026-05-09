@@ -205,3 +205,49 @@ export function placeVideoCountLabel(
   }
   return `${currentCount} / ${max} vidéo${max > 1 ? 's' : ''}`
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTO-BOOST SAISONNIER PRESTATAIRES (mig 44 PR-D Sprint 4)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/**
+ * Nombre maximum de fenêtres saisonnières qu'un prestataire peut cocher
+ * pour son auto-boost annuaire.
+ *  - standard   : 0  → boost non inclus (upsell vers Premium)
+ *  - premium    : 1  → 1 fenêtre principale (Ramadan OU Saison mariage…)
+ *  - cercle_pro : illimité (matérialisé par null)
+ *
+ * Founders bénéficient comme cercle_pro (cf lib/permissions.ts).
+ *
+ * Pas de trigger SQL pour ce cap : validé côté API route avant insert
+ * (même pattern que les vidéos PR-3, plus souple sur les changements
+ * de palier).
+ */
+export const SEASONAL_BOOST_COUNT_MAX: Record<Palier, number | null> = {
+  standard: 0,
+  premium: 1,
+  cercle_pro: null,
+}
+
+/** Helper boolean : peut-on cocher 1 fenêtre supplémentaire ? */
+export function canSelectSeasonalBoost(
+  palier: Palier,
+  currentCount: number,
+): boolean {
+  const max = SEASONAL_BOOST_COUNT_MAX[palier]
+  if (max === 0) return false
+  return max === null || currentCount < max
+}
+
+/** Libellé compteur UI ("0 / 1 fenêtre", "3 fenêtres · illimité"). */
+export function seasonalBoostCountLabel(
+  palier: Palier,
+  currentCount: number,
+): string {
+  const max = SEASONAL_BOOST_COUNT_MAX[palier]
+  if (max === 0) return 'Boost saisonnier non inclus dans ton palier'
+  if (max === null) {
+    return `${currentCount} fenêtre${currentCount > 1 ? 's' : ''} · illimité`
+  }
+  return `${currentCount} / ${max} fenêtre${max > 1 ? 's' : ''}`
+}

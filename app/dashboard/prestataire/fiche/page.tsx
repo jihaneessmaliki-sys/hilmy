@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { VideosManager } from '@/components/v2/VideosManager'
+import { SeasonalBoostsSection } from '@/components/v2/SeasonalBoostsSection'
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORIES_MAP } from '@/lib/constants'
 import {
@@ -674,6 +675,18 @@ export default function MaFichePage() {
                       scope="prestataire"
                       profileId={profileId}
                       userId={userId}
+                      palier={palier}
+                    />
+                  </Group>
+                )}
+
+                {/* Section Tes périodes — auto-boost saisonnier (PR-D mig 44).
+                    Standard = upsell, Premium = 1 fenêtre, Cercle Pro = illimité.
+                    Gating + cap revalidé server-side dans /api/seasonal-boosts. */}
+                {profileId && (
+                  <Group kicker="Tes périodes">
+                    <SeasonalBoostsSection
+                      profileId={profileId}
                       palier={palier}
                     />
                   </Group>
