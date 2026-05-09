@@ -72,6 +72,11 @@ export default async function AdminLayout({
       label: 'Signalements Je cherche',
       badge: jeChercheSignalementsCount.count ?? 0,
     },
+    {
+      href: '/admin/event-seasonal-categories',
+      label: 'Catégories saisonnières',
+      badge: undefined,
+    },
   ]
 
   return (
