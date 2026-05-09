@@ -6,6 +6,16 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { createClient } from '@/lib/supabase/client'
 import { villesSuggestions } from '@/lib/mock-data'
+import {
+  getAllLevels,
+  getNextLevelInfo,
+  pointEventLabel,
+} from '@/lib/gamification-helpers'
+import type {
+  GamificationStatut,
+  PointEvent,
+  UserGamification,
+} from '@/lib/supabase/types'
 
 type Draft = {
   prenom: string
@@ -35,6 +45,10 @@ export default function MonProfilPage() {
     bio: '',
     avatar_url: null,
   })
+
+  // Gamification (Sprint U1.5 mig 16 + backfill mig 48)
+  const [gamif, setGamif] = useState<UserGamification | null>(null)
+  const [recentEvents, setRecentEvents] = useState<PointEvent[]>([])
 
   useEffect(() => {
     const run = async () => {
@@ -69,6 +83,25 @@ export default function MonProfilPage() {
         })
         setCreatedAt(data.created_at ?? null)
       }
+
+      // Gamification — fetch parallèle (vue user_gamification + 5
+      // derniers gains). RLS authenticated read OK, service_role inutile.
+      const [gamifRes, eventsRes] = await Promise.all([
+        supabase
+          .from('user_gamification')
+          .select('user_id, total_points, statut, derniere_activite')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('point_events')
+          .select('id, user_id, source_id, event_type, points, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5),
+      ])
+      if (gamifRes.data) setGamif(gamifRes.data as UserGamification)
+      if (eventsRes.data) setRecentEvents(eventsRes.data as PointEvent[])
+
       setLoading(false)
     }
     run()
@@ -219,6 +252,9 @@ export default function MonProfilPage() {
             </div>
 
             <div className="space-y-8">
+              {/* Mon niveau — Sprint U1.5 gamification UI */}
+              <NiveauSection gamif={gamif} recentEvents={recentEvents} />
+
               <div className="flex items-center gap-4">
                 <GoldLine width={40} />
                 <span className="overline text-or">À propos de toi</span>
@@ -336,4 +372,162 @@ function Field({
       {hint && <span className="text-[11px] text-texte-sec/80">{hint}</span>}
     </label>
   )
+}
+
+const STATUT_EMOJI: Record<GamificationStatut, string> = {
+  Nouvelle: '🌱',
+  Copine: '✨',
+  Pilier: '🌟',
+  Légende: '👑',
+}
+
+function NiveauSection({
+  gamif,
+  recentEvents,
+}: {
+  gamif: UserGamification | null
+  recentEvents: PointEvent[]
+}) {
+  const totalPoints = gamif?.total_points ?? 0
+  const statut = gamif?.statut ?? 'Nouvelle'
+  const next = getNextLevelInfo(totalPoints)
+  const allLevels = getAllLevels()
+
+  return (
+    <section className="rounded-sm border border-or/15 bg-creme-soft p-6 md:p-8">
+      <div className="mb-5 flex items-center gap-4">
+        <GoldLine width={40} />
+        <span className="overline text-or">Mon niveau</span>
+      </div>
+
+      {/* Header niveau actuel + total points */}
+      <div className="flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <p className="font-serif text-[34px] leading-none font-light text-vert md:text-[40px]">
+            <span aria-hidden="true" className="mr-2">
+              {STATUT_EMOJI[statut]}
+            </span>
+            {statut}
+          </p>
+          <p className="mt-2 text-[13px] text-texte-sec">
+            {totalPoints} pt{totalPoints > 1 ? 's' : ''} cumulé{totalPoints > 1 ? 's' : ''}
+          </p>
+        </div>
+        {next.next_level && (
+          <p className="font-serif text-[14px] italic text-or md:text-[15px]">
+            Plus que <span className="font-medium">{next.points_to_next}</span> pts pour
+            devenir <span className="font-medium">{next.next_level}</span>.
+          </p>
+        )}
+        {!next.next_level && (
+          <p className="font-serif text-[14px] italic text-or">
+            Tu es au sommet. Continue, on est fières.
+          </p>
+        )}
+      </div>
+
+      {/* Barre de progression */}
+      <div className="mt-5">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-blanc">
+          <div
+            className="h-full rounded-full bg-or transition-all duration-700"
+            style={{ width: `${next.percent_progress}%` }}
+            aria-label={`Progression : ${next.percent_progress}%`}
+          />
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] tracking-[0.18em] text-texte-sec uppercase">
+          {allLevels.map((l) => {
+            const reached = totalPoints >= l.min
+            return (
+              <span
+                key={l.statut}
+                className={
+                  reached ? 'font-medium text-vert' : 'text-texte-sec/60'
+                }
+              >
+                {l.statut}{' '}
+                <span className="ml-1 text-[10px] tracking-normal normal-case text-or">
+                  {l.min}+
+                </span>
+              </span>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Comment gagner */}
+      <div className="mt-7 grid gap-3 md:grid-cols-3">
+        <HowToEarnTile
+          points="+10"
+          quoi="par recommandation publiée"
+        />
+        <HowToEarnTile
+          points="+20"
+          quoi="par événement créé"
+        />
+        <HowToEarnTile
+          points="+5"
+          quoi="quand une copine save ta reco"
+          hint="max 50 pts par reco"
+        />
+      </div>
+
+      {/* Derniers gains */}
+      {recentEvents.length > 0 && (
+        <div className="mt-7">
+          <p className="overline text-or">Tes derniers points</p>
+          <ul className="mt-3 divide-y divide-or/10">
+            {recentEvents.map((ev) => (
+              <li
+                key={ev.id}
+                className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
+              >
+                <span className="text-vert">
+                  <span className="font-medium text-or">+{ev.points} pts</span>{' '}
+                  <span className="italic text-texte-sec">
+                    {pointEventLabel(ev.event_type)}
+                  </span>
+                </span>
+                <span className="text-[11px] tracking-[0.16em] text-texte-sec uppercase">
+                  {relativeFr(ev.created_at)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function HowToEarnTile({
+  points,
+  quoi,
+  hint,
+}: {
+  points: string
+  quoi: string
+  hint?: string
+}) {
+  return (
+    <div className="rounded-sm border border-or/15 bg-blanc p-4">
+      <p className="font-serif text-2xl font-light text-or">{points} pts</p>
+      <p className="mt-1 text-[12px] leading-[1.4] text-vert">{quoi}</p>
+      {hint && (
+        <p className="mt-1 text-[11px] italic text-texte-sec">{hint}</p>
+      )}
+    </div>
+  )
+}
+
+function relativeFr(iso: string): string {
+  const now = Date.now()
+  const target = new Date(iso).getTime()
+  const diffDays = Math.round((now - target) / 86400000)
+  if (diffDays < 1) return "aujourd'hui"
+  if (diffDays === 1) return 'hier'
+  if (diffDays < 7) return `il y a ${diffDays} j`
+  if (diffDays < 30) return `il y a ${Math.round(diffDays / 7)} sem.`
+  if (diffDays < 365) return `il y a ${Math.round(diffDays / 30)} mois`
+  return `il y a ${Math.round(diffDays / 365)} an${Math.round(diffDays / 365) > 1 ? 's' : ''}`
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
+import { toast } from 'sonner'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { createClient } from '@/lib/supabase/client'
@@ -219,6 +220,9 @@ export default function NouveauEvenementPage() {
       // silencieux : notification non critique
     }
 
+    // Toast voix Sara — gamification mig 16 award +20 pts via trigger
+    // SECURITY DEFINER, on est optimiste côté client (best-effort).
+    toast.success('+20 pts · Tu fais grandir Hilmy', { duration: 4000 })
     router.push('/dashboard/utilisatrice/evenements')
   }
 

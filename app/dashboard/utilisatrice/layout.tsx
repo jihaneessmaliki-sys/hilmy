@@ -1,3 +1,4 @@
+import { Toaster } from 'sonner'
 import { Sidebar, type SidebarItem } from '@/components/dashboard/Sidebar'
 import { requireUserProfile } from '@/lib/supabase/session'
 
@@ -69,6 +70,20 @@ export default async function UtilisatriceLayout({
         signOutLabel="À bientôt"
       />
       <div className="min-w-0 flex-1">{children}</div>
+      {/* Sonner toast — voix Sara post-publication recos/events
+          (Sprint U1.5 gamification UI). Position top-right, tons crème
+          + or pour cohérence charte Hilmy. */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#F5F0E6',
+            color: '#0F3D2E',
+            border: '1px solid rgba(201, 169, 97, 0.4)',
+            fontFamily: 'inherit',
+          },
+        }}
+      />
     </div>
   )
 }

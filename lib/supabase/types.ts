@@ -494,6 +494,44 @@ export type QueryResult<T> =
 
 
 /* ─────────────────────────────────────────────────────────────
+   Gamification utilisatrices (mig 16 + backfill mig 48 — Sprint U1.5)
+   ─────────────────────────────────────────────────────────────
+   Aligné sur la BDD réelle :
+    - point_events : log immuable, écriture exclusivement via triggers
+      SECURITY DEFINER (cf mig 16). Colonne s'appelle `event_type` (PAS
+      `kind`).
+    - user_gamification : vue calculée à la volée. N'expose que ces 4
+      colonnes — pas de recos_count/events_count (à dériver via query
+      séparée si besoin un jour).
+   Niveaux hardcodés dans la vue SQL : Nouvelle 0-19 | Copine 20-99 |
+   Pilier 100-299 | Légende 300+. Garder synchro avec lib/supabase/
+   queries/gamification.ts. */
+
+export type GamificationStatut = 'Nouvelle' | 'Copine' | 'Pilier' | 'Légende';
+
+export type PointEventType =
+  | 'reco_published'
+  | 'event_published'
+  | 'reco_saved_by_other';
+
+export interface PointEvent {
+  id: string;
+  user_id: string;
+  source_id: string;
+  event_type: PointEventType;
+  points: number;
+  created_at: string;
+}
+
+export interface UserGamification {
+  user_id: string;
+  total_points: number;
+  statut: GamificationStatut;
+  derniere_activite: string | null;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
    Catégories saisonnières d'événements (mig 44 + 45)
    ─────────────────────────────────────────────────────────────
    Initialement créée par PR-D pour le boost prestataire (scope
