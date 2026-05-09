@@ -49,7 +49,7 @@ export function VideoPlayer({
           controls
           autoPlay
           playsInline
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
           aria-label={ariaLabel}
         />
       </div>
@@ -77,7 +77,7 @@ export function VideoPlayer({
         <img
           src={thumbnailUrl as string}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+          className="absolute inset-0 h-full w-full object-contain transition-transform duration-700 group-hover:scale-[1.02]"
           loading="lazy"
         />
       )}
