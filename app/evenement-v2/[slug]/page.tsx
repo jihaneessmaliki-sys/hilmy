@@ -215,7 +215,12 @@ export default async function EvenementV2Page({
                   registrationMode={ev.registration_mode ?? 'internal'}
                   externalUrl={ev.external_signup_url}
                 />
-                <FavoriteButton label="Sauvegarder" labelActive="Sauvegardé" />
+                <FavoriteButton
+                  itemType="evenement"
+                  itemId={ev.id}
+                  label="Sauvegarder"
+                  labelActive="Sauvegardé"
+                />
               </div>
 
               <div className="mt-8 flex flex-wrap items-center gap-6 text-[12px] text-texte-sec">

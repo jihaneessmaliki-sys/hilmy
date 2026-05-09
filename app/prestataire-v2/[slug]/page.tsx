@@ -285,7 +285,7 @@ export default async function PrestatairePage({
               )}
               {!isPreview && (
                 <div className="mt-6">
-                  <FavoriteButton />
+                  <FavoriteButton itemType="prestataire" itemId={finalRow!.id} />
                 </div>
               )}
             </div>
