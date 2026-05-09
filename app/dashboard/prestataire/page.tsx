@@ -83,27 +83,33 @@ export default async function PrestataireAccueilPage() {
 
   // Construction du chart 30j (Premium+ seulement) — bucket par jour, jours
   // sans donnée à 0 pour avoir une courbe propre.
-  const vues30j = isPremiumOrAbove
-    ? buildVues30jSeries(viewsLast30dRes.data ?? [])
-    : []
+  const views30dRows = viewsLast30dRes.data ?? []
+  const views30d = views30dRows.length
+  const vues30j = isPremiumOrAbove ? buildVues30jSeries(views30dRows) : []
 
   const reviews = reviewsRes.data ?? []
   const pendingReplies = reviews.filter((r) => !r.reponse_pro).length
   const upcomingEventsCount = eventsRes.count ?? 0
 
-  const prenom = prestataire.nom.split(' ')[0] ?? prestataire.nom
+  // ─── Gating "data riche" vs "data jeune/encouragement" ──────────────
+  // Voix Sara : on transforme chaque chiffre en récit. Quand la data est
+  // trop jeune pour raconter une histoire, on bascule sur des
+  // encouragements + actions concrètes plutôt que d'afficher des 0
+  // déprimants. Aligné sur le dashboard lieu (PR-B2 #79).
+  const viewsRichMode = viewsTotal >= 10 || viewsLast7 >= 3
+
+  // Pluralisation FR (1 → "", N>1 → "s").
+  const pluralS = (n: number) => (n > 1 ? 's' : '')
 
   return (
     <>
       <DashboardHeader
-        kicker={`Bonjour, ${prenom}`}
+        kicker={`Ton tableau de bord, ${prestataire.nom}`}
         titre={
-          <>
-            Ton activité,{' '}
-            <em className="font-serif italic text-or">en un coup d&apos;œil.</em>
+          <>Voilà ce que les copines{' '}
+            <em className="font-serif italic text-or">pensent de toi.</em>
           </>
         }
-        lead="Les chiffres depuis la création de ta fiche. Vues, contacts, avis."
         actions={
           <div className="flex flex-wrap items-center gap-3">
             {isCerclePro && <PastilleSelectionHilmy />}
@@ -143,74 +149,149 @@ export default async function PrestataireAccueilPage() {
         </section>
       )}
 
-      {/* === STATS PALIER-AWARE ===================================== */}
+      {/* ─── Section 1 — Les copines te découvrent ─────────────────── */}
       <section className="px-6 py-10 md:px-12 md:py-14">
-        <div className="mb-8 flex items-center gap-4">
-          <GoldLine width={40} />
-          <span className="overline text-or">
-            {!isPremiumOrAbove ? 'Mes chiffres' : 'Mes chiffres détaillés'}
-          </span>
-        </div>
+        {viewsRichMode ? (
+          <>
+            <div className="mb-8 flex items-center gap-4">
+              <GoldLine width={40} />
+              <span className="overline text-or">
+                Les copines te découvrent
+              </span>
+            </div>
 
-        {!isPremiumOrAbove ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            <StatCard
-              kicker="Vues totales"
-              value={viewsTotal.toLocaleString('fr-FR')}
-              hint="Depuis la publication de ta fiche"
-              index={0}
-            />
-            <StatCard
-              kicker="Clics totaux"
-              value={contactsTotal.toLocaleString('fr-FR')}
-              hint="WhatsApp, téléphone, email, réseaux…"
-              variant="or"
-              index={1}
-            />
-          </div>
+            {!isPremiumOrAbove ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <StatCard
+                  kicker="Au total"
+                  value={`${viewsTotal.toLocaleString('fr-FR')} copine${pluralS(viewsTotal)}`}
+                  hint="se sont arrêtées sur ton profil"
+                  variant="vert"
+                  index={0}
+                />
+                <StatCard
+                  kicker="Elles ont fait le pas"
+                  value={contactsTotal.toLocaleString('fr-FR')}
+                  hint="ont voulu te joindre, tous canaux confondus"
+                  variant="or"
+                  index={1}
+                />
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                  kicker="Au total"
+                  value={`${viewsTotal.toLocaleString('fr-FR')} copine${pluralS(viewsTotal)}`}
+                  hint="se sont arrêtées sur ton profil"
+                  variant="vert"
+                  index={0}
+                />
+                <StatCard
+                  kicker="Cette semaine"
+                  value={viewsLast7.toLocaleString('fr-FR')}
+                  hint="ont voulu te connaître"
+                  variant="or"
+                  index={1}
+                />
+                <StatCard
+                  kicker="Elles t'ont WhatsApp"
+                  value={whatsappCount.toLocaleString('fr-FR')}
+                  hint="ont cliqué pour t'écrire"
+                  variant="vert"
+                  index={2}
+                />
+                <StatCard
+                  kicker="Elles ont voulu te joindre"
+                  value={emailWebsiteCount.toLocaleString('fr-FR')}
+                  hint="via email ou ton site"
+                  index={3}
+                />
+              </div>
+            )}
+          </>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              kicker="Vues totales"
-              value={viewsTotal.toLocaleString('fr-FR')}
-              hint="Depuis la publication"
-              index={0}
-            />
-            <StatCard
-              kicker="Vues cette semaine"
-              value={viewsLast7.toLocaleString('fr-FR')}
-              hint="Sur les 7 derniers jours"
-              variant="or"
-              index={1}
-            />
-            <StatCard
-              kicker="Clics WhatsApp"
-              value={whatsappCount.toLocaleString('fr-FR')}
-              hint="Visites qui ont cliqué pour t'écrire"
-              variant="vert"
-              index={2}
-            />
-            <StatCard
-              kicker="Clics email / site"
-              value={emailWebsiteCount.toLocaleString('fr-FR')}
-              hint="Email + site web cumulés"
-              index={3}
-            />
-          </div>
+          <>
+            <div className="mb-6 flex items-center gap-4">
+              <GoldLine width={40} />
+              <span className="overline text-or">Ton profil prend ses marques</span>
+            </div>
+            <h2 className="font-serif text-[clamp(1.75rem,3vw,2.25rem)] font-light leading-[1.15] text-vert">
+              Les premières copines{' '}
+              <em className="italic text-or">arrivent.</em>
+            </h2>
+            <p className="mt-4 max-w-xl text-[15px] leading-[1.7] text-texte-sec">
+              Pendant que ta fiche prend ses marques, voilà 3 manières de
+              l&apos;aider à briller :
+            </p>
+
+            <ul className="mt-10 grid gap-6 md:grid-cols-3">
+              <li className="rounded-sm border border-or/15 bg-blanc p-6 md:p-7">
+                <span
+                  className="font-serif text-[44px] font-light italic leading-none text-or"
+                  aria-hidden="true"
+                >
+                  01
+                </span>
+                <h3 className="mt-5 font-serif text-lg font-light leading-snug text-vert">
+                  Partage le lien sur ton Insta story
+                </h3>
+                <p className="mt-3 text-[13px] leading-[1.6] text-texte-sec">
+                  La team Hilmy y est très active.
+                </p>
+              </li>
+
+              <li className="rounded-sm border border-or/15 bg-blanc p-6 md:p-7">
+                <span
+                  className="font-serif text-[44px] font-light italic leading-none text-or"
+                  aria-hidden="true"
+                >
+                  02
+                </span>
+                <h3 className="mt-5 font-serif text-lg font-light leading-snug text-vert">
+                  Glisse un QR code dans tes communications client
+                </h3>
+                <p className="mt-3 text-[13px] leading-[1.6] text-texte-sec">
+                  Tes vraies clientes deviennent ambassadrices.
+                </p>
+              </li>
+
+              <li className="rounded-sm border border-or/15 bg-blanc p-6 md:p-7">
+                <span
+                  className="font-serif text-[44px] font-light italic leading-none text-or"
+                  aria-hidden="true"
+                >
+                  03
+                </span>
+                <Link
+                  href="/dashboard/prestataire/evenements"
+                  className="mt-5 block font-serif text-lg font-light leading-snug text-vert hover:text-or"
+                >
+                  Crée un événement saisonnier{' '}
+                  <span className="text-or" aria-hidden="true">→</span>
+                </Link>
+                <p className="mt-3 text-[13px] leading-[1.6] text-texte-sec">
+                  C&apos;est l&apos;auto-boost de la team Hilmy.
+                </p>
+              </li>
+            </ul>
+          </>
         )}
 
-        {/* Bandeau upsell Standard → Premium */}
+        {/* Bandeau invitation Standard → Premium (toujours visible si non
+            Premium+, indépendant du mode riche/jeune) */}
         {!isPremiumOrAbove && (
-          <div className="mt-6 rounded-sm border border-or/30 bg-or/10 p-6 md:p-7">
+          <div className="mt-10 rounded-sm border border-or/30 bg-or/10 p-6 md:p-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
               <div>
                 <p className="overline text-or">Passe en Premium</p>
                 <p className="mt-2 font-serif text-[18px] italic leading-[1.4] text-vert md:text-[20px]">
-                  Vues hebdo, clics par canal, courbe sur 30 jours…
+                  Le détail des copines qui t&apos;ont voulue, semaine après
+                  semaine.
                 </p>
                 <p className="mt-2 text-[13px] leading-[1.6] text-texte-sec">
-                  Le détail de ton audience et l&apos;évolution de ta fiche
-                  sont réservés aux paliers Premium et Cercle Pro.
+                  Le détail des canaux qu&apos;elles ont cliqués et
+                  l&apos;évolution de ta fiche sur 30 jours sont réservés
+                  aux paliers Premium et Cercle Pro.
                 </p>
               </div>
               <Link
@@ -224,25 +305,26 @@ export default async function PrestataireAccueilPage() {
           </div>
         )}
 
-        {/* Bandeau Stats avancées Cercle Pro — actif depuis Phase 4 */}
+        {/* Bandeau Cercle Pro — page détaillée disponible */}
         {isCerclePro && (
-          <div className="mt-6 rounded-sm bg-vert p-6 text-creme md:p-7">
+          <div className="mt-10 rounded-sm bg-vert p-6 text-creme md:p-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
               <div>
-                <p className="overline text-or">Stats avancées · disponibles</p>
+                <p className="overline text-or">Le détail des copines · disponible</p>
                 <p className="mt-2 font-serif text-[18px] italic leading-[1.4] text-creme md:text-[20px]">
-                  Carte des villes, pics horaires, benchmark catégorie.
+                  D&apos;où elles viennent, quand elles te regardent, comment
+                  tu te situes.
                 </p>
                 <p className="mt-2 text-[13px] leading-[1.6] text-creme/75">
                   Tu fais partie du Cercle Pro — voici la vue 30 jours
-                  glissants pour piloter ton audience en profondeur.
+                  glissants pour comprendre les copines en profondeur.
                 </p>
               </div>
               <Link
                 href="/dashboard/prestataire/stats-avancees"
                 className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-or px-5 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:bg-or-light"
               >
-                Voir mes stats avancées
+                Voir le détail
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
@@ -250,22 +332,24 @@ export default async function PrestataireAccueilPage() {
         )}
       </section>
 
-      {/* === CHART 30 JOURS (Premium+ uniquement) ====================== */}
-      {isPremiumOrAbove && (
+      {/* === CHART 30 JOURS (Premium+ + data riche + ≥5 vues 30d) ====== */}
+      {isPremiumOrAbove && viewsRichMode && views30d >= 5 && (
         <section className="bg-blanc px-6 py-12 md:px-12 md:py-16">
           <div className="rounded-sm border border-or/15 bg-creme-soft p-6 md:p-8">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <p className="overline text-or">Évolution des vues</p>
+                <p className="overline text-or">
+                  Quand on s&apos;arrête sur ton profil
+                </p>
                 <h2 className="mt-2 font-serif text-2xl font-light text-vert">
-                  Sur 30 jours.
+                  Les 30 derniers jours en image.
                 </h2>
-                <p className="mt-1 text-[11px] italic text-texte-sec">
-                  Données réelles agrégées par jour.
+                <p className="mt-1 text-[12px] italic text-texte-sec">
+                  Chaque pic, c&apos;est une copine qui t&apos;a découverte.
                 </p>
               </div>
               <span className="font-serif text-xl italic text-or">
-                ↗ {viewsTotal.toLocaleString('fr-FR')}
+                ↗ {views30d}
               </span>
             </div>
             <VuesAreaChart data={vues30j} />
@@ -386,6 +470,12 @@ export default async function PrestataireAccueilPage() {
           </p>
         )}
       </section>
+
+      {/* ─── Footer transparence ──────────────────────────────────── */}
+      <p className="px-6 pb-12 pt-2 text-center font-sans text-[12px] italic text-texte-sec md:px-12">
+        On compte précieusement chaque pas qu&apos;une copine fait vers
+        toi, depuis le 9 mai 2026.
+      </p>
     </>
   )
 }
