@@ -435,24 +435,12 @@ function NiveauSection({
             aria-label={`Progression : ${next.percent_progress}%`}
           />
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] tracking-[0.18em] text-texte-sec uppercase">
-          {allLevels.map((l) => {
-            const reached = totalPoints >= l.min
-            return (
-              <span
-                key={l.statut}
-                className={
-                  reached ? 'font-medium text-vert' : 'text-texte-sec/60'
-                }
-              >
-                {l.statut}{' '}
-                <span className="ml-1 text-[10px] tracking-normal normal-case text-or">
-                  {l.min}+
-                </span>
-              </span>
-            )
-          })}
-        </div>
+      </div>
+
+      {/* Accordion 4 paliers + avantages débloqués */}
+      <div className="mt-6">
+        <p className="overline text-or">Avantages par niveau</p>
+        <LevelAccordion currentStatut={statut} totalPoints={totalPoints} />
       </div>
 
       {/* Comment gagner */}
@@ -497,6 +485,138 @@ function NiveauSection({
         </div>
       )}
     </section>
+  )
+}
+
+/**
+ * Avantages par palier — voix Sara stricte.
+ *
+ * ⚠️ Plusieurs avantages listés ici sont des engagements à honorer côté
+ * produit (codes promo, IRL, newsletter). Voir tech-debt.md section
+ * "Engagements à honorer" pour le tracking par sprint.
+ */
+const LEVEL_ADVANTAGES: Record<GamificationStatut, string[]> = {
+  Nouvelle: ["Tu viens d'arriver. Bienvenue parmi les copines."],
+  Copine: [
+    '🎁 1 code -10% chez 1 prestataire Cercle Pro au choix',
+    '✨ Ton statut s\'affiche sur tes recos publiées',
+  ],
+  Pilier: [
+    '🎁 1 code -10% chez 3 prestataires Cercle Pro au choix',
+    '✨ Ta voix mise en avant sur la homepage Hilmy',
+    '🌙 Invitée aux brunchs Hilmy IRL',
+  ],
+  Légende: [
+    '🎁 1 code -10% chez 5 prestataires Cercle Pro au choix',
+    '✨ Profil mis en avant dans l\'annuaire',
+    '🌙 Accès prioritaire aux events VIP',
+    '🎤 Possibilité d\'écrire dans la newsletter Hilmy',
+  ],
+}
+
+function LevelAccordion({
+  currentStatut,
+  totalPoints,
+}: {
+  currentStatut: GamificationStatut
+  totalPoints: number
+}) {
+  const allLevels = getAllLevels()
+  // Default expanded = palier actuel uniquement, pour que la copine voie
+  // immédiatement ses avantages déjà acquis sans avoir à dérouler.
+  const [openSet, setOpenSet] = useState<Set<GamificationStatut>>(
+    () => new Set([currentStatut]),
+  )
+
+  const toggle = (statut: GamificationStatut) => {
+    setOpenSet((prev) => {
+      const next = new Set(prev)
+      if (next.has(statut)) next.delete(statut)
+      else next.add(statut)
+      return next
+    })
+  }
+
+  return (
+    <ul className="mt-3 space-y-2">
+      {allLevels.map((l) => {
+        const reached = totalPoints >= l.min
+        const isCurrent = l.statut === currentStatut
+        const isOpen = openSet.has(l.statut)
+        const advantages = LEVEL_ADVANTAGES[l.statut]
+        return (
+          <li
+            key={l.statut}
+            className={`overflow-hidden rounded-sm border transition-colors ${
+              isCurrent
+                ? 'border-or/50 bg-blanc'
+                : reached
+                  ? 'border-or/20 bg-blanc/70'
+                  : 'border-or/10 bg-blanc/40'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => toggle(l.statut)}
+              aria-expanded={isOpen}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-creme-deep/30"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span aria-hidden="true" className="text-[20px]">
+                  {STATUT_EMOJI[l.statut]}
+                </span>
+                <span className="flex flex-col">
+                  <span
+                    className={`font-serif text-[16px] leading-tight ${
+                      reached ? 'text-vert' : 'text-texte-sec'
+                    }`}
+                  >
+                    {l.statut}
+                    <span className="ml-2 text-[11px] tracking-[0.18em] text-or uppercase">
+                      {l.min}+ pts
+                    </span>
+                  </span>
+                  <span
+                    className={`mt-0.5 text-[10px] tracking-[0.22em] uppercase ${
+                      reached ? 'text-vert/60' : 'text-texte-sec/60'
+                    }`}
+                  >
+                    {reached ? '✅ Débloqué' : '🔒 Verrouillé'}
+                  </span>
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                className={`shrink-0 text-or transition-transform duration-200 ${
+                  isOpen ? 'rotate-180' : 'rotate-0'
+                }`}
+              >
+                ▾
+              </span>
+            </button>
+            <div
+              className={`grid transition-all duration-300 ${
+                isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+              }`}
+            >
+              <div className="overflow-hidden">
+                <ul
+                  className={`space-y-1.5 px-4 pb-4 text-[13px] leading-[1.5] ${
+                    reached ? 'text-vert' : 'text-texte-sec'
+                  }`}
+                >
+                  {advantages.map((line, i) => (
+                    <li key={i} className="list-none pl-7 -indent-7">
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
