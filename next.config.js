@@ -61,16 +61,22 @@ const securityHeaders = [
  * uniquement sur les 2 routes où UploadVideo (ffmpeg.wasm) tourne. Permet
  * SharedArrayBuffer pour la compression multi-thread (3-5× plus rapide).
  *
- * NE PAS appliquer globalement : casserait potentiellement Stripe Checkout
- * futur, Google Maps embeds, YouTube iframes (require-corp bloque les
- * cross-origin sub-resources sans CORP header).
+ * COEP=credentialless (et NON require-corp) : require-corp bloquait les
+ * workers internes Turbopack/Next.js qui ne renvoient pas le header
+ * Cross-Origin-Resource-Policy. credentialless autorise les ressources
+ * cross-origin sans credentials (cookies/auth) sans opt-in CORP, tout en
+ * maintenant le cross-origin isolated state nécessaire pour SAB.
+ * Compat 2026 : Chrome/Edge 96+, Firefox 119+, Safari 17.4+.
+ *
+ * NE PAS appliquer globalement : maintient l'isolement Stripe Checkout
+ * futur, Google Maps embeds, YouTube iframes hors de ces routes.
  *
  * Vérifié à la création (sprint 3 PR-3 audit) : ces 2 routes n'utilisent
  * NI Maps NI Google Places NI iframes externes — safe.
  */
 const crossOriginIsolatedHeaders = [
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-  { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
+  { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
 ]
 
 const nextConfig = {
