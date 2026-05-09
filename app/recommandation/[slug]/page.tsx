@@ -16,8 +16,10 @@ import {
   getPlacesByCategorie,
 } from '@/lib/supabase/queries/places'
 import { getRecommendationsByPlace } from '@/lib/supabase/queries/recommendations'
+import { getPlaceVideos } from '@/lib/supabase/queries/videos'
 import { createClient } from '@/lib/supabase/server'
 import type { Place, Recommendation } from '@/lib/supabase/types'
+import { VideoPlayer } from '@/components/v2/VideoPlayer'
 import { DIET_TAGS_MAP, dietTagLabel, recTagLabel } from '@/lib/constants'
 
 type RecoView = {
@@ -102,6 +104,21 @@ export default async function RecommandationPage({
   const { data: row, error } = await getPlaceBySlug(slug)
   if (error || !row) notFound()
   const l: MockLieu = adaptDbPlace(row)
+
+  // Fetch des vidéos du lieu (mig 43 PR-3) — public read OK via RLS.
+  const { data: videos } = await getPlaceVideos(row.id)
+  const videoEntries = (videos ?? []).map((v) => {
+    const videoUrl = supabase.storage.from('place-videos').getPublicUrl(v.storage_path).data.publicUrl
+    const thumbnailUrl = v.thumbnail_storage_path
+      ? supabase.storage.from('place-videos').getPublicUrl(v.thumbnail_storage_path).data.publicUrl
+      : null
+    return {
+      id: v.id,
+      videoUrl,
+      thumbnailUrl,
+      durationSeconds: v.duration_seconds,
+    }
+  })
 
   // Fetch les recommandations publiées pour ce lieu + leurs autrices.
   const { data: recos } = await getRecommendationsByPlace(row.id)
@@ -191,6 +208,50 @@ export default async function RecommandationPage({
           </div>
         </div>
       </section>
+
+      {/* Section Vidéos — Sélection Hilmy uniquement (vidéos absentes
+          sinon). Affiché juste après le hero pour mettre en avant le
+          format pour les fiches premium. */}
+      {videoEntries.length > 0 && (
+        <section className="bg-creme-soft py-12 md:py-16">
+          <div className="mx-auto max-w-container px-6 md:px-20">
+            <FadeInSection>
+              <header className="flex items-center gap-5">
+                <GoldLine width={60} />
+                <span className="overline text-or">
+                  Découvre {l.nom} en vidéo
+                </span>
+              </header>
+              {videoEntries.length === 1 ? (
+                <div className="mt-6">
+                  <VideoPlayer
+                    videoUrl={videoEntries[0].videoUrl}
+                    thumbnailUrl={videoEntries[0].thumbnailUrl}
+                    durationSeconds={videoEntries[0].durationSeconds}
+                    ariaLabel={`Voir la vidéo de ${l.nom}`}
+                    fallbackColor={l.cover}
+                    size="large"
+                  />
+                </div>
+              ) : (
+                <div className="mt-6 grid gap-5 md:grid-cols-2">
+                  {videoEntries.map((v) => (
+                    <VideoPlayer
+                      key={v.id}
+                      videoUrl={v.videoUrl}
+                      thumbnailUrl={v.thumbnailUrl}
+                      durationSeconds={v.durationSeconds}
+                      ariaLabel={`Voir la vidéo de ${l.nom}`}
+                      fallbackColor={l.cover}
+                      size="medium"
+                    />
+                  ))}
+                </div>
+              )}
+            </FadeInSection>
+          </div>
+        </section>
+      )}
 
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-container px-6 md:px-20">

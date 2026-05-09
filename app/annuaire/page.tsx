@@ -6,6 +6,7 @@ import {
   type Prestataire as MockPrestataire,
 } from '@/lib/mock-data'
 import { getAllPrestataires } from '@/lib/supabase/queries/prestataires'
+import { getProfileIdsWithVideos } from '@/lib/supabase/queries/videos'
 import type { Prestataire as DbPrestataire } from '@/lib/supabase/types'
 import { AnnuaireClient } from './AnnuaireClient'
 
@@ -87,7 +88,16 @@ export default async function AnnuairePage() {
     )
   }
 
-  const adapted = (data ?? []).map(adaptPrestataireFromDb)
+  const rows = data ?? []
+
+  // Pré-fetch en batch des IDs prestataires qui ont au moins 1 vidéo
+  // (évite N+1 sur le badge ▶ VIDÉO côté card). Mig 43 PR-3.
+  const idsWithVideos = await getProfileIdsWithVideos(rows.map((p) => p.id))
+
+  const adapted = rows.map((p) => ({
+    ...adaptPrestataireFromDb(p),
+    has_videos: idsWithVideos.has(p.id),
+  }))
   const sorted = sortByPalierThenServerOrder(adapted)
 
   return <AnnuaireClient prestataires={sorted} />

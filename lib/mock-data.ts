@@ -108,6 +108,9 @@ export type Prestataire = {
   telephone?: string;
   instagram?: string;
   palier?: 'standard' | 'premium' | 'cercle_pro';
+  /** Boolean flag pour le badge ▶ VIDÉO sur la card feed (PR-3 mig 43).
+   *  Pré-fetché côté server via `getProfileIdsWithVideos` pour éviter N+1. */
+  has_videos?: boolean;
 };
 
 export const prestataires: Prestataire[] = [
@@ -367,6 +370,9 @@ export type Lieu = {
   galerie: string[];
   recommandePar: { prenom: string; avatar: string; date: string }[];
   commentaires: { prenom: string; avatar: string; texte: string; date: string }[];
+  /** Boolean flag pour le badge ▶ VIDÉO sur la card feed (PR-3 mig 43).
+   *  Pré-fetché côté server via `getPlaceIdsWithVideos` pour éviter N+1. */
+  has_videos?: boolean;
 };
 
 export const lieux: Lieu[] = [

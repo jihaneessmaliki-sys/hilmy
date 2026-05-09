@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'motion/react'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
+import { VideosManager } from '@/components/v2/VideosManager'
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORIES_MAP } from '@/lib/constants'
 import {
@@ -664,6 +665,19 @@ export default function MaFichePage() {
                     </ul>
                   )}
                 </Group>
+
+                {/* Section Mes vidéos — gating server-side via API route
+                    /api/videos/upload (cap durée + count par palier). */}
+                {profileId && userId && (
+                  <Group kicker="Mes vidéos">
+                    <VideosManager
+                      scope="prestataire"
+                      profileId={profileId}
+                      userId={userId}
+                      palier={palier}
+                    />
+                  </Group>
+                )}
 
                 <div className="flex items-center gap-4">
                   <button

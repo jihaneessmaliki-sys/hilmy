@@ -72,9 +72,26 @@ export default function RecommandationsPage() {
           setLoading(false)
           return
         }
-        const adapted = (data ?? []).map((row) =>
-          adaptPlaceFromDb(row as unknown as Place),
-        )
+        const placeRows = (data ?? []) as unknown as (Place & { id: string })[]
+
+        // Pré-fetch has_videos en batch (mig 43 PR-3 — badge ▶ VIDÉO).
+        // Public read OK via RLS place_videos_public_read.
+        const placeIds = placeRows.map((p) => p.id)
+        let videoIds = new Set<string>()
+        if (placeIds.length > 0) {
+          const { data: videoRows } = await supabase
+            .from('place_videos')
+            .select('place_id')
+            .in('place_id', placeIds)
+          videoIds = new Set(
+            ((videoRows ?? []) as { place_id: string }[]).map((r) => r.place_id),
+          )
+        }
+
+        const adapted = placeRows.map((row) => ({
+          ...adaptPlaceFromDb(row),
+          has_videos: videoIds.has(row.id),
+        }))
         setLiveLieux(adapted)
         setLoading(false)
       } catch (e) {

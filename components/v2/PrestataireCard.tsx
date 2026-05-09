@@ -59,6 +59,17 @@ export function PrestataireCard({ p, index = 0 }: Props) {
               {p.note.toFixed(1)}
             </div>
           )}
+          {p.has_videos && (
+            <div
+              className={`absolute ${p.lesAvis && p.lesAvis.length > 0 ? 'right-5 top-12' : 'right-5 top-5'} inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blanc/90 px-2.5 py-1 text-[10px] font-medium tracking-[0.22em] text-vert backdrop-blur uppercase`}
+              aria-label="Cette fiche contient une vidéo"
+            >
+              <svg width="10" height="10" viewBox="0 0 22 22" fill="currentColor" aria-hidden="true" className="text-or">
+                <path d="M5 3l14 8-14 8z" />
+              </svg>
+              Vidéo
+            </div>
+          )}
           {/* Badge palier — visible seulement pour premium/cercle_pro
               (le standard est le défaut, on ne badge pas pour ne pas
               surcharger la liste). */}
