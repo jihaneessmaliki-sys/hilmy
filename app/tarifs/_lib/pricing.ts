@@ -79,7 +79,6 @@ export const PALIER_INFO: Record<Palier, PalierInfo> = {
       'Dashboard détaillé',
       'Tap-to-contact tracé',
       '20 photos · 1 vidéo 60s (dès cette semaine)',
-      '-10% pour les Copines',
       'Stats hebdo (dès lundi prochain)',
       'Story trimestrielle (dès Q3 2026)',
       '2 boosts par an (dès mai 2026)',
