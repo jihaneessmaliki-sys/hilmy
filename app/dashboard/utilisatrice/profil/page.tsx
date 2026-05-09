@@ -498,16 +498,16 @@ function NiveauSection({
 const LEVEL_ADVANTAGES: Record<GamificationStatut, string[]> = {
   Nouvelle: ["Tu viens d'arriver. Bienvenue parmi les copines."],
   Copine: [
-    '🎁 1 code -10% chez 1 prestataire Cercle Pro au choix',
+    "🎁 1 code -10% chez 1 prestataire de l'annuaire qui accepte les codes Hilmy",
     '✨ Ton statut s\'affiche sur tes recos publiées',
   ],
   Pilier: [
-    '🎁 1 code -10% chez 3 prestataires Cercle Pro au choix',
+    "🎁 1 code -10% chez 3 prestataires de l'annuaire qui acceptent les codes Hilmy",
     '✨ Ta voix mise en avant sur la homepage Hilmy',
     '🌙 Invitée aux brunchs Hilmy IRL',
   ],
   Légende: [
-    '🎁 1 code -10% chez 5 prestataires Cercle Pro au choix',
+    "🎁 1 code -10% chez 5 prestataires de l'annuaire qui acceptent les codes Hilmy",
     '✨ Profil mis en avant dans l\'annuaire',
     '🌙 Accès prioritaire aux events VIP',
     '🎤 Possibilité d\'écrire dans la newsletter Hilmy',
