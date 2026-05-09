@@ -506,6 +506,10 @@ export type Evenement = {
   flyer?: string | null;
   places: number;
   inscrites: number;
+  /** Catégorie saisonnière (mig 46 PR-F). Pré-fetché via LEFT JOIN
+   *  PostgREST sur event_seasonal_categories. Drive le badge card +
+   *  filtre chips /evenements-v2. */
+  seasonal_category?: { slug: string; label: string; emoji: string } | null;
 };
 
 export const evenements: Evenement[] = [
