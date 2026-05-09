@@ -190,9 +190,10 @@ export default function MaFichePage() {
     if (!userId || !profileId) return
     if (!canUploadMorePhotos(palier, draft.galerie.length)) {
       const limit = PHOTO_LIMIT[palier]
+      const nextPalier = palier === 'standard' ? 'Premium' : 'Cercle Pro'
       setError(
         limit !== null
-          ? `Limite atteinte (${limit} photos pour le palier ${palier === 'standard' ? 'Standard' : 'Premium'}). Passe au palier supérieur depuis /tarifs pour en ajouter plus.`
+          ? `Tu as atteint ta limite de ${limit} photo${limit > 1 ? 's' : ''}. Passe en ${nextPalier} pour en ajouter plus, ou réorganise celles que tu as déjà.`
           : 'Limite atteinte.',
       )
       return
