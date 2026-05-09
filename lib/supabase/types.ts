@@ -479,3 +479,25 @@ export interface PlaceVideo {
 export type QueryResult<T> =
   | { data: T; error: null }
   | { data: null; error: string };
+
+
+/* ─────────────────────────────────────────────────────────────
+   Catégories saisonnières d'événements (mig 44 + 45)
+   ─────────────────────────────────────────────────────────────
+   Initialement créée par PR-D pour le boost prestataire (scope
+   abandonné). La table `seasonal_event_windows` est renommée
+   `event_seasonal_categories` via mig 45 et sert désormais de
+   référentiel pour les filtres saisonniers de la page /événements
+   (PR-F à venir). */
+
+export interface EventSeasonalCategory {
+  id: string;
+  slug: string;
+  label: string;
+  emoji: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
