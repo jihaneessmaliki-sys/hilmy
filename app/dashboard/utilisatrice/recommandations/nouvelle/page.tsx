@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
+import { toast } from 'sonner'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import {
@@ -223,6 +224,9 @@ export default function RecommandationNouvellePage() {
       setError(recoErr.message)
       return
     }
+    // Toast voix Sara — gamification mig 16 award +10 pts via trigger
+    // SECURITY DEFINER, on est optimiste côté client (best-effort).
+    toast.success('+10 pts · Tu fais grandir Hilmy', { duration: 4000 })
     router.push('/dashboard/utilisatrice/recommandations')
   }
 

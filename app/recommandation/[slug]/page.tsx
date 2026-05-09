@@ -17,7 +17,9 @@ import {
 } from '@/lib/supabase/queries/places'
 import { getRecommendationsByPlace } from '@/lib/supabase/queries/recommendations'
 import { getPlaceVideos } from '@/lib/supabase/queries/videos'
+import { getUserGamificationByUserIds } from '@/lib/supabase/queries/gamification'
 import { isSelectionHilmy } from '@/lib/permissions-lieux'
+import type { GamificationStatut } from '@/lib/supabase/types'
 import { createClient } from '@/lib/supabase/server'
 import type { Place, Recommendation } from '@/lib/supabase/types'
 import { VideoPlayer } from '@/components/v2/VideoPlayer'
@@ -34,6 +36,9 @@ type RecoView = {
   diets: string[]
   priceIndicator: string | null
   photos: string[]
+  /** Statut gamif (mig 16 + backfill mig 48). NULL si user n'a aucun
+   *  point cumulé (= jamais publié de reco/event au moment du fetch). */
+  statut: GamificationStatut | null
 }
 
 const AVATAR_PALETTE = ['#B8C7B0', '#D9C9A8', '#C4B8D4', '#E8C5B5', '#A8C4C9', '#D4B8A8']
@@ -126,14 +131,24 @@ export default async function RecommandationPage({
   const recoRows = (recos ?? []) as Recommendation[]
   const userIds = Array.from(new Set(recoRows.map((r) => r.user_id)))
   const profilesById = new Map<string, { prenom: string }>()
+  // Pré-fetch gamif batch (Sprint U1.5) — 1 RPC sur la vue user_gamification
+  // pour tous les auteurs en parallèle des prenoms. RLS authenticated read OK.
+  let gamifByUser = new Map<string, { statut: GamificationStatut }>()
   if (userIds.length > 0) {
-    const { data: profs } = await supabase
-      .from('user_profiles')
-      .select('user_id, prenom')
-      .in('user_id', userIds)
+    const [{ data: profs }, gamifMap] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('user_id, prenom')
+        .in('user_id', userIds),
+      getUserGamificationByUserIds(userIds),
+    ])
     for (const p of (profs ?? []) as { user_id: string; prenom: string }[]) {
       profilesById.set(p.user_id, { prenom: p.prenom })
     }
+    // On ne garde que le statut côté view-model (le reste pas utile ici)
+    gamifByUser = new Map(
+      Array.from(gamifMap.entries()).map(([uid, g]) => [uid, { statut: g.statut }]),
+    )
   }
   const recoViews: RecoView[] = recoRows.map((r) => {
     const rawTags = r.tags ?? []
@@ -150,6 +165,7 @@ export default async function RecommandationPage({
       diets,
       priceIndicator: r.price_indicator,
       photos: r.photo_urls ?? [],
+      statut: gamifByUser.get(r.user_id)?.statut ?? null,
     }
   })
 
@@ -293,6 +309,17 @@ export default async function RecommandationPage({
                         <div>
                           <p className="text-[14px] font-medium text-vert">
                             {r.prenom}
+                            {r.statut && (
+                              <span
+                                className={`ml-1.5 font-serif text-[13px] italic font-light ${
+                                  r.statut === 'Nouvelle'
+                                    ? 'text-texte-sec/70'
+                                    : 'text-or'
+                                }`}
+                              >
+                                · {r.statut}
+                              </span>
+                            )}
                           </p>
                           <p className="text-[11px] text-texte-sec">{r.date}</p>
                         </div>
@@ -430,6 +457,17 @@ export default async function RecommandationPage({
                         />
                         <span className="text-[12px] font-medium text-vert">
                           {r.prenom}
+                          {r.statut && (
+                            <span
+                              className={`ml-1 font-serif text-[11px] italic font-light ${
+                                r.statut === 'Nouvelle'
+                                  ? 'text-texte-sec/70'
+                                  : 'text-or'
+                              }`}
+                            >
+                              · {r.statut}
+                            </span>
+                          )}
                         </span>
                       </div>
                     ))}

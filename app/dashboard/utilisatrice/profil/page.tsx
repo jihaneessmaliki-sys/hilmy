@@ -6,6 +6,16 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { createClient } from '@/lib/supabase/client'
 import { villesSuggestions } from '@/lib/mock-data'
+import {
+  getAllLevels,
+  getNextLevelInfo,
+  pointEventLabel,
+} from '@/lib/gamification-helpers'
+import type {
+  GamificationStatut,
+  PointEvent,
+  UserGamification,
+} from '@/lib/supabase/types'
 
 type Draft = {
   prenom: string
@@ -35,6 +45,10 @@ export default function MonProfilPage() {
     bio: '',
     avatar_url: null,
   })
+
+  // Gamification (Sprint U1.5 mig 16 + backfill mig 48)
+  const [gamif, setGamif] = useState<UserGamification | null>(null)
+  const [recentEvents, setRecentEvents] = useState<PointEvent[]>([])
 
   useEffect(() => {
     const run = async () => {
@@ -69,6 +83,25 @@ export default function MonProfilPage() {
         })
         setCreatedAt(data.created_at ?? null)
       }
+
+      // Gamification — fetch parallèle (vue user_gamification + 5
+      // derniers gains). RLS authenticated read OK, service_role inutile.
+      const [gamifRes, eventsRes] = await Promise.all([
+        supabase
+          .from('user_gamification')
+          .select('user_id, total_points, statut, derniere_activite')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('point_events')
+          .select('id, user_id, source_id, event_type, points, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5),
+      ])
+      if (gamifRes.data) setGamif(gamifRes.data as UserGamification)
+      if (eventsRes.data) setRecentEvents(eventsRes.data as PointEvent[])
+
       setLoading(false)
     }
     run()
@@ -219,6 +252,9 @@ export default function MonProfilPage() {
             </div>
 
             <div className="space-y-8">
+              {/* Mon niveau — Sprint U1.5 gamification UI */}
+              <NiveauSection gamif={gamif} recentEvents={recentEvents} />
+
               <div className="flex items-center gap-4">
                 <GoldLine width={40} />
                 <span className="overline text-or">À propos de toi</span>
@@ -336,4 +372,282 @@ function Field({
       {hint && <span className="text-[11px] text-texte-sec/80">{hint}</span>}
     </label>
   )
+}
+
+const STATUT_EMOJI: Record<GamificationStatut, string> = {
+  Nouvelle: '🌱',
+  Copine: '✨',
+  Pilier: '🌟',
+  Légende: '👑',
+}
+
+function NiveauSection({
+  gamif,
+  recentEvents,
+}: {
+  gamif: UserGamification | null
+  recentEvents: PointEvent[]
+}) {
+  const totalPoints = gamif?.total_points ?? 0
+  const statut = gamif?.statut ?? 'Nouvelle'
+  const next = getNextLevelInfo(totalPoints)
+  const allLevels = getAllLevels()
+
+  return (
+    <section className="rounded-sm border border-or/15 bg-creme-soft p-6 md:p-8">
+      <div className="mb-5 flex items-center gap-4">
+        <GoldLine width={40} />
+        <span className="overline text-or">Mon niveau</span>
+      </div>
+
+      {/* Header niveau actuel + total points */}
+      <div className="flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <p className="font-serif text-[34px] leading-none font-light text-vert md:text-[40px]">
+            <span aria-hidden="true" className="mr-2">
+              {STATUT_EMOJI[statut]}
+            </span>
+            {statut}
+          </p>
+          <p className="mt-2 text-[13px] text-texte-sec">
+            {totalPoints} pt{totalPoints > 1 ? 's' : ''} cumulé{totalPoints > 1 ? 's' : ''}
+          </p>
+        </div>
+        {next.next_level && (
+          <p className="font-serif text-[14px] italic text-or md:text-[15px]">
+            Plus que <span className="font-medium">{next.points_to_next}</span> pts pour
+            devenir <span className="font-medium">{next.next_level}</span>.
+          </p>
+        )}
+        {!next.next_level && (
+          <p className="font-serif text-[14px] italic text-or">
+            Tu es au sommet. Continue, on est fières.
+          </p>
+        )}
+      </div>
+
+      {/* Barre de progression */}
+      <div className="mt-5">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-blanc">
+          <div
+            className="h-full rounded-full bg-or transition-all duration-700"
+            style={{ width: `${next.percent_progress}%` }}
+            aria-label={`Progression : ${next.percent_progress}%`}
+          />
+        </div>
+      </div>
+
+      {/* Accordion 4 paliers + avantages débloqués */}
+      <div className="mt-6">
+        <p className="overline text-or">Avantages par niveau</p>
+        <LevelAccordion currentStatut={statut} totalPoints={totalPoints} />
+      </div>
+
+      {/* Comment gagner */}
+      <div className="mt-7 grid gap-3 md:grid-cols-3">
+        <HowToEarnTile
+          points="+10"
+          quoi="par recommandation publiée"
+        />
+        <HowToEarnTile
+          points="+20"
+          quoi="par événement créé"
+        />
+        <HowToEarnTile
+          points="+5"
+          quoi="quand une copine save ta reco"
+          hint="max 50 pts par reco"
+        />
+      </div>
+
+      {/* Derniers gains */}
+      {recentEvents.length > 0 && (
+        <div className="mt-7">
+          <p className="overline text-or">Tes derniers points</p>
+          <ul className="mt-3 divide-y divide-or/10">
+            {recentEvents.map((ev) => (
+              <li
+                key={ev.id}
+                className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
+              >
+                <span className="text-vert">
+                  <span className="font-medium text-or">+{ev.points} pts</span>{' '}
+                  <span className="italic text-texte-sec">
+                    {pointEventLabel(ev.event_type)}
+                  </span>
+                </span>
+                <span className="text-[11px] tracking-[0.16em] text-texte-sec uppercase">
+                  {relativeFr(ev.created_at)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  )
+}
+
+/**
+ * Avantages par palier — voix Sara stricte.
+ *
+ * ⚠️ Plusieurs avantages listés ici sont des engagements à honorer côté
+ * produit (codes promo, IRL, newsletter). Voir tech-debt.md section
+ * "Engagements à honorer" pour le tracking par sprint.
+ */
+const LEVEL_ADVANTAGES: Record<GamificationStatut, string[]> = {
+  Nouvelle: ["Tu viens d'arriver. Bienvenue parmi les copines."],
+  Copine: [
+    "🎁 1 code -10% chez 1 prestataire de l'annuaire qui accepte les codes Hilmy",
+    '✨ Ton statut s\'affiche sur tes recos publiées',
+  ],
+  Pilier: [
+    "🎁 1 code -10% chez 3 prestataires de l'annuaire qui acceptent les codes Hilmy",
+    '✨ Ta voix mise en avant sur la homepage Hilmy',
+    '🌙 Invitée aux brunchs Hilmy IRL',
+  ],
+  Légende: [
+    "🎁 1 code -10% chez 5 prestataires de l'annuaire qui acceptent les codes Hilmy",
+    '✨ Profil mis en avant dans l\'annuaire',
+    '🌙 Accès prioritaire aux events VIP',
+    '🎤 Possibilité d\'écrire dans la newsletter Hilmy',
+  ],
+}
+
+function LevelAccordion({
+  currentStatut,
+  totalPoints,
+}: {
+  currentStatut: GamificationStatut
+  totalPoints: number
+}) {
+  const allLevels = getAllLevels()
+  // Default expanded = palier actuel uniquement, pour que la copine voie
+  // immédiatement ses avantages déjà acquis sans avoir à dérouler.
+  const [openSet, setOpenSet] = useState<Set<GamificationStatut>>(
+    () => new Set([currentStatut]),
+  )
+
+  const toggle = (statut: GamificationStatut) => {
+    setOpenSet((prev) => {
+      const next = new Set(prev)
+      if (next.has(statut)) next.delete(statut)
+      else next.add(statut)
+      return next
+    })
+  }
+
+  return (
+    <ul className="mt-3 space-y-2">
+      {allLevels.map((l) => {
+        const reached = totalPoints >= l.min
+        const isCurrent = l.statut === currentStatut
+        const isOpen = openSet.has(l.statut)
+        const advantages = LEVEL_ADVANTAGES[l.statut]
+        return (
+          <li
+            key={l.statut}
+            className={`overflow-hidden rounded-sm border transition-colors ${
+              isCurrent
+                ? 'border-or/50 bg-blanc'
+                : reached
+                  ? 'border-or/20 bg-blanc/70'
+                  : 'border-or/10 bg-blanc/40'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => toggle(l.statut)}
+              aria-expanded={isOpen}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-creme-deep/30"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span aria-hidden="true" className="text-[20px]">
+                  {STATUT_EMOJI[l.statut]}
+                </span>
+                <span className="flex flex-col">
+                  <span
+                    className={`font-serif text-[16px] leading-tight ${
+                      reached ? 'text-vert' : 'text-texte-sec'
+                    }`}
+                  >
+                    {l.statut}
+                    <span className="ml-2 text-[11px] tracking-[0.18em] text-or uppercase">
+                      {l.min}+ pts
+                    </span>
+                  </span>
+                  <span
+                    className={`mt-0.5 text-[10px] tracking-[0.22em] uppercase ${
+                      reached ? 'text-vert/60' : 'text-texte-sec/60'
+                    }`}
+                  >
+                    {reached ? '✅ Débloqué' : '🔒 Verrouillé'}
+                  </span>
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                className={`shrink-0 text-or transition-transform duration-200 ${
+                  isOpen ? 'rotate-180' : 'rotate-0'
+                }`}
+              >
+                ▾
+              </span>
+            </button>
+            <div
+              className={`grid transition-all duration-300 ${
+                isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+              }`}
+            >
+              <div className="overflow-hidden">
+                <ul
+                  className={`space-y-1.5 px-4 pb-4 text-[13px] leading-[1.5] ${
+                    reached ? 'text-vert' : 'text-texte-sec'
+                  }`}
+                >
+                  {advantages.map((line, i) => (
+                    <li key={i} className="list-none pl-7 -indent-7">
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+function HowToEarnTile({
+  points,
+  quoi,
+  hint,
+}: {
+  points: string
+  quoi: string
+  hint?: string
+}) {
+  return (
+    <div className="rounded-sm border border-or/15 bg-blanc p-4">
+      <p className="font-serif text-2xl font-light text-or">{points} pts</p>
+      <p className="mt-1 text-[12px] leading-[1.4] text-vert">{quoi}</p>
+      {hint && (
+        <p className="mt-1 text-[11px] italic text-texte-sec">{hint}</p>
+      )}
+    </div>
+  )
+}
+
+function relativeFr(iso: string): string {
+  const now = Date.now()
+  const target = new Date(iso).getTime()
+  const diffDays = Math.round((now - target) / 86400000)
+  if (diffDays < 1) return "aujourd'hui"
+  if (diffDays === 1) return 'hier'
+  if (diffDays < 7) return `il y a ${diffDays} j`
+  if (diffDays < 30) return `il y a ${Math.round(diffDays / 7)} sem.`
+  if (diffDays < 365) return `il y a ${Math.round(diffDays / 30)} mois`
+  return `il y a ${Math.round(diffDays / 365)} an${Math.round(diffDays / 365) > 1 ? 's' : ''}`
 }
