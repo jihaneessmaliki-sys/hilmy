@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { Lieu } from '@/lib/mock-data'
 import { categoriesLieux } from '@/lib/mock-data'
+import { isSelectionHilmy } from '@/lib/permissions-lieux'
 
 function catLabel(slug: string) {
   return categoriesLieux.find((c) => c.slug === slug)?.label ?? slug
@@ -57,8 +58,19 @@ export function LieuCard({ lieu, index = 0 }: Props) {
             />
           )}
           <div className="absolute inset-0 bg-grain opacity-[0.08]" />
-          <div className="absolute left-5 top-5 inline-flex max-w-[60%] items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
-            {catLabel(lieu.categorie)}
+          <div className="absolute left-5 top-5 flex max-w-[60%] flex-col items-start gap-1.5">
+            {isSelectionHilmy(lieu) && (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full bg-or/95 px-2.5 py-1 text-[10px] font-medium tracking-[0.22em] text-vert backdrop-blur uppercase"
+                aria-label="Lieu Sélection Hilmy"
+              >
+                <span aria-hidden="true">✨</span>
+                Sélection Hilmy
+              </span>
+            )}
+            <span className="inline-flex max-w-full items-center gap-2 truncate rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
+              {catLabel(lieu.categorie)}
+            </span>
           </div>
           {lieu.has_videos && (
             <div
