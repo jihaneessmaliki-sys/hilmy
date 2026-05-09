@@ -205,6 +205,7 @@ export function VideosManager(props: Props) {
                   videoUrl={videoUrl}
                   thumbnailUrl={thumbnailUrl}
                   durationSeconds={v.duration_seconds}
+                  size="small"
                 />
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[11px] text-texte-sec">

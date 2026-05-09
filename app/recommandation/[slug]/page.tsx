@@ -222,18 +222,32 @@ export default async function RecommandationPage({
                   Découvre {l.nom} en vidéo
                 </span>
               </header>
-              <div className="mt-6 grid gap-5 md:grid-cols-2">
-                {videoEntries.map((v) => (
+              {videoEntries.length === 1 ? (
+                <div className="mt-6">
                   <VideoPlayer
-                    key={v.id}
-                    videoUrl={v.videoUrl}
-                    thumbnailUrl={v.thumbnailUrl}
-                    durationSeconds={v.durationSeconds}
+                    videoUrl={videoEntries[0].videoUrl}
+                    thumbnailUrl={videoEntries[0].thumbnailUrl}
+                    durationSeconds={videoEntries[0].durationSeconds}
                     ariaLabel={`Voir la vidéo de ${l.nom}`}
                     fallbackColor={l.cover}
+                    size="large"
                   />
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="mt-6 grid gap-5 md:grid-cols-2">
+                  {videoEntries.map((v) => (
+                    <VideoPlayer
+                      key={v.id}
+                      videoUrl={v.videoUrl}
+                      thumbnailUrl={v.thumbnailUrl}
+                      durationSeconds={v.durationSeconds}
+                      ariaLabel={`Voir la vidéo de ${l.nom}`}
+                      fallbackColor={l.cover}
+                      size="medium"
+                    />
+                  ))}
+                </div>
+              )}
             </FadeInSection>
           </div>
         </section>

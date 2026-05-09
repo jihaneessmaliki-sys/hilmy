@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+export type VideoPlayerSize = 'small' | 'medium' | 'large'
+
 interface Props {
   /** URL publique de la vidéo (Supabase Storage public bucket). */
   videoUrl: string
@@ -13,6 +15,16 @@ interface Props {
   ariaLabel?: string
   /** Couleur de fallback si pas de thumbnail (ex: '#D4C5B0'). */
   fallbackColor?: string
+  /**
+   * Taille du lecteur :
+   *   - 'small'  : dashboard owner (grille 2-cols, parent dicte largeur)
+   *   - 'medium' : fiche publique avec 2+ vidéos (max-w 600, mx-auto)
+   *   - 'large'  : fiche publique avec 1 seule vidéo (max-w 800, mx-auto,
+   *                aspect-ratio dicté par la vidéo elle-même → portrait
+   *                ou paysage rendus en intrinsic)
+   * Default 'medium' pour la rétrocompat.
+   */
+  size?: VideoPlayerSize
 }
 
 /**
@@ -32,6 +44,7 @@ export function VideoPlayer({
   durationSeconds,
   ariaLabel = 'Voir la vidéo',
   fallbackColor = '#D4C5B0',
+  size = 'medium',
 }: Props) {
   const [playing, setPlaying] = useState(false)
 
@@ -39,9 +52,34 @@ export function VideoPlayer({
   const seconds = Math.floor(durationSeconds % 60)
   const durationLabel = `${minutes}:${seconds.toString().padStart(2, '0')}`
 
+  const hasThumbnail = thumbnailUrl !== null && thumbnailUrl.length > 0
+
+  // Intrinsic = la vidéo/thumbnail dicte le ratio (size=large + thumbnail
+  // dispo). Sans thumbnail, on garde aspect-video pour ne pas avoir un
+  // bouton de hauteur 0 avant chargement.
+  const isIntrinsic = size === 'large' && hasThumbnail
+
+  const maxWidthClass =
+    size === 'small'
+      ? ''
+      : size === 'medium'
+        ? 'mx-auto max-w-[600px]'
+        : 'mx-auto max-w-[800px]'
+
+  // Container : aspect-video sauf en mode intrinsic (ratio dicté par
+  // l'image/vidéo elle-même via block + h-auto).
+  const aspectClass = isIntrinsic ? '' : 'aspect-video'
+
   if (playing) {
+    // En lecture : pareil — large + thumbnail = intrinsic, sinon
+    // aspect-video + object-contain pour letterbox propre.
+    const videoLayoutClass = isIntrinsic
+      ? 'block h-auto w-full'
+      : 'h-full w-full object-contain'
     return (
-      <div className="relative aspect-video w-full overflow-hidden rounded-sm bg-vert">
+      <div
+        className={`relative w-full ${maxWidthClass} ${aspectClass} overflow-hidden rounded-sm bg-vert`}
+      >
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <video
           src={videoUrl}
@@ -49,21 +87,23 @@ export function VideoPlayer({
           controls
           autoPlay
           playsInline
-          className="h-full w-full object-contain"
+          className={videoLayoutClass}
           aria-label={ariaLabel}
         />
       </div>
     )
   }
 
-  const hasThumbnail = thumbnailUrl !== null && thumbnailUrl.length > 0
+  const imgLayoutClass = isIntrinsic
+    ? 'block h-auto w-full transition-transform duration-700 group-hover:scale-[1.02]'
+    : 'absolute inset-0 h-full w-full object-contain transition-transform duration-700 group-hover:scale-[1.02]'
 
   return (
     <button
       type="button"
       onClick={() => setPlaying(true)}
       aria-label={ariaLabel}
-      className="group relative aspect-video w-full overflow-hidden rounded-sm bg-creme-deep transition-shadow hover:shadow-[0_30px_60px_-30px_rgba(15,61,46,0.35)]"
+      className={`group relative block w-full ${maxWidthClass} ${aspectClass} overflow-hidden rounded-sm bg-creme-deep transition-shadow hover:shadow-[0_30px_60px_-30px_rgba(15,61,46,0.35)]`}
       style={
         hasThumbnail
           ? undefined
@@ -77,7 +117,7 @@ export function VideoPlayer({
         <img
           src={thumbnailUrl as string}
           alt=""
-          className="absolute inset-0 h-full w-full object-contain transition-transform duration-700 group-hover:scale-[1.02]"
+          className={imgLayoutClass}
           loading="lazy"
         />
       )}
