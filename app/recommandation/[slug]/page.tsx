@@ -2,6 +2,8 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PageShell } from '@/components/v2/PageShell'
 import { FavoriteButton } from '@/components/v2/FavoriteButton'
+import { TrackPlaceView } from '@/components/v2/TrackPlaceView'
+import { PlaceContactLink } from '@/components/v2/PlaceContactLink'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { LieuCard } from '@/components/v2/LieuCard'
@@ -144,6 +146,7 @@ export default async function RecommandationPage({
 
   return (
     <PageShell>
+      <TrackPlaceView placeId={row.id} />
       {/* Cover */}
       <section
         className="relative h-[54vh] min-h-[420px] overflow-hidden pt-20 md:h-[62vh]"
@@ -316,19 +319,21 @@ export default async function RecommandationPage({
                     Adresse via Google Maps
                   </span>
                 </div>
-                <a
+                <PlaceContactLink
                   href={`https://maps.google.com/?q=${encodeURIComponent(l.adresse)}`}
-                  target="_blank"
-                  rel="noreferrer"
+                  placeId={row.id}
+                  contactType="google_maps"
                   className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-or/40 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-blanc"
                 >
                   Ouvrir dans Maps
                   <span className="text-or" aria-hidden="true">
                     →
                   </span>
-                </a>
+                </PlaceContactLink>
                 <div className="mt-3 flex flex-col gap-3">
                   <FavoriteButton
+                    itemType="lieu"
+                    itemId={row.id}
                     label="Sauvegarder"
                     labelActive="Sauvegardé"
                     variant="primary"

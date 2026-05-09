@@ -53,7 +53,8 @@ export function isValidUuid(s: unknown): s is string {
   return typeof s === 'string' && UUID_REGEX.test(s)
 }
 
-/** Whitelist des contact_type acceptés (CHECK constraint côté DB). */
+/** Whitelist des contact_type acceptés (CHECK constraint côté DB,
+ *  table `profile_contacts`, mig 15). */
 export const CONTACT_TYPES = [
   'whatsapp',
   'phone',
@@ -70,4 +71,29 @@ export type ContactType = (typeof CONTACT_TYPES)[number]
 
 export function isValidContactType(s: unknown): s is ContactType {
   return typeof s === 'string' && (CONTACT_TYPES as readonly string[]).includes(s)
+}
+
+/** Whitelist des contact_type acceptés pour la table `place_contacts`
+ *  (CHECK constraint mig 41). Différent de CONTACT_TYPES :
+ *   - pas de 'linkedin' (un café n'a pas de LinkedIn)
+ *   - + 'google_maps' (canal natif des fiches places). */
+export const PLACE_CONTACT_TYPES = [
+  'phone',
+  'website',
+  'email',
+  'instagram',
+  'tiktok',
+  'facebook',
+  'youtube',
+  'google_maps',
+  'whatsapp',
+] as const
+
+export type PlaceContactType = (typeof PLACE_CONTACT_TYPES)[number]
+
+export function isValidPlaceContactType(s: unknown): s is PlaceContactType {
+  return (
+    typeof s === 'string' &&
+    (PLACE_CONTACT_TYPES as readonly string[]).includes(s)
+  )
 }

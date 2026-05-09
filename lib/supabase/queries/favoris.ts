@@ -2,34 +2,18 @@
  * Queries favoris (table polymorphique : type_item = prestataire | lieu | evenement).
  * RLS owner-only — auth.uid() est injecté automatiquement par Supabase.
  * Toutes les ops échouent si l'utilisatrice n'est pas connectée.
+ *
+ * ⚠️ Ce module est CÔTÉ CLIENT uniquement (importé par <FavoriteButton />,
+ * un Client Component). Ne PAS y ajouter d'import server-side
+ * (`@/lib/supabase/server` casse le bundle client à cause de `next/headers`).
+ * Si on a besoin d'helpers favoris côté server plus tard, les mettre dans
+ * un fichier séparé `favoris-server.ts`.
  */
 
 import { createClient as createClientBrowser } from "@/lib/supabase/client";
-import { createClient as createClientServer } from "@/lib/supabase/server";
 import type { Favori, FavoriType, QueryResult } from "@/lib/supabase/types";
 
 const FAVORI_SELECT = `id, user_id, type_item, item_id, note_perso, created_at`;
-
-/**
- * Récupère les favoris de l'utilisatrice connectée (tous types confondus).
- * Utilisé côté server (dashboard).
- */
-export async function getFavorisForCurrentUser(): Promise<
-  QueryResult<Favori[]>
-> {
-  try {
-    const supabase = await createClientServer();
-    const { data, error } = await supabase
-      .from("favoris")
-      .select(FAVORI_SELECT)
-      .order("created_at", { ascending: false });
-
-    if (error) return { data: null, error: error.message };
-    return { data: (data ?? []) as unknown as Favori[], error: null };
-  } catch (err) {
-    return { data: null, error: errorMessage(err) };
-  }
-}
 
 /** Ajoute un favori côté client (depuis un bouton cœur). */
 export async function addFavori(
