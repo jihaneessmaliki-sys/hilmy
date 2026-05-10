@@ -2,7 +2,70 @@ import type { Metadata } from 'next'
 import { PageShell } from '@/components/v2/PageShell'
 import { WizardSection } from './_components/WizardSection'
 import { LieuPricing } from './_components/LieuPricing'
-import type { Palier } from './_lib/pricing'
+import type { Palier, Duree } from './_lib/pricing'
+import { createClient } from '@/lib/supabase/server'
+
+/**
+ * Sprint 7 mig 49 — defense in depth UI : vérifie si le user est founder
+ * pour cacher SubscribeButton (déjà 403 côté API). Best-effort, silently
+ * skip si pas de session (cas guest = la majorité des visiteurs /tarifs).
+ */
+async function isAuthenticatedFounder(): Promise<boolean> {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return false
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_founder')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    return data?.is_founder === true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Sprint 7 mig 49 — construit côté server le mapping (palier, duree)
+ * → priceId Stripe à partir de process.env.STRIPE_PRICE_*.
+ *
+ * Reste server-side (env vars STRIPE_* sans NEXT_PUBLIC_) → on passe
+ * la map déjà résolue à WizardSection qui est client. Si une combo
+ * n'a pas de priceId (env var absente/typo), WizardSection fallback
+ * sur le mailto legacy. Sécurité défense en profondeur : un priceId
+ * client-side n'est pas un secret (visible dans toute Stripe Checkout
+ * URL), donc l'exposer via prop est safe.
+ *
+ * Sélection Hilmy lieu (39€/mois) absente — Sprint 7bis.
+ */
+function buildStripePriceIds(): Partial<
+  Record<Palier, Partial<Record<Duree, string>>>
+> {
+  const m: Partial<Record<Palier, Partial<Record<Duree, string>>>> = {}
+  const add = (palier: Palier, duree: Duree, envKey: string) => {
+    const id = process.env[envKey]
+    if (id && id.startsWith('price_')) {
+      if (!m[palier]) m[palier] = {}
+      m[palier]![duree] = id
+    }
+  }
+  add('standard', 1, 'STRIPE_PRICE_STANDARD_MONTHLY')
+  add('standard', 3, 'STRIPE_PRICE_STANDARD_3M')
+  add('standard', 6, 'STRIPE_PRICE_STANDARD_6M')
+  add('standard', 12, 'STRIPE_PRICE_STANDARD_1Y')
+  add('premium', 1, 'STRIPE_PRICE_PREMIUM_MONTHLY')
+  add('premium', 3, 'STRIPE_PRICE_PREMIUM_3M')
+  add('premium', 6, 'STRIPE_PRICE_PREMIUM_6M')
+  add('premium', 12, 'STRIPE_PRICE_PREMIUM_1Y')
+  add('cercle_pro', 1, 'STRIPE_PRICE_CERCLE_PRO_MONTHLY')
+  add('cercle_pro', 3, 'STRIPE_PRICE_CERCLE_PRO_3M')
+  add('cercle_pro', 6, 'STRIPE_PRICE_CERCLE_PRO_6M')
+  add('cercle_pro', 12, 'STRIPE_PRICE_CERCLE_PRO_1Y')
+  return m
+}
 
 type SearchParams = Promise<{
   palier?: string
@@ -127,6 +190,7 @@ export default async function TarifsPage({
   const params = await searchParams
   const initialPalier = normalizePalier(params.palier)
   const initialPromo = params.promo?.trim().toUpperCase() || undefined
+  const isFounder = await isAuthenticatedFounder()
 
   // Log analytics dev mode (deep-link mobile UTM tracking).
   if (process.env.NODE_ENV !== 'production' && params.utm_source) {
@@ -248,7 +312,12 @@ export default async function TarifsPage({
             </p>
           </div>
 
-          <WizardSection initialPalier={initialPalier} initialPromo={initialPromo} />
+          <WizardSection
+            initialPalier={initialPalier}
+            initialPromo={initialPromo}
+            stripePriceIds={buildStripePriceIds()}
+            isFounder={isFounder}
+          />
         </section>
 
         {/* CTA STRIP 1 */}

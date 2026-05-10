@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'motion/react'
+import { toast } from 'sonner'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { VideosManager } from '@/components/v2/VideosManager'
@@ -15,6 +16,7 @@ import {
 } from '@/lib/palier-limits'
 import { getEffectivePalier } from '@/lib/permissions'
 import type { Palier } from '@/app/tarifs/_lib/pricing'
+import type { Subscription } from '@/lib/supabase/types'
 
 type Service = { nom: string; prix: string; duree: string }
 
@@ -50,6 +52,9 @@ export default function MaFichePage() {
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [profileId, setProfileId] = useState<string | null>(null)
+  // Sprint 7 mig 49 — abo Stripe actif (ou null si jamais souscrit)
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [portalLoading, setPortalLoading] = useState(false)
   const [status, setStatus] = useState<string>('pending')
   const [palier, setPalier] = useState<Palier>('standard')
   const [noteMoy, setNoteMoy] = useState(0)
@@ -142,10 +147,69 @@ export default function MaFichePage() {
         services: (data.services ?? []) as Service[],
         galerie: (data.galerie ?? []) as string[],
       })
+
+      // Sprint 7 mig 49 — fetch abo actif (status active/trialing/past_due)
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select(
+          'id, profile_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, palier, duree_months, status, current_period_start, current_period_end, cancel_at_period_end, canceled_at, ended_at, created_at, updated_at',
+        )
+        .eq('profile_id', data.id)
+        .in('status', ['active', 'trialing', 'past_due'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (sub) setSubscription(sub as Subscription)
+
       setLoading(false)
     }
     run()
   }, [])
+
+  // Sprint 7 — toast post-checkout success
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('stripe_success') === '1') {
+      const prenom = draft.nom || 'copine'
+      toast.success(`🎉 Bienvenue dans la team, ${prenom} !`, {
+        duration: 5000,
+        description:
+          'Ton abonnement est actif. Si tu ne vois pas encore ton nouveau palier, recharge dans quelques secondes.',
+      })
+      // Clean URL pour éviter de re-trigger au refresh
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+    if (params.get('stripe_canceled') === '1') {
+      // Pas de toast en cas de cancel — déjà capturé côté /tarifs si besoin.
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+  // draft.nom dépendance pour avoir le prénom au moment où le toast fire
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
+
+  /** Sprint 7 — POST /api/stripe/portal puis redirige Stripe Billing Portal. */
+  const openStripePortal = async () => {
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null
+        toast.error(json?.error ?? 'Stripe Portal indisponible.', { duration: 5000 })
+        setPortalLoading(false)
+        return
+      }
+      const json = (await res.json()) as { url?: string }
+      if (json.url) {
+        window.location.href = json.url
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erreur réseau.', { duration: 5000 })
+      setPortalLoading(false)
+    }
+  }
 
   const handleSave = async () => {
     if (!profileId) return
@@ -679,6 +743,16 @@ export default function MaFichePage() {
                   </Group>
                 )}
 
+                {/* Mon abonnement — Sprint 7 mig 49 Stripe */}
+                <Group kicker="Mon abonnement">
+                  <SubscriptionPanel
+                    subscription={subscription}
+                    palier={palier}
+                    onOpenPortal={openStripePortal}
+                    portalLoading={portalLoading}
+                  />
+                </Group>
+
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
@@ -854,5 +928,135 @@ function Field({
       {children}
       {hint && <span className="text-[11px] text-texte-sec/80">{hint}</span>}
     </label>
+  )
+}
+
+/**
+ * Sprint 7 mig 49 — Section "Mon abonnement" du dashboard fiche.
+ *
+ * 3 modes :
+ *   - Founder : message "Tu as accès Cercle Pro à vie", pas de bouton portal
+ *   - Sub active : palier + intervalle + prochaine échéance + bouton portal
+ *   - Pas de sub : CTA "Voir les tarifs" → /tarifs
+ */
+const PALIER_LABEL: Record<Palier, string> = {
+  standard: 'Standard',
+  premium: 'Premium',
+  cercle_pro: 'Cercle Pro',
+}
+
+const DUREE_LABEL: Record<number, string> = {
+  1: 'Mensuel',
+  3: 'Trimestriel',
+  6: 'Semestriel',
+  12: 'Annuel',
+}
+
+function formatPeriodFr(iso: string): string {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function SubscriptionPanel({
+  subscription,
+  palier,
+  onOpenPortal,
+  portalLoading,
+}: {
+  subscription: Subscription | null
+  palier: Palier
+  onOpenPortal: () => void
+  portalLoading: boolean
+}) {
+  // Founder = palier effectif cercle_pro, mais pas de subscription Stripe
+  // (accès gratuit à vie — pas de billing portal à exposer).
+  const isFounderEquivalent = palier === 'cercle_pro' && !subscription
+  if (isFounderEquivalent) {
+    return (
+      <div className="rounded-sm border border-or/30 bg-creme-soft p-6 md:p-7">
+        <p className="overline text-or">Accès Cercle Pro à vie</p>
+        <p className="mt-2 font-serif text-[18px] italic leading-[1.4] text-vert md:text-[20px]">
+          Tu fais partie des fondatrices Hilmy.
+        </p>
+        <p className="mt-2 max-w-2xl text-[13px] leading-[1.6] text-texte-sec">
+          Toutes les features Cercle Pro sont actives sans abonnement.
+        </p>
+      </div>
+    )
+  }
+
+  if (!subscription) {
+    return (
+      <div className="rounded-sm border border-or/30 bg-creme-soft p-6 md:p-7">
+        <p className="overline text-or">Pas encore d&apos;abonnement</p>
+        <p className="mt-2 font-serif text-[18px] italic leading-[1.4] text-vert md:text-[20px]">
+          Choisis ta formule, démarre quand tu veux.
+        </p>
+        <p className="mt-2 max-w-2xl text-[13px] leading-[1.6] text-texte-sec">
+          Standard, Premium ou Cercle Pro — chaque palier débloque plus de
+          place dans la team.
+        </p>
+        <Link
+          href="/tarifs"
+          className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-vert px-6 text-[11px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark"
+        >
+          Voir les tarifs
+          <span className="text-or-light" aria-hidden="true">→</span>
+        </Link>
+      </div>
+    )
+  }
+
+  const dureeLabel = DUREE_LABEL[subscription.duree_months] ?? 'Mensuel'
+  const palierLabel = PALIER_LABEL[subscription.palier] ?? subscription.palier
+  const isPastDue = subscription.status === 'past_due'
+  const isCanceling = subscription.cancel_at_period_end
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="font-serif text-[28px] leading-none font-light text-vert md:text-[32px]">
+            {palierLabel}
+          </p>
+          <p className="mt-2 text-[13px] text-texte-sec">
+            {dureeLabel} · prochaine échéance le{' '}
+            <span className="font-medium text-vert">
+              {formatPeriodFr(subscription.current_period_end)}
+            </span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenPortal}
+          disabled={portalLoading}
+          className="inline-flex h-11 items-center gap-2 rounded-full border border-or/40 bg-blanc px-5 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-creme-deep disabled:cursor-wait disabled:opacity-60"
+        >
+          {portalLoading ? 'Redirection…' : 'Gérer mon abonnement'}
+          <span className="text-or" aria-hidden="true">→</span>
+        </button>
+      </div>
+
+      {isPastDue && (
+        <p className="rounded-sm border border-red-900/20 bg-red-900/5 px-4 py-3 text-[13px] leading-[1.5] text-red-900">
+          ⚠️ On n&apos;a pas pu débiter ton dernier paiement. On retente
+          dans quelques jours. Si tu veux mettre à jour ta carte, clique
+          sur « Gérer mon abonnement » ci-dessus.
+        </p>
+      )}
+
+      {isCanceling && (
+        <p className="rounded-sm border border-or/30 bg-creme-soft px-4 py-3 text-[13px] leading-[1.5] text-vert">
+          Ton abonnement est annulé, mais reste actif jusqu&apos;au{' '}
+          <span className="font-medium">
+            {formatPeriodFr(subscription.current_period_end)}
+          </span>
+          . Tu peux changer d&apos;avis depuis le portail.
+        </p>
+      )}
+    </div>
   )
 }
