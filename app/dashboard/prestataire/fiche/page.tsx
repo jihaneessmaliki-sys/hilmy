@@ -245,7 +245,15 @@ export default function MaFichePage() {
       site_web: draft.site_web.trim() || null,
       prix_from: draft.prix_from ? Number(draft.prix_from) : null,
       devise: draft.devise,
-      services: draft.services,
+      // Trim + filter pour éviter de polluer la BDD avec des services
+      // {nom: "", prix: "", duree: ""} créés puis non remplis.
+      services: draft.services
+        .map((s) => ({
+          nom: s.nom.trim(),
+          prix: s.prix.trim(),
+          duree: s.duree.trim(),
+        }))
+        .filter((s) => s.nom.length > 0),
       galerie: draft.galerie,
     }
     const { error: updErr } = await supabase

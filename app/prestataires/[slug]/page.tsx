@@ -133,8 +133,16 @@ export default async function PrestatairePage({
       <header className="pt-28 pb-8 md:pt-36 md:pb-12">
         <div className="mx-auto max-w-container px-6 md:px-20">
           <div className="flex flex-col gap-8 md:flex-row md:items-end md:gap-12">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm md:w-1/2">
-              <Image src={heroPhoto} alt={pub.nom} fill className="object-cover" priority sizes="(max-width: 768px) 100vw, 50vw" />
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-creme-soft md:w-1/2">
+              <Image
+                src={heroPhoto}
+                alt={pub.nom}
+                fill
+                className="object-cover"
+                priority
+                fetchPriority="high"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-4">
@@ -228,8 +236,18 @@ export default async function PrestatairePage({
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
                     {photos.slice(1).map((src: string, i: number) => (
-                      <div key={i} className="relative aspect-square overflow-hidden rounded-sm">
-                        <Image src={src} alt={`${pub.nom} — photo ${i + 2}`} fill className="object-cover" sizes="(max-width: 768px) 50vw, 33vw" />
+                      <div
+                        key={i}
+                        className="relative aspect-square overflow-hidden rounded-sm bg-creme-soft"
+                      >
+                        <Image
+                          src={src}
+                          alt={`${pub.nom} — photo ${i + 2}`}
+                          fill
+                          className="object-cover"
+                          loading="lazy"
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                        />
                       </div>
                     ))}
                   </div>
