@@ -126,7 +126,7 @@ export function GalleryAutoplayCarousel({
             <button
               type="button"
               onClick={() => setLightboxOpen(i)}
-              className="group relative block h-full w-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-or"
+              className="group relative block h-full w-full overflow-hidden bg-creme-soft focus:outline-none focus:ring-2 focus:ring-or"
               aria-label={`Agrandir la photo ${i + 1} sur ${photos.length}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -134,7 +134,7 @@ export function GalleryAutoplayCarousel({
                 src={url}
                 alt=""
                 loading={i === 0 ? 'eager' : 'lazy'}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                className="h-full w-full object-contain transition-transform duration-700 group-hover:scale-[1.02]"
               />
               <span
                 className="pointer-events-none absolute inset-0 bg-vert/0 transition-colors duration-300 group-hover:bg-vert/10"
