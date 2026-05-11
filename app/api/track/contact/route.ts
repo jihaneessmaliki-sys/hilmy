@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { authenticateRequest } from '@/lib/supabase/bearer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import {
@@ -49,10 +49,9 @@ export async function POST(request: Request) {
     )
   }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Récupère le user authentifié (peut être null pour anonyme).
+  // Cookies (web) avec fallback Bearer (mobile RN). Cf. lib/supabase/bearer.ts.
+  const { user } = await authenticateRequest(request)
 
   const meta = extractTrackingMeta(request)
 

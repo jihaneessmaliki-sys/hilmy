@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { authenticateRequest } from '@/lib/supabase/bearer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import { isValidUuid } from '@/lib/tracking'
@@ -49,10 +49,8 @@ export async function POST(request: Request) {
   })
   if (limited) return limited
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Cookies (web) avec fallback Bearer (mobile RN). Cf. lib/supabase/bearer.ts.
+  const { supabase, user } = await authenticateRequest(request)
   if (!user) {
     return NextResponse.json({ error: 'Non authentifiée' }, { status: 401 })
   }
