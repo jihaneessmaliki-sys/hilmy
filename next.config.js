@@ -176,6 +176,11 @@ const nextConfig = {
         destination: '/dashboard/prestataire/devis',
         permanent: true,
       },
+      {
+        source: '/dashboard/prestataire/stats',
+        destination: '/dashboard/prestataire/stats-avancees',
+        permanent: true,
+      },
     ]
   },
 }
