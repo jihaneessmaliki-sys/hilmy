@@ -29,10 +29,10 @@ export const runtime = 'nodejs'
  *      sur profiles (admin client)
  *   6. Crée Checkout Session avec metadata profile_id + palier + duree
  *      pour décodage rapide côté webhook
- *   7. Auto-applique LANCEMENT50 si NEXT_PUBLIC_PROMO_LANCEMENT=true
- *      (via getActiveStripeDiscounts())
- *   8. Permet à la copine de retaper un autre code via
- *      allow_promotion_codes: true côté Stripe Checkout
+ *   7. Si NEXT_PUBLIC_PROMO_LANCEMENT=true → auto-applique LANCEMENT50
+ *      via discounts (pas de stacking, cf AGENTS.md).
+ *      Sinon → allow_promotion_codes: true pour permettre un code copine.
+ *      Stripe API rejette si les 2 sont passés ensemble.
  *
  * Retourne { url } à utiliser pour window.location.href côté client.
  *
@@ -129,6 +129,8 @@ export async function POST(request: Request) {
   }
 
   // Crée la Checkout Session
+  // Stripe API : allow_promotion_codes et discounts sont mutuellement exclusifs.
+  const discounts = getActiveStripeDiscounts()
   let session
   try {
     session = await stripe.checkout.sessions.create({
@@ -137,8 +139,9 @@ export async function POST(request: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: STRIPE_SUCCESS_URL,
       cancel_url: STRIPE_CANCEL_URL,
-      allow_promotion_codes: true,
-      discounts: getActiveStripeDiscounts(),
+      ...(discounts && discounts.length > 0
+        ? { discounts }
+        : { allow_promotion_codes: true }),
       metadata: {
         profile_id: profile.id as string,
         palier: decoded.palier,
