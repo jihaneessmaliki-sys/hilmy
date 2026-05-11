@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   }
   if (profile.is_founder === true) {
     return NextResponse.json(
-      { error: 'Tu as déjà accès Cercle Pro à vie.' },
+      { error: 'Tu fais partie des fondatrices Hilmy, accès Cercle Pro à vie offert 💚' },
       { status: 403 },
     )
   }
