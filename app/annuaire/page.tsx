@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { PageShell } from '@/components/v2/PageShell'
 import { PageHero } from '@/components/v2/PageHero'
 import { LiveErrorState } from '@/components/v2/LiveStates'
@@ -9,6 +10,29 @@ import { getAllPrestataires } from '@/lib/supabase/queries/prestataires'
 import { getProfileIdsWithVideos } from '@/lib/supabase/queries/videos'
 import type { Prestataire as DbPrestataire } from '@/lib/supabase/types'
 import { AnnuaireClient } from './AnnuaireClient'
+
+export const metadata: Metadata = {
+  title: 'Annuaire prestataires francophones',
+  description:
+    'Découvre les adresses Hilmy : coiffeuses, esthéticiennes, événementiels, lieux. Sélectionnées par et pour les copines francophones en Suisse, France, Belgique.',
+  alternates: { canonical: '/annuaire' },
+  openGraph: {
+    title: 'Hilmy — Annuaire prestataires',
+    description:
+      'Coiffeuses, esthéticiennes, événementiels, lieux. Recommandées entre copines francophones.',
+    url: '/annuaire',
+    siteName: 'Hilmy',
+    locale: 'fr_FR',
+    type: 'website',
+    images: [{ url: '/images/hero.jpg', width: 1200, height: 630, alt: 'Hilmy annuaire' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Hilmy — Annuaire prestataires',
+    description: 'Coiffeuses, événementiels, lieux. Recommandées entre copines.',
+    images: ['/images/hero.jpg'],
+  },
+}
 
 /**
  * Tri prioritaire annuaire (Cercle Pro 99€/mois — feature "Mise en avant prio").

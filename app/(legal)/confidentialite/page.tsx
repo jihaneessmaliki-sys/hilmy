@@ -1,5 +1,21 @@
+import type { Metadata } from 'next'
 import { ContentPageShell } from '@/components/v2/ContentPageShell'
 import { LegalSection } from '@/components/v2/LegalSection'
+
+export const metadata: Metadata = {
+  title: 'Politique de confidentialité',
+  description:
+    'Comment Hilmy collecte, stocke et protège tes données personnelles. Sous-traitants, droits RGPD, contact DPO.',
+  alternates: { canonical: '/confidentialite' },
+  openGraph: {
+    title: 'Hilmy — Politique de confidentialité',
+    description: 'Données personnelles, sous-traitants, droits RGPD.',
+    url: '/confidentialite',
+    siteName: 'Hilmy',
+    locale: 'fr_FR',
+    type: 'article',
+  },
+}
 
 export default function ConfidentialitePage() {
   return (

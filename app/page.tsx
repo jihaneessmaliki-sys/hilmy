@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Navigation } from '@/components/landing/Navigation'
 import { HeroV2 } from '@/components/landing/HeroV2'
 import { StartingPoint } from '@/components/landing/StartingPoint'
@@ -9,6 +10,29 @@ import { PricingTeaser } from '@/components/landing/PricingTeaser'
 import { FAQ } from '@/components/landing/FAQ'
 import { FinalCTA } from '@/components/landing/FinalCTA'
 import { FooterV2 } from '@/components/landing/FooterV2'
+
+export const metadata: Metadata = {
+  title: "Les meilleures adresses, entre copines",
+  description:
+    "Hilmy, les meilleures adresses entre copines. Annuaire francophone de prestataires : beauté, événementiel, lieux, lifestyle. Rejoins gratuitement la team.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Hilmy — Les meilleures adresses, entre copines",
+    description:
+      "Annuaire francophone : beauté, événementiel, lieux, lifestyle. Recommandé entre copines.",
+    url: "/",
+    siteName: "Hilmy",
+    locale: "fr_FR",
+    type: "website",
+    images: [{ url: "/images/hero.jpg", width: 1200, height: 630, alt: "Hilmy" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Hilmy — Les meilleures adresses, entre copines",
+    description: "Annuaire francophone recommandé entre copines.",
+    images: ["/images/hero.jpg"],
+  },
+}
 
 export default function HomePage() {
   return (

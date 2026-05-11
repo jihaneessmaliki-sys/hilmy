@@ -78,6 +78,48 @@ function adaptDbPrestataire(p: DbPrestataire): MockPrestataire {
   }
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<import('next').Metadata> {
+  const { slug } = await params
+  const { data: row } = await getPrestataireBySlug(slug)
+  if (!row) {
+    return {
+      title: 'Prestataire',
+      robots: { index: false, follow: false },
+    }
+  }
+  const nom = row.nom ?? 'Prestataire'
+  const cat = catLabel(row.categorie ?? '')
+  const ville = row.ville ?? ''
+  const title = `${nom} — ${cat}${ville ? ` à ${ville}` : ''}`
+  const desc = (row.description ?? row.tagline ?? `${nom} sur Hilmy, l'annuaire des copines francophones.`).slice(0, 160)
+  const photo = Array.isArray(row.photos) && row.photos.length > 0 ? row.photos[0] : '/images/hero.jpg'
+  const canonical = `/prestataire-v2/${slug}`
+  return {
+    title,
+    description: desc,
+    alternates: { canonical },
+    openGraph: {
+      title: `${title} | Hilmy`,
+      description: desc,
+      url: canonical,
+      siteName: 'Hilmy',
+      locale: 'fr_FR',
+      type: 'profile',
+      images: [{ url: photo, width: 1200, height: 630, alt: nom }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | Hilmy`,
+      description: desc,
+      images: [photo],
+    },
+  }
+}
+
 export default async function PrestatairePage({
   params,
 }: {

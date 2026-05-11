@@ -74,9 +74,26 @@ type SearchParams = Promise<{
 }>
 
 export const metadata: Metadata = {
-  title: 'Tarifs · Hilmy — La team des bonnes adresses',
+  title: 'Tarifs et abonnements prestataires',
   description:
-    "L'annuaire prestataires femmes francophones en Suisse, France, Belgique. Trois formules pour visibilité et bonnes adresses entre copines.",
+    "Tu es prestataire francophone ? Rejoins la team Hilmy avec trois formules : Standard 19€, Premium 49€, Cercle Pro 99€. Annuaire entre copines, vraies adresses.",
+  alternates: { canonical: '/tarifs' },
+  openGraph: {
+    title: 'Hilmy — Tarifs prestataires',
+    description:
+      "Trois formules pour rejoindre la team Hilmy : Standard 19€, Premium 49€, Cercle Pro 99€.",
+    url: '/tarifs',
+    siteName: 'Hilmy',
+    locale: 'fr_FR',
+    type: 'website',
+    images: [{ url: '/images/hero.jpg', width: 1200, height: 630, alt: 'Hilmy tarifs' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Hilmy — Tarifs prestataires',
+    description: 'Standard 19€, Premium 49€, Cercle Pro 99€. Rejoins la team.',
+    images: ['/images/hero.jpg'],
+  },
 }
 
 // 6 catégories Sélection Hilmy — décision Jiji batch 3.2 Q6 :
