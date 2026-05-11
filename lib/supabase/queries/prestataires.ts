@@ -118,6 +118,102 @@ export async function getAllPrestataires(): Promise<QueryResult<Prestataire[]>> 
   }
 }
 
+/**
+ * Champs PUBLICS de la fiche prestataire — visibles sans login.
+ * SÉCURITÉ : whatsapp, email, phone_public, prendre_rdv_url sont
+ * VOLONTAIREMENT exclus pour ne JAMAIS atterrir dans le HTML anonyme.
+ * Socials handles (instagram, facebook, etc.) sont publics par nature.
+ */
+const PUBLIC_PRESTATAIRE_SELECT = `
+  id,
+  slug,
+  nom,
+  categorie,
+  ville,
+  code_postal,
+  description,
+  tagline,
+  services,
+  galerie,
+  photos,
+  horaires,
+  prix_from,
+  prix_gamme,
+  devise,
+  note_moyenne,
+  nb_avis,
+  palier,
+  is_founder,
+  instagram,
+  facebook,
+  tiktok,
+  youtube,
+  linkedin,
+  site_web,
+  approved_at
+`
+
+export type PublicPrestataire = {
+  id: string
+  slug: string
+  nom: string
+  categorie: string
+  ville: string | null
+  code_postal: string | null
+  description: string | null
+  tagline: string | null
+  services: string[] | null
+  galerie: string[] | null
+  photos: string[] | null
+  horaires: Record<string, string> | null
+  prix_from: number | null
+  prix_gamme: string | null
+  devise: string | null
+  note_moyenne: number | null
+  nb_avis: number | null
+  palier: string
+  instagram: string | null
+  facebook: string | null
+  tiktok: string | null
+  youtube: string | null
+  linkedin: string | null
+  site_web: string | null
+  approved_at: string | null
+}
+
+/**
+ * Fetch public d'une fiche prestataire (sans auth requise).
+ * Retourne UNIQUEMENT les champs publics — pas de whatsapp/email/phone/rdv_url.
+ */
+export async function getPublicPrestataire(
+  slug: string,
+): Promise<QueryResult<PublicPrestataire | null>> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(PUBLIC_PRESTATAIRE_SELECT)
+      .eq('slug', slug)
+      .eq('status', 'approved')
+      .maybeSingle()
+
+    if (error) return { data: null, error: error.message }
+    if (!data) return { data: null, error: null }
+
+    const raw = data as unknown as PublicPrestataire & { is_founder?: boolean }
+    const { is_founder, palier, ...rest } = raw
+    return {
+      data: {
+        ...rest,
+        palier: getEffectivePalier({ palier, is_founder }),
+      } as PublicPrestataire,
+      error: null,
+    }
+  } catch (err) {
+    return { data: null, error: errorMessage(err) }
+  }
+}
+
 /** Récupère une prestataire par son slug. Renvoie null si introuvable. */
 export async function getPrestataireBySlug(
   slug: string
