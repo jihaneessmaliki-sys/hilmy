@@ -170,6 +170,12 @@ const nextConfig = {
         destination: '/auth/login',
         permanent: true,
       },
+      // Dashboard prestataire — URLs intuitives Sprint 7bis
+      {
+        source: '/dashboard/prestataire/demandes',
+        destination: '/dashboard/prestataire/devis',
+        permanent: true,
+      },
     ]
   },
 }
