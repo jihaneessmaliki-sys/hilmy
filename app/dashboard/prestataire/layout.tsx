@@ -1,3 +1,4 @@
+import { Toaster } from 'sonner'
 import { Sidebar, type SidebarItem } from '@/components/dashboard/Sidebar'
 import { requirePrestataire } from '@/lib/supabase/session'
 import { createClient } from '@/lib/supabase/server'
@@ -106,6 +107,20 @@ export default async function PrestataireLayout({
         signOutLabel="À bientôt"
       />
       <div className="min-w-0 flex-1">{children}</div>
+      {/* Sonner toast — utilisé pour le retour post-checkout Stripe
+          (Sprint 7) + erreurs de souscription. Position top-right,
+          tons crème + or charte Hilmy. */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#F5F0E6',
+            color: '#0F3D2E',
+            border: '1px solid rgba(201, 169, 97, 0.4)',
+            fontFamily: 'inherit',
+          },
+        }}
+      />
     </div>
   )
 }

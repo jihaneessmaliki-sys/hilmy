@@ -24,6 +24,7 @@ import {
   applyPromoLancement,
   isPromoLancementActive,
 } from '@/lib/promo-lancement'
+import { SubscribeButton } from '@/components/SubscribeButton'
 
 type WizardKey = 'standard' | 'premium' | 'cercle_pro'
 
@@ -35,6 +36,15 @@ interface WizardSectionProps {
    *  Tente une validation Supabase au mount, comme si l'utilisatrice avait
    *  tapé le code à la main. */
   initialPromo?: string
+  /** Mapping (palier, duree_months) → priceId Stripe. Calculé côté server
+   *  dans app/tarifs/page.tsx depuis process.env.STRIPE_PRICE_* et passé
+   *  ici. Sprint 7 mig 49. Si priceId absent (env var manquante pour une
+   *  combo), le bouton fallback sur le mailto legacy. */
+  stripePriceIds?: Partial<Record<WizardKey, Partial<Record<1 | 3 | 6 | 12, string>>>>
+  /** Defense in depth UI Sprint 7 — si le user authentifié est founder,
+   *  on cache le SubscribeButton (l'API /api/stripe/checkout refuserait
+   *  de toute façon avec 403, mais on évite la friction UX). */
+  isFounder?: boolean
 }
 
 const STEPS: {
@@ -132,7 +142,7 @@ function computeReco(answers: Record<number, WizardKey>): Palier {
   return best
 }
 
-export function WizardSection({ initialPalier, initialPromo }: WizardSectionProps = {}) {
+export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isFounder }: WizardSectionProps = {}) {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
   const [answers, setAnswers] = useState<Record<number, WizardKey>>({})
   // Si un palier vient du deep-link, on saute le wizard et on affiche
@@ -602,15 +612,44 @@ export function WizardSection({ initialPalier, initialPromo }: WizardSectionProp
                 )}
               </div>
 
-              <a
-                href={mailto}
-                className="block w-full rounded-full bg-or px-8 py-4 text-center text-[15px] font-semibold text-vert transition-all hover:-translate-y-0.5 hover:bg-or-light hover:shadow-[0_8px_24px_rgba(201,169,97,0.3)]"
-                aria-label={`Choisir la formule ${info.name} (${formatPrice(
+              {(() => {
+                // Sprint 7 mig 49 — résout le priceId pour la combo
+                // (palier, duree). Si présent, on rend SubscribeButton
+                // qui POST /api/stripe/checkout. Sinon fallback mailto
+                // legacy (env var manquante côté Vercel pour cette combo).
+                // Founder = on cache l'option de souscrire (defense in
+                // depth UI, complète le 403 server-side).
+                if (isFounder) {
+                  return (
+                    <div className="rounded-sm border border-or/30 bg-creme-soft px-5 py-4 text-center text-[13px] italic leading-[1.5] text-vert">
+                      Tu fais partie des fondatrices Hilmy — tu as déjà accès
+                      Cercle Pro à vie, pas besoin d&apos;abonnement.
+                    </div>
+                  )
+                }
+                const priceId = stripePriceIds?.[palier]?.[duree]
+                const aria = `Choisir la formule ${info.name} (${formatPrice(
                   appliedPromo ? monthlyAfterDiscount : lancMonthly,
-                )} par mois)`}
-              >
-                Je choisis cette formule
-              </a>
+                )} par mois)`
+                if (priceId) {
+                  return (
+                    <SubscribeButton
+                      priceId={priceId}
+                      label="Je choisis cette formule"
+                      ariaLabel={aria}
+                    />
+                  )
+                }
+                return (
+                  <a
+                    href={mailto}
+                    className="block w-full rounded-full bg-or px-8 py-4 text-center text-[15px] font-semibold text-vert transition-all hover:-translate-y-0.5 hover:bg-or-light hover:shadow-[0_8px_24px_rgba(201,169,97,0.3)]"
+                    aria-label={aria}
+                  >
+                    Je choisis cette formule
+                  </a>
+                )
+              })()}
             </div>
 
             <div>

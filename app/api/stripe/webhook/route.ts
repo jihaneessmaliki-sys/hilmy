@@ -1,0 +1,264 @@
+import { NextResponse } from 'next/server'
+import type Stripe from 'stripe'
+import { stripe, getPaliersAndInterval } from '@/lib/stripe'
+import {
+  upsertSubscriptionAdmin,
+  markSubscriptionCanceledAdmin,
+  updateProfilePalierAdmin,
+  getSubscriptionByStripeIdAdmin,
+} from '@/lib/supabase/queries/subscriptions'
+import type { SubscriptionStatus } from '@/lib/supabase/types'
+
+export const runtime = 'nodejs'
+
+/**
+ * POST /api/stripe/webhook
+ *
+ * ⚠️ Route publique (pas de session Supabase). Sécurité = signature
+ * Stripe via stripe.webhooks.constructEvent(body, signature, secret).
+ * Tout payload non signé est rejeté en 400.
+ *
+ * Events MVP (Sprint 7) :
+ *   - checkout.session.completed     → activation initiale (palier+sub)
+ *   - customer.subscription.updated  → renouvellement, change palier,
+ *                                      cancel_at_period_end toggle
+ *   - customer.subscription.deleted  → fin de l'abo (downgrade standard)
+ *   - invoice.payment_failed         → status='past_due' (Stripe Smart
+ *                                      Retries fait le job derrière)
+ *
+ * Idempotence : Stripe peut re-sender un event 3-7 jours après en cas
+ * de timeout. upsertSubscriptionAdmin via ON CONFLICT (stripe_subscription
+ * _id) absorbe les rejeux sans doublon. Les UPDATE profiles.palier sont
+ * idempotentes par nature.
+ *
+ * Réponse : 200 le plus vite possible. Si erreur métier non-critique
+ * (ex. profile_id metadata absent), log + 200 quand même pour ne pas
+ * que Stripe retry à l'infini.
+ */
+
+const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? ''
+
+export async function POST(request: Request) {
+  const signature = request.headers.get('stripe-signature')
+  if (!signature) {
+    return new NextResponse('Missing stripe-signature header', { status: 400 })
+  }
+  if (!WEBHOOK_SECRET) {
+    console.error('[stripe/webhook] STRIPE_WEBHOOK_SECRET absent côté serveur')
+    return new NextResponse('Webhook secret not configured', { status: 500 })
+  }
+
+  // ⚠️ stripe.webhooks.constructEvent attend le body BRUT (pas parsé).
+  // Next 14 App Router : await request.text() preserve les bytes
+  // exactement tels quels — pas de body-parser global qui casserait
+  // la signature.
+  const body = await request.text()
+
+  let event: Stripe.Event
+  try {
+    event = stripe.webhooks.constructEvent(body, signature, WEBHOOK_SECRET)
+  } catch (err) {
+    console.error('[stripe/webhook] signature verification failed:', err)
+    return new NextResponse('Webhook signature verification failed', {
+      status: 400,
+    })
+  }
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        await handleCheckoutCompleted(event.data.object)
+        break
+      }
+      case 'customer.subscription.updated': {
+        await handleSubscriptionUpdated(event.data.object)
+        break
+      }
+      case 'customer.subscription.deleted': {
+        await handleSubscriptionDeleted(event.data.object)
+        break
+      }
+      case 'invoice.payment_failed': {
+        await handleInvoicePaymentFailed(event.data.object)
+        break
+      }
+      default:
+        // Event hors scope — ack 200 pour Stripe ne re-tente pas.
+        break
+    }
+  } catch (err) {
+    // Erreur métier non-critique : log mais 200 pour stopper les retries
+    // Stripe (sinon ils s'accumulent 3 jours). Les rows manquantes
+    // pourront être réconciliées via un script admin si besoin.
+    console.error(
+      `[stripe/webhook] handler error for ${event.type}:`,
+      err instanceof Error ? err.message : err,
+    )
+  }
+
+  return NextResponse.json({ received: true }, { status: 200 })
+}
+
+/* ─── Handlers ─────────────────────────────────────────────────────── */
+
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  // session.subscription est soit string (ID), soit Stripe.Subscription
+  // selon expand. Par défaut c'est l'ID.
+  const subId =
+    typeof session.subscription === 'string'
+      ? session.subscription
+      : session.subscription?.id
+  if (!subId) {
+    console.warn('[stripe/webhook] checkout.session.completed sans subscription id')
+    return
+  }
+
+  const profileId = session.metadata?.profile_id
+  if (!profileId) {
+    console.warn(
+      '[stripe/webhook] checkout.session.completed sans profile_id en metadata',
+    )
+    return
+  }
+
+  // Fetch full subscription pour avoir les périodes
+  const sub = await stripe.subscriptions.retrieve(subId)
+  await persistSubscription(sub, profileId)
+}
+
+async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
+  // metadata.profile_id posé à la création par /api/stripe/checkout dans
+  // subscription_data. Si absent (souscription créée hors Hilmy ?), on
+  // tente de retrouver via la row existante.
+  const profileId = await resolveProfileId(sub)
+  if (!profileId) return
+  await persistSubscription(sub, profileId)
+}
+
+async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
+  const profileId = await resolveProfileId(sub)
+  if (!profileId) return
+
+  // Marque cancelled + downgrade palier
+  await markSubscriptionCanceledAdmin(sub.id)
+  await updateProfilePalierAdmin(profileId, 'standard')
+}
+
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  // Stripe v2025-04+ : Invoice n'a plus de champ direct `subscription`,
+  // c'est sous parent.subscription_details ou parent.invoice_item ou via
+  // billing_reason. Pour rester compatible large : tenter via parent OU
+  // re-fetch via lines.
+  const sub = invoice.parent?.subscription_details?.subscription
+  const subId = typeof sub === 'string' ? sub : sub?.id
+  if (!subId) {
+    // Pas une invoice d'abonnement — ignorer (one-shot invoices, etc.)
+    return
+  }
+
+  const existing = await getSubscriptionByStripeIdAdmin(subId)
+  if (!existing) {
+    console.warn(
+      `[stripe/webhook] invoice.payment_failed pour subscription inconnue: ${subId}`,
+    )
+    return
+  }
+
+  // Update statut à past_due (Stripe le fera aussi via subscription.updated
+  // mais on est plus rapide ici). Pas de downgrade palier — Smart Retries
+  // va retenter pendant ~3 semaines.
+  await upsertSubscriptionAdmin({
+    profile_id: existing.profile_id,
+    stripe_customer_id: existing.stripe_customer_id,
+    stripe_subscription_id: existing.stripe_subscription_id,
+    stripe_price_id: existing.stripe_price_id,
+    palier: existing.palier,
+    duree_months: existing.duree_months,
+    status: 'past_due',
+    current_period_start: existing.current_period_start,
+    current_period_end: existing.current_period_end,
+    cancel_at_period_end: existing.cancel_at_period_end,
+    canceled_at: existing.canceled_at,
+    ended_at: existing.ended_at,
+  })
+}
+
+/* ─── Utilitaires ─────────────────────────────────────────────────── */
+
+async function resolveProfileId(
+  sub: Stripe.Subscription,
+): Promise<string | null> {
+  const meta = sub.metadata?.profile_id
+  if (meta) return meta
+  // Fallback : retrouver via la row existante en BDD
+  const existing = await getSubscriptionByStripeIdAdmin(sub.id)
+  return existing?.profile_id ?? null
+}
+
+/**
+ * Persiste un Stripe.Subscription complet en BDD + propage le palier
+ * sur profiles si le statut entitle (active/trialing).
+ *
+ * past_due : on UPSERT avec palier maintenu, pas de change profiles.
+ * canceled / incomplete_expired : palier='standard' downgrade.
+ */
+async function persistSubscription(
+  sub: Stripe.Subscription,
+  profileId: string,
+): Promise<void> {
+  const item = sub.items?.data?.[0]
+  if (!item?.price?.id) {
+    console.warn(`[stripe/webhook] subscription ${sub.id} sans price line item`)
+    return
+  }
+  const decoded = getPaliersAndInterval(item.price.id)
+  if (!decoded) {
+    console.warn(
+      `[stripe/webhook] price_id non référencé côté serveur: ${item.price.id}`,
+    )
+    return
+  }
+
+  // current_period_start/end : Stripe v2025+ a déplacé ces champs sur
+  // l'item, plus sur la subscription elle-même. On lit avec fallback.
+  const startTs =
+    item.current_period_start ?? (sub as unknown as { current_period_start?: number }).current_period_start ?? null
+  const endTs =
+    item.current_period_end ?? (sub as unknown as { current_period_end?: number }).current_period_end ?? null
+  if (startTs == null || endTs == null) {
+    console.warn(`[stripe/webhook] subscription ${sub.id} sans period bounds`)
+    return
+  }
+
+  const status = sub.status as SubscriptionStatus
+  await upsertSubscriptionAdmin({
+    profile_id: profileId,
+    stripe_customer_id:
+      typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+    stripe_subscription_id: sub.id,
+    stripe_price_id: item.price.id,
+    palier: decoded.palier,
+    duree_months: decoded.duree_months,
+    status,
+    current_period_start: new Date(startTs * 1000).toISOString(),
+    current_period_end: new Date(endTs * 1000).toISOString(),
+    cancel_at_period_end: sub.cancel_at_period_end ?? false,
+    canceled_at: sub.canceled_at
+      ? new Date(sub.canceled_at * 1000).toISOString()
+      : null,
+    ended_at: sub.ended_at ? new Date(sub.ended_at * 1000).toISOString() : null,
+  })
+
+  // Propage le palier sur profiles selon le statut
+  if (status === 'active' || status === 'trialing' || status === 'past_due') {
+    await updateProfilePalierAdmin(profileId, decoded.palier)
+  } else if (
+    status === 'canceled' ||
+    status === 'incomplete_expired' ||
+    status === 'unpaid'
+  ) {
+    await updateProfilePalierAdmin(profileId, 'standard')
+  }
+  // 'incomplete' : pas de change palier — l'utilisatrice doit finaliser
+  // le payment authorize. Stripe re-trigger à completion.
+}

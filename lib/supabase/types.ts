@@ -494,6 +494,44 @@ export type QueryResult<T> =
 
 
 /* ─────────────────────────────────────────────────────────────
+   Abonnements Stripe prestataires (mig 49 — Sprint 7)
+   ─────────────────────────────────────────────────────────────
+   Mirror local du state Stripe pour gating palier rapide côté UI.
+   Updates exclusivement via /api/stripe/webhook (service_role).
+   Sélection Hilmy lieux déférée Sprint 7bis (pas dans le CHECK ici). */
+
+export type SubscriptionStatus =
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'incomplete'
+  | 'incomplete_expired'
+  | 'trialing'
+  | 'unpaid';
+
+export type SubscriptionPalier = 'standard' | 'premium' | 'cercle_pro';
+export type SubscriptionDureeMonths = 1 | 3 | 6 | 12;
+
+export interface Subscription {
+  id: string;
+  profile_id: string;
+  stripe_customer_id: string;
+  stripe_subscription_id: string;
+  stripe_price_id: string;
+  palier: SubscriptionPalier;
+  duree_months: SubscriptionDureeMonths;
+  status: SubscriptionStatus;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  canceled_at: string | null;
+  ended_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
    Gamification utilisatrices (mig 16 + backfill mig 48 — Sprint U1.5)
    ─────────────────────────────────────────────────────────────
    Aligné sur la BDD réelle :
