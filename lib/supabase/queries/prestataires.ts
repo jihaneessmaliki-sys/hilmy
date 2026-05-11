@@ -162,7 +162,7 @@ export type PublicPrestataire = {
   code_postal: string | null
   description: string | null
   tagline: string | null
-  services: string[] | null
+  services: Array<{ nom: string; prix?: string; duree?: string }> | null
   galerie: string[] | null
   photos: string[] | null
   horaires: Record<string, string> | null

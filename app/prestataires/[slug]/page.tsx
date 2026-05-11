@@ -191,11 +191,30 @@ export default async function PrestatairePage({
                     <h2 className="overline text-or">Services</h2>
                   </div>
                   <ul className="mt-4 grid gap-2 md:grid-cols-2">
-                    {pub.services.map((s: string, i: number) => (
-                      <li key={i} className="rounded-sm border border-or/15 bg-blanc px-4 py-2 text-[14px] text-vert">
-                        {s}
-                      </li>
-                    ))}
+                    {(pub.services as unknown as Array<{ nom?: string; prix?: string; duree?: string } | string>)
+                      .map((s, i) => {
+                        if (typeof s === 'string') {
+                          if (!s.trim()) return null
+                          return (
+                            <li key={i} className="rounded-sm border border-or/15 bg-blanc px-4 py-2 text-[14px] text-vert">
+                              {s}
+                            </li>
+                          )
+                        }
+                        if (!s || typeof s !== 'object' || !s.nom?.trim()) return null
+                        return (
+                          <li key={i} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-sm border border-or/15 bg-blanc px-4 py-2 text-[14px] text-vert">
+                            <span className="font-medium">{s.nom}</span>
+                            {s.prix?.trim() && (
+                              <span className="text-[13px] text-or">{s.prix}</span>
+                            )}
+                            {s.duree?.trim() && (
+                              <span className="text-[13px] text-vert/60">· {s.duree}</span>
+                            )}
+                          </li>
+                        )
+                      })
+                      .filter(Boolean)}
                   </ul>
                 </section>
               )}
