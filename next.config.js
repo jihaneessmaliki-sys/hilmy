@@ -83,6 +83,16 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
+  // Sprint 7bis Bloc C D3 : whitelist domaines pour next/image
+  // - Supabase Storage : photos prestataires (bucket public prestataire-photos)
+  // - Unsplash : seeds éditoriaux (clara, catherine, mounia)
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'qrlvjwqanixkhopedqqw.supabase.co', pathname: '/storage/**' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+    ],
+  },
+
   async headers() {
     return [
       {
