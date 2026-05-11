@@ -170,6 +170,12 @@ const nextConfig = {
         destination: '/auth/login',
         permanent: true,
       },
+      // Sprint 7bis C2 — URL canonique /prestataires/{slug}
+      {
+        source: '/prestataire-v2/:slug',
+        destination: '/prestataires/:slug',
+        permanent: true,
+      },
       // Dashboard prestataire — URLs intuitives Sprint 7bis
       {
         source: '/dashboard/prestataire/demandes',
