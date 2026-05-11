@@ -32,8 +32,10 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Protected routes — require auth
+  // Sprint 7bis C2 : /prestataires retiré pour rendre fiches publiques
+  // La sécurité est gérée côté query (getPublicPrestataire ne SELECT pas
+  // les champs sensibles whatsapp/email/phone)
   const protectedPaths = [
-    "/prestataires",
     "/prestataire/",
     "/bonnes-adresses",
     "/lieu/",
