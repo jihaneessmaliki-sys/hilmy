@@ -164,6 +164,12 @@ const nextConfig = {
         destination: '/annuaire?categorie=:slug',
         permanent: true,
       },
+      // Auth (Sprint 7bis — bookmark legacy)
+      {
+        source: '/login',
+        destination: '/auth/login',
+        permanent: true,
+      },
     ]
   },
 }
