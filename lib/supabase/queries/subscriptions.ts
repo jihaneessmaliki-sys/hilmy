@@ -144,14 +144,17 @@ export async function upsertSubscriptionAdmin(
  */
 export async function markSubscriptionCanceledAdmin(
   stripeSubId: string,
+  canceledAt?: string | null,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const admin = createAdminClient()
+    const nowIso = new Date().toISOString()
     const { error } = await admin
       .from('subscriptions')
       .update({
         status: 'canceled',
-        ended_at: new Date().toISOString(),
+        canceled_at: canceledAt ?? nowIso,
+        ended_at: nowIso,
       })
       .eq('stripe_subscription_id', stripeSubId)
     if (error) return { ok: false, error: error.message }

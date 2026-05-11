@@ -140,7 +140,10 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
   if (!profileId) return
 
   // Marque cancelled + downgrade palier
-  await markSubscriptionCanceledAdmin(sub.id)
+  const canceledAt = sub.canceled_at
+    ? new Date(sub.canceled_at * 1000).toISOString()
+    : null
+  await markSubscriptionCanceledAdmin(sub.id, canceledAt)
   await updateProfilePalierAdmin(profileId, 'standard')
 }
 
