@@ -117,7 +117,7 @@ export function FicheRow({ fiche }: { fiche: FicheRow }) {
 
         <div className="flex flex-col gap-2 md:w-44 md:shrink-0">
           <a
-            href={`/prestataire-v2/${fiche.slug}`}
+            href={`/prestataires/${fiche.slug}`}
             target="_blank"
             rel="noopener"
             className="inline-flex h-9 items-center justify-center rounded-full border border-or/30 px-4 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-colors hover:border-or hover:bg-creme-soft"

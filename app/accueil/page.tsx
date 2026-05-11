@@ -140,7 +140,7 @@ export default async function AccueilPage() {
       type: 'prestataire',
       nom: pr.nom,
       sousTitre: pr.ville,
-      href: `/prestataire-v2/${pr.slug}`,
+      href: `/prestataires/${pr.slug}`,
       lat: off.lat,
       lng: off.lng,
     })
@@ -237,7 +237,7 @@ export default async function AccueilPage() {
         created_at: r.created_at,
         user_prenom: u?.prenom ?? null,
         target_nom: profile.nom,
-        target_href: `/prestataire-v2/${profile.slug}`,
+        target_href: `/prestataires/${profile.slug}`,
         target_cover: cover,
       })
     }
@@ -320,7 +320,7 @@ export default async function AccueilPage() {
           type_item: 'prestataire',
           titre: p.nom,
           sousTitre: `${p.categorie} · ${p.ville}`,
-          href: `/prestataire-v2/${p.slug}`,
+          href: `/prestataires/${p.slug}`,
           cover: galerieArr[0] ?? photos[0] ?? null,
         })
       } else if (f.type_item === 'lieu') {

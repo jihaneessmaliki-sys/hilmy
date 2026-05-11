@@ -41,7 +41,7 @@ export function ReportRow({ report }: { report: ReportRow }) {
       : `Lieu ${place?.name ?? ''}`
   const targetLink =
     report.reco?.type === 'prestataire' && profile?.slug
-      ? `/prestataire-v2/${profile.slug}#avis`
+      ? `/prestataires/${profile.slug}#avis`
       : place?.slug
         ? `/recommandation/${place.slug}`
         : null

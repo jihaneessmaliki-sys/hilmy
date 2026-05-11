@@ -97,7 +97,7 @@ export default function MesRecommandationsPage() {
           id: p.id,
           title: p.nom,
           subtitle: `${p.categorie ?? ''} · ${p.ville ?? ''}`,
-          href: `/prestataire-v2/${p.slug}`,
+          href: `/prestataires/${p.slug}`,
         }
       }
     }

@@ -33,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       for (const p of prestataires) {
         if (!p.slug) continue
         dynamicRoutes.push({
-          url: `${SITE_URL}/prestataire-v2/${p.slug}`,
+          url: `${SITE_URL}/prestataires/${p.slug}`,
           lastModified: p.updated_at ? new Date(p.updated_at) : now,
           changeFrequency: 'weekly',
           priority: 0.8,

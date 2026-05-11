@@ -31,7 +31,7 @@ export function PrestataireCard({ p, index = 0 }: Props) {
       transition={{ duration: 0.7, delay: index * 0.04, ease: [0.22, 1, 0.36, 1] }}
       className="group flex h-full flex-col overflow-hidden rounded-sm bg-blanc transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_30px_60px_-30px_rgba(15,61,46,0.25)]"
     >
-      <Link href={`/prestataire-v2/${p.slug}`} className="flex h-full flex-col">
+      <Link href={`/prestataires/${p.slug}`} className="flex h-full flex-col">
         <div
           className="relative h-64 w-full overflow-hidden"
           style={{

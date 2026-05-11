@@ -47,7 +47,7 @@ export function AvisSection({
   }
 
   const redirectToSignup = () => {
-    const redirectTo = `/prestataire-v2/${profileSlug}#avis`
+    const redirectTo = `/prestataires/${profileSlug}#avis`
     router.push(`/auth/signup?redirect=${encodeURIComponent(redirectTo)}`)
   }
 

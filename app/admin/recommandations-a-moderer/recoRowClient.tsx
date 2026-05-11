@@ -41,7 +41,7 @@ export function RecoRow({ reco }: { reco: RecoRow }) {
     reco.type === 'place' && place?.slug
       ? `/recommandation/${place.slug}`
       : profile?.slug
-        ? `/prestataire-v2/${profile.slug}`
+        ? `/prestataires/${profile.slug}`
         : null
 
   const setStatus = async (next: 'flagged' | 'published') => {

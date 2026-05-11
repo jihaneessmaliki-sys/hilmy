@@ -318,7 +318,7 @@ export async function sendFicheApprouvee({
   nomFiche: string;
   ficheSlug: string;
 }) {
-  const ficheUrl = `${getSiteUrl()}/prestataire-v2/${ficheSlug}`;
+  const ficheUrl = `${getSiteUrl()}/prestataires/${ficheSlug}`;
   await sendEmail({
     to,
     subject: "Ta fiche Hilmy est en ligne 🌸",

@@ -115,7 +115,7 @@ export default async function PrestataireAccueilPage() {
             {isCerclePro && <PastilleSelectionHilmy />}
             <PalierBadge palier={palier} size="medium" />
             <Link
-              href={`/prestataire-v2/${prestataire.slug}`}
+              href={`/prestataires/${prestataire.slug}`}
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex h-11 items-center gap-2 rounded-full border border-or/40 px-5 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-blanc"
@@ -417,7 +417,7 @@ export default async function PrestataireAccueilPage() {
             titre="Pas encore d'avis."
             pitch="Dès qu'une copine dépose une reco sur ta fiche, elle apparaît ici. Tu pourras lui répondre en direct."
             ctaLabel="Voir ma fiche"
-            ctaHref={`/prestataire-v2/${prestataire.slug}`}
+            ctaHref={`/prestataires/${prestataire.slug}`}
           />
         ) : (
           <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

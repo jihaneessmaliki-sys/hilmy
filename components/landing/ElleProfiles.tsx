@@ -114,7 +114,7 @@ function PionniereCard({ p, index }: { p: Prestataire; index: number }) {
   return (
     <FadeInSection delay={index * 0.1}>
       <Link
-        href={`/prestataire-v2/${p.slug}`}
+        href={`/prestataires/${p.slug}`}
         className="group flex h-full flex-col overflow-hidden rounded-sm border border-or/25 bg-vert-dark/40 transition-all duration-500 hover:-translate-y-1 hover:border-or hover:bg-vert-dark/60"
       >
         <div className="relative h-60 w-full overflow-hidden">

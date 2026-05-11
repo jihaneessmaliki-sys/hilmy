@@ -80,7 +80,7 @@ export default function FavorisPage() {
           type: 'prestataire',
           title: p.nom,
           subtitle: `${p.categorie ?? ''} · ${p.ville ?? ''}`,
-          href: `/prestataire-v2/${p.slug}`,
+          href: `/prestataires/${p.slug}`,
           cover: '#D4C5B0',
         }
       }

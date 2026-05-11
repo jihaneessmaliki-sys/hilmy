@@ -344,7 +344,7 @@ export default function MaFichePage() {
           <div className="flex items-center gap-3">
             {draft.slug && (
               <Link
-                href={`/prestataire-v2/${draft.slug}`}
+                href={`/prestataires/${draft.slug}`}
                 target="_blank"
                 className="group inline-flex h-11 items-center gap-2 rounded-full border border-or/40 px-5 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-blanc"
               >

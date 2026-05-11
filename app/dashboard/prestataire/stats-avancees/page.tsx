@@ -337,7 +337,7 @@ export default async function StatsAvanceesPage() {
             </p>
             {prestataire.slug && (
               <Link
-                href={`/prestataire-v2/${prestataire.slug}`}
+                href={`/prestataires/${prestataire.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-7 inline-flex h-12 items-center gap-2 rounded-full bg-vert px-7 text-[11px] font-medium tracking-[0.22em] text-creme uppercase transition-all hover:bg-vert-dark"

@@ -93,13 +93,13 @@ function RecoCard({ reco }: { reco: VoixPublicReco }) {
   // rows pré-V2 qui n'avaient pas de slug généré).
   // Routes canoniques (vérifiées le 29/04/2026) :
   //   place       → /recommandation/{slug|id}
-  //   prestataire → /prestataire-v2/{slug|id}
+  //   prestataire → /prestataires/{slug|id}
   // Les deux redirect vers /auth/signup si pas connectée — comportement
   // cohérent avec le reste du site, accepté pour Phase 1.
   const target = slug ?? id;
   const href = isPlace
     ? `/recommandation/${target}`
-    : `/prestataire-v2/${target}`;
+    : `/prestataires/${target}`;
 
   return (
     <li>

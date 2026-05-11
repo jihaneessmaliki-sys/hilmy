@@ -42,7 +42,7 @@ export default async function MesDevisPage() {
         lead="Les copines qui te demandent un devis depuis ta fiche apparaissent ici. À toi de leur répondre par email ou téléphone."
         actions={
           <Link
-            href={`/prestataire-v2/${prestataire.slug}`}
+            href={`/prestataires/${prestataire.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-11 items-center gap-2 rounded-full border border-or/40 px-5 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-blanc"
@@ -70,7 +70,7 @@ export default async function MesDevisPage() {
             titre="Pas encore de demande de devis."
             pitch="Dès qu'une copine clique sur « Demander un devis » sur ta fiche, sa demande apparaît ici. Tu reçois aussi un email à chaque demande."
             ctaLabel="Voir ma fiche publique"
-            ctaHref={`/prestataire-v2/${prestataire.slug}`}
+            ctaHref={`/prestataires/${prestataire.slug}`}
           />
         ) : (
           <div className="space-y-12">

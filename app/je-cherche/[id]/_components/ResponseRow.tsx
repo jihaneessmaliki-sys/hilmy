@@ -77,7 +77,7 @@ export function ResponseRow({ response, demandeId, thanked, isOwn }: Props) {
 
         {response.prestataire && (
           <Link
-            href={`/prestataire-v2/${response.prestataire.slug}`}
+            href={`/prestataires/${response.prestataire.slug}`}
             className="mt-4 flex items-center gap-3 rounded-sm border border-or/20 bg-creme-soft p-3 transition-colors hover:border-or/50 hover:bg-creme-deep"
           >
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-sm bg-creme-deep">
