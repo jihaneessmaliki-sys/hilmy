@@ -42,12 +42,13 @@ export default async function AbonnementPage() {
   const upsellInfo = upsell ? PALIER_INFO[upsell] : null
   const upsellPrice = upsell ? PRICING[upsell][1].m : null
 
-  // Support prioritaire Cercle Pro : préfixe [PRIORITAIRE] dans le subject
-  // mailto et SLA réponse 12h vs 24h pour les autres paliers.
+  // Support prioritaire Cercle Pro : préfixe [PRIORITAIRE Cercle Pro] +
+  // nom prestataire dans le subject mailto, SLA 12h vs 24h, style CTA
+  // distinct (or pleine, emoji 💚) pour rendre la promesse visible.
   const isCerclePro = palier === 'cercle_pro'
   const supportSubject = isCerclePro
-    ? '[PRIORITAIRE] Mon abonnement Hilmy'
-    : 'Mon abonnement Hilmy'
+    ? `[PRIORITAIRE Cercle Pro] ${prestataire.nom} — Mon abonnement Hilmy`
+    : `${prestataire.nom} — Mon abonnement Hilmy`
   const supportMailto = `mailto:hilmy.io@hotmail.com?subject=${encodeURIComponent(supportSubject)}`
   const supportSla = isCerclePro
     ? 'on te répond par email sous 12h ouvrées (support prioritaire Cercle Pro)'
@@ -287,10 +288,23 @@ export default async function AbonnementPage() {
           )}
           <a
             href={supportMailto}
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-or/40 px-6 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-creme-deep"
+            className={
+              isCerclePro
+                ? 'inline-flex h-11 items-center gap-2 rounded-full bg-or px-6 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:-translate-y-0.5 hover:bg-or-light hover:shadow-[0_8px_24px_rgba(201,169,97,0.3)]'
+                : 'inline-flex h-11 items-center gap-2 rounded-full border border-or/40 px-6 text-[11px] font-medium tracking-[0.22em] text-vert uppercase transition-all hover:border-or hover:bg-creme-deep'
+            }
           >
-            {isCerclePro ? 'Écrire à la team (prio)' : 'Écrire à la team'}
-            <span className="text-or" aria-hidden="true">→</span>
+            {isCerclePro ? (
+              <>
+                Contacter le support prioritaire 💚
+                <span aria-hidden="true">→</span>
+              </>
+            ) : (
+              <>
+                Écrire à la team
+                <span className="text-or" aria-hidden="true">→</span>
+              </>
+            )}
           </a>
         </div>
       </div>
