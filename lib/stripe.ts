@@ -129,17 +129,20 @@ export function isKnownPriceId(priceId: string): boolean {
 
 /* ──────────────────────────────────────────────────────────────────
    URLs success / cancel post-checkout
+
+   Origin dynamique calculé depuis request.url côté handler (pas via
+   NEXT_PUBLIC_SITE_URL qui peut diverger entre Preview/Prod). Le
+   profile_id est injecté en query param pour détecter côté client si
+   le user actuel matche celui qui a payé (cas multi-comptes browser).
    ────────────────────────────────────────────────────────────────── */
 
-function siteUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ??
-    'https://www.hilmy.io'
-  )
+export function buildStripeSuccessUrl(origin: string, profileId: string): string {
+  return `${origin}/dashboard/prestataire/fiche?stripe_success=1&profile_id=${encodeURIComponent(profileId)}`
 }
 
-export const STRIPE_SUCCESS_URL = `${siteUrl()}/dashboard/prestataire/fiche?stripe_success=1`
-export const STRIPE_CANCEL_URL = `${siteUrl()}/tarifs?stripe_canceled=1`
+export function buildStripeCancelUrl(origin: string): string {
+  return `${origin}/tarifs?stripe_canceled=1`
+}
 
 /** Map status Stripe → "abo actif" boolean. Active + trialing = palier
  *  appliqué côté UI. past_due = palier maintenu mais warning. */

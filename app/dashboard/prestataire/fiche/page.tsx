@@ -169,14 +169,26 @@ export default function MaFichePage() {
   // Sprint 7 — toast post-checkout success
   useEffect(() => {
     if (typeof window === 'undefined') return
+    if (!profileId) return
     const params = new URLSearchParams(window.location.search)
     if (params.get('stripe_success') === '1') {
-      const prenom = draft.nom || 'copine'
-      toast.success(`🎉 Bienvenue dans la team, ${prenom} !`, {
-        duration: 5000,
-        description:
-          'Ton abonnement est actif. Si tu ne vois pas encore ton nouveau palier, recharge dans quelques secondes.',
-      })
+      const paidProfileId = params.get('profile_id')
+      if (paidProfileId && paidProfileId !== profileId) {
+        // Multi-comptes browser : Jiji a payé pour le compte X mais elle est
+        // loggée sur le compte Y. Toast info, pas success.
+        toast.info('Paiement enregistré sur un autre compte', {
+          duration: 8000,
+          description:
+            'Le checkout a été complété pour une autre fiche prestataire. Déconnecte-toi et reconnecte-toi avec le bon compte pour voir le nouveau palier.',
+        })
+      } else {
+        const prenom = draft.nom || 'copine'
+        toast.success(`🎉 Bienvenue dans la team, ${prenom} !`, {
+          duration: 5000,
+          description:
+            'Ton abonnement est actif. Si tu ne vois pas encore ton nouveau palier, recharge dans quelques secondes.',
+        })
+      }
       // Clean URL pour éviter de re-trigger au refresh
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)

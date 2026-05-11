@@ -6,8 +6,8 @@ import {
   stripe,
   isKnownPriceId,
   getPaliersAndInterval,
-  STRIPE_SUCCESS_URL,
-  STRIPE_CANCEL_URL,
+  buildStripeSuccessUrl,
+  buildStripeCancelUrl,
 } from '@/lib/stripe'
 import { getActiveStripeDiscounts } from '@/lib/stripe-promo'
 import { setProfileStripeCustomerIdAdmin } from '@/lib/supabase/queries/subscriptions'
@@ -131,14 +131,15 @@ export async function POST(request: Request) {
   // Crée la Checkout Session
   // Stripe API : allow_promotion_codes et discounts sont mutuellement exclusifs.
   const discounts = getActiveStripeDiscounts()
+  const origin = new URL(request.url).origin
   let session
   try {
     session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: stripeCustomerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: STRIPE_SUCCESS_URL,
-      cancel_url: STRIPE_CANCEL_URL,
+      success_url: buildStripeSuccessUrl(origin, profile.id as string),
+      cancel_url: buildStripeCancelUrl(origin),
       ...(discounts && discounts.length > 0
         ? { discounts }
         : { allow_promotion_codes: true }),
