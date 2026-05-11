@@ -181,6 +181,11 @@ const nextConfig = {
         destination: '/dashboard/prestataire/stats-avancees',
         permanent: true,
       },
+      {
+        source: '/dashboard/prestataire/recommandations',
+        destination: '/dashboard/prestataire',
+        permanent: true,
+      },
     ]
   },
 }
