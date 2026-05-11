@@ -501,6 +501,54 @@ export default async function PrestataireAccueilPage() {
         )}
       </section>
 
+      {/* ─── Plus d'outils ─ liens utilitaires (Sprint 7bis) ───────── */}
+      <section className="border-t border-or/10 px-6 py-10 md:px-12 md:py-12">
+        <div className="flex items-center gap-4">
+          <GoldLine width={32} />
+          <span className="overline text-or">Plus d&apos;outils</span>
+        </div>
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          <Link
+            href="/dashboard/prestataire/devis"
+            className="group flex items-center justify-between rounded-sm border border-or/15 bg-blanc px-5 py-4 transition-all hover:border-or/40 hover:shadow-sm"
+          >
+            <div>
+              <p className="font-serif text-[16px] text-vert">
+                Demandes de devis
+              </p>
+              <p className="mt-1 text-[12px] italic text-texte-sec">
+                {isCerclePro
+                  ? 'Les copines qui veulent un devis express.'
+                  : 'Réservé Cercle Pro — voir l’abonnement.'}
+              </p>
+            </div>
+            <span
+              className="text-or transition-transform group-hover:translate-x-1"
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </Link>
+          <Link
+            href="/dashboard/prestataire/parametres"
+            className="group flex items-center justify-between rounded-sm border border-or/15 bg-blanc px-5 py-4 transition-all hover:border-or/40 hover:shadow-sm"
+          >
+            <div>
+              <p className="font-serif text-[16px] text-vert">Paramètres</p>
+              <p className="mt-1 text-[12px] italic text-texte-sec">
+                Mot de passe, email, notifications.
+              </p>
+            </div>
+            <span
+              className="text-or transition-transform group-hover:translate-x-1"
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </Link>
+        </div>
+      </section>
+
       {/* ─── Footer transparence ──────────────────────────────────── */}
       <p className="px-6 pb-12 pt-2 text-center font-sans text-[12px] italic text-texte-sec md:px-12">
         On compte précieusement chaque pas qu&apos;une copine fait vers
