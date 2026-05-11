@@ -6,6 +6,7 @@ import { Navigation } from '@/components/landing/Navigation'
 import { FooterV2 } from '@/components/landing/FooterV2'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { CardOverlayGated } from '@/components/v2/CardOverlayGated'
+import { GalleryAutoplayCarousel } from '@/components/v2/GalleryAutoplayCarousel'
 import { PalierBadge } from '@/components/v2/PalierBadge'
 import { PastilleSelectionHilmy } from '@/components/v2/PastilleSelectionHilmy'
 import { categoriesPrestataires } from '@/lib/mock-data'
@@ -234,6 +235,11 @@ export default async function PrestatairePage({
                     <GoldLine width={32} />
                     <h2 className="overline text-or">Galerie</h2>
                   </div>
+                  {isCerclePro ? (
+                    <div className="mt-4">
+                      <GalleryAutoplayCarousel items={photos} ariaLabel={`Galerie ${pub.nom}`} />
+                    </div>
+                  ) : (
                   <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
                     {photos.slice(1).map((src: string, i: number) => (
                       <div
@@ -251,6 +257,7 @@ export default async function PrestatairePage({
                       </div>
                     ))}
                   </div>
+                  )}
                 </section>
               )}
 
