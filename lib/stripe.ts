@@ -11,6 +11,7 @@
 
 import Stripe from 'stripe'
 import type { Palier, Duree } from '@/app/tarifs/_lib/pricing'
+import type { CopinePlan } from '@/lib/supabase/types'
 
 /**
  * Lazy singleton — initialise Stripe au 1er appel uniquement.
@@ -125,6 +126,77 @@ export function getPriceIdForCombo(
 /** Vérifie qu'un priceId est référencé — gating server-side. */
 export function isKnownPriceId(priceId: string): boolean {
   return PRICE_ID_MAP.has(priceId)
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   COPINE_PRICE_ID_MAP — décodage Stripe priceId → plan Pass Copine
+
+   Map distinct du PRICE_ID_MAP prestataire ci-dessus pour deux raisons :
+   (1) éviter qu'un priceId Copine soit accepté par isKnownPriceId()
+   côté flow prestataire (qui ferait crasher decodage palier/duree) ;
+   (2) garder les deux flows découplés — toute modif côté prestataire
+   ne touche pas le flow Copine et vice-versa.
+
+   Pricing Pass Copine (mig 50) :
+     • monthly : 4,99€/mois
+     • annual  : 49€/an (2 mois offerts vs monthly)
+   ────────────────────────────────────────────────────────────────── */
+
+function buildCopinePriceIdMap(): Map<string, CopinePlan> {
+  const m = new Map<string, CopinePlan>()
+  const add = (envKey: string, plan: CopinePlan) => {
+    const id = process.env[envKey]
+    if (id && id.startsWith('price_')) m.set(id, plan)
+  }
+  add('STRIPE_PRICE_COPINE_MONTHLY', 'monthly')
+  add('STRIPE_PRICE_COPINE_ANNUAL', 'annual')
+  return m
+}
+
+const COPINE_PRICE_ID_MAP = buildCopinePriceIdMap()
+
+/** Vrai si le priceId correspond à un price Pass Copine. */
+export function isCopinePriceId(priceId: string): boolean {
+  return COPINE_PRICE_ID_MAP.has(priceId)
+}
+
+/** Décode un priceId Copine en plan. Null si inconnu. */
+export function getCopinePlan(priceId: string): CopinePlan | null {
+  return COPINE_PRICE_ID_MAP.get(priceId) ?? null
+}
+
+/**
+ * Résout un plan Copine en priceId. Utilisé par /api/stripe/checkout
+ * quand le body contient { plan } au lieu de { price_id } — flow Pass
+ * Copine où le client n'a pas accès aux env vars STRIPE_PRICE_COPINE_*
+ * (server-only par décision A5).
+ *
+ * Retourne null si la var d'env correspondante est absente côté
+ * runtime — le caller doit retourner 503/server-config error.
+ */
+export function getCopinePriceIdForPlan(plan: CopinePlan): string | null {
+  for (const [priceId, p] of COPINE_PRICE_ID_MAP) {
+    if (p === plan) return priceId
+  }
+  return null
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   URLs success / cancel Pass Copine
+
+   Origin dynamique depuis request.url côté handler. Le user_id est
+   redondant ici (cookie session Supabase suffit pour identifier la
+   user dans /dashboard/utilisatrice/copine), mais on garde
+   stripe_success=1 pour distinguer le retour Stripe d'une visite
+   directe (UX message "Bienvenue dans la team Copines").
+   ────────────────────────────────────────────────────────────────── */
+
+export function buildCopineSuccessUrl(origin: string): string {
+  return `${origin}/dashboard/utilisatrice/copine?stripe_success=1`
+}
+
+export function buildCopineCancelUrl(origin: string): string {
+  return `${origin}/pass-copine?stripe_canceled=1`
 }
 
 /* ──────────────────────────────────────────────────────────────────

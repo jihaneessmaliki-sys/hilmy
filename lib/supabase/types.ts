@@ -331,6 +331,16 @@ export interface UserProfile {
   /** Préférences évolutives (jsonb, default {}). Clés notifications dans .notifications.
    *  Type ouvert pour autres clés futures sans casser le typage. */
   preferences: { notifications?: Partial<NotificationPrefs>; [key: string]: unknown } | null;
+  /** Pass Copine (mig 50). is_copine=true ⇔ abo Stripe Copine actif/trialing/past_due.
+   *  Modifié exclusivement par /api/stripe/webhook. À ne pas confondre avec
+   *  GamificationStatut='Copine' (niveau 20-99 points, free). */
+  is_copine: boolean;
+  /** Timestamp du premier checkout Copine réussi. Préservé après unsubscribe
+   *  pour analytics fidélité. NULL si jamais souscrit. */
+  copine_since: string | null;
+  /** FK vers Stripe customer attaché au flow Pass Copine. Peut être identique
+   *  à profiles.stripe_customer_id si la même personne est aussi prestataire. */
+  copine_stripe_customer_id: string | null;
   created_at: string;
 }
 
@@ -520,6 +530,34 @@ export interface Subscription {
   stripe_price_id: string;
   palier: SubscriptionPalier;
   duree_months: SubscriptionDureeMonths;
+  status: SubscriptionStatus;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  canceled_at: string | null;
+  ended_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   copine_subscriptions (mig 50) — Pass Copine utilisatrices
+
+   Mirror local des abos Stripe Pass Copine. Parallèle à Subscription
+   ci-dessus qui couvre les paliers prestataires (mig 49). Updates
+   exclusivement via /api/stripe/webhook (service_role bypass RLS).
+   ───────────────────────────────────────────────────────────── */
+
+export type CopinePlan = 'monthly' | 'annual';
+
+export interface CopineSubscription {
+  id: string;
+  user_id: string;
+  stripe_customer_id: string;
+  stripe_subscription_id: string;
+  stripe_price_id: string;
+  plan: CopinePlan;
   status: SubscriptionStatus;
   current_period_start: string;
   current_period_end: string;
