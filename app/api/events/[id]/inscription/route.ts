@@ -38,7 +38,7 @@ export async function POST(
   const { data: event, error: evErr } = await supabase
     .from("events")
     .select(
-      "id, title, slug, start_date, city, address, status, visibility, places_max, inscrites_count, prestataire_id, user_id",
+      "id, title, slug, start_date, city, address, status, visibility, places_max, inscrites_count, prestataire_id, user_id, early_access_until",
     )
     .eq("id", eventId)
     .maybeSingle();
@@ -62,6 +62,28 @@ export async function POST(
       { error: "L'événement est complet." },
       { status: 400 },
     );
+  }
+
+  // Defense-in-depth Pass Copine (mig 50) : si l'event est en fenêtre
+  // d'accès anticipé Copines (early_access_until > now()) et que la
+  // user n'est pas Copine, on bloque l'inscription côté serveur même
+  // si le client gate a été contourné. Le client reconnaît le code
+  // EARLY_ACCESS_COPINE_ONLY et ouvre le paywall.
+  if (event.early_access_until) {
+    const earlyAccessTs = new Date(event.early_access_until).getTime();
+    if (!Number.isNaN(earlyAccessTs) && earlyAccessTs > Date.now()) {
+      const { data: copineRow } = await supabase
+        .from("user_profiles")
+        .select("is_copine")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!copineRow?.is_copine) {
+        return NextResponse.json(
+          { error: "EARLY_ACCESS_COPINE_ONLY" },
+          { status: 403 },
+        );
+      }
+    }
   }
 
   // Upsert inscription (unique sur user+event)

@@ -217,6 +217,11 @@ export interface HilmyEvent {
 
   status: EventStatus;
   registration_mode: EventRegistrationMode;
+  /** Pass Copine (mig 50). Si non-NULL et > now(), seules les
+   *  utilisatrices Copines peuvent s'inscrire jusqu'à cette date.
+   *  Passé cette date, ouvert à tout le monde. NULL = pas de fenêtre
+   *  Copines. */
+  early_access_until: string | null;
   created_at: string;
   updated_at: string;
 

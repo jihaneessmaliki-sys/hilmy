@@ -57,6 +57,7 @@ function adaptDbEventForCard(ev: HilmyEvent): MockEvenement {
     flyer: ev.flyer_url ?? null,
     places: ev.places_max ?? 20,
     inscrites: ev.inscrites_count ?? 0,
+    early_access_until: ev.early_access_until,
   }
 }
 
@@ -82,6 +83,7 @@ export default async function EvenementV2Page({
 
   // Inscription status (si user connectée)
   let isInscrite = false
+  let isCopine = false
   if (user) {
     const { data: ins } = await supabase
       .from('event_inscriptions')
@@ -90,6 +92,15 @@ export default async function EvenementV2Page({
       .eq('user_id', user.id)
       .maybeSingle()
     isInscrite = ins?.status === 'inscrite'
+    // Pass Copine (mig 50) — drive le client gate du paywall events
+    // accès anticipé. Le check defense-in-depth tourne aussi côté
+    // /api/events/[id]/inscription.
+    const { data: copineRow } = await supabase
+      .from('user_profiles')
+      .select('is_copine')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    isCopine = copineRow?.is_copine ?? false
   }
 
   const isOwner = !!user && user.id === ev.user_id
@@ -214,6 +225,8 @@ export default async function EvenementV2Page({
                   variant="solid"
                   registrationMode={ev.registration_mode ?? 'internal'}
                   externalUrl={ev.external_signup_url}
+                  earlyAccessUntil={ev.early_access_until}
+                  isCopine={isCopine}
                 />
                 <FavoriteButton
                   itemType="evenement"
@@ -374,6 +387,8 @@ export default async function EvenementV2Page({
                     variant="outline"
                     registrationMode={ev.registration_mode ?? 'internal'}
                     externalUrl={ev.external_signup_url}
+                    earlyAccessUntil={ev.early_access_until}
+                    isCopine={isCopine}
                   />
                 </div>
               </div>

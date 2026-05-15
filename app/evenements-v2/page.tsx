@@ -85,6 +85,7 @@ function adaptEvenementFromDb(e: DbEventWithCategory): MockEvenement {
     seasonal_category: seasonal
       ? { slug: seasonal.slug, label: seasonal.label, emoji: seasonal.emoji }
       : null,
+    early_access_until: e.early_access_until,
   }
 }
 
@@ -141,7 +142,7 @@ function EvenementsV2PageInner() {
               // mig 46 PR-F : event_seasonal_category_id + LEFT JOIN
               // event_seasonal_categories (relation auto-détectée par PostgREST
               // via la FK). Le LEFT JOIN renvoie null si pas de catégorie.
-              'id, user_id, prestataire_id, title, slug, description, event_type, format, visibility, start_date, end_date, country, region, city, address, online_link, flyer_url, external_signup_url, price_type, price_amount, price_currency, places_max, inscrites_count, status, created_at, updated_at, event_seasonal_category_id, event_seasonal_category:event_seasonal_categories(id, slug, label, emoji)',
+              'id, user_id, prestataire_id, title, slug, description, event_type, format, visibility, start_date, end_date, country, region, city, address, online_link, flyer_url, external_signup_url, price_type, price_amount, price_currency, places_max, inscrites_count, status, early_access_until, created_at, updated_at, event_seasonal_category_id, event_seasonal_category:event_seasonal_categories(id, slug, label, emoji)',
             )
             .eq('status', 'published')
             .gte('start_date', now)

@@ -34,6 +34,7 @@ const EVENT_SELECT = `
   inscrites_count,
   status,
   registration_mode,
+  early_access_until,
   created_at,
   updated_at
 `;
