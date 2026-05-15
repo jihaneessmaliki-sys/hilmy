@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { LayoutDashboard } from 'lucide-react'
 import { useSession } from '@/components/auth/SessionProvider'
+import { CopineBadge } from '@/components/badges/CopineBadge'
 
 interface NavigationProps {
   /**
@@ -14,6 +15,13 @@ interface NavigationProps {
    * contenu (manifeste, contact, legal…) qui n'ont pas de hero sombre.
    */
   variant?: 'transparent' | 'solid'
+  /**
+   * Flag Pass Copine, fetché côté server via NavigationServer wrapper.
+   * Default false : pour les pages qui montent Navigation directement
+   * (sans wrapper), pas de badge ni d'item Copine — mode dégradé safe.
+   */
+  isCopine?: boolean
+  copineSince?: string | null
 }
 
 function dashboardPathFor(user: ReturnType<typeof useSession>['user']): string {
@@ -22,7 +30,11 @@ function dashboardPathFor(user: ReturnType<typeof useSession>['user']): string {
   return signupType === 'provider' ? '/dashboard/prestataire' : '/dashboard/utilisatrice'
 }
 
-export function Navigation({ variant = 'transparent' }: NavigationProps = {}) {
+export function Navigation({
+  variant = 'transparent',
+  isCopine = false,
+  copineSince = null,
+}: NavigationProps = {}) {
   const [scrolled, setScrolled] = useState(false)
   const { user } = useSession()
 
@@ -62,6 +74,19 @@ export function Navigation({ variant = 'transparent' }: NavigationProps = {}) {
             { href: '/recommandations', label: 'Recommandations' },
             { href: '/evenements-v2', label: 'Événements' },
             { href: '/tarifs', label: 'Tarifs' },
+            // Lien Pass Copine — visible si user connectée non-prestataire
+            // (les prestataires ont leur propre flow d'abo dans /tarifs).
+            // Label dynamique : prospect vs Copine.
+            ...(user && user.user_metadata?.signupType !== 'provider'
+              ? [
+                  {
+                    href: isCopine
+                      ? '/dashboard/utilisatrice/copine'
+                      : '/pass-copine',
+                    label: isCopine ? 'Mon Pass Copine' : 'Pass Copine',
+                  },
+                ]
+              : []),
             // Lien dashboard visible uniquement pour les comptes prestataire.
             // Approximation via signupType (set au signup) — si la fiche n'existe
             // pas encore, /mon-espace redirige proprement vers /onboarding.
@@ -96,17 +121,20 @@ export function Navigation({ variant = 'transparent' }: NavigationProps = {}) {
             </Link>
           )}
           {user ? (
-            <Link
-              href={dashboardPathFor(user)}
-              className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[13px] font-semibold transition-all ${
-                scrolled
-                  ? 'border-vert text-vert hover:bg-vert hover:text-creme'
-                  : 'border-or text-or hover:bg-or hover:text-vert'
-              }`}
-            >
-              <LayoutDashboard size={16} strokeWidth={1.75} aria-hidden="true" />
-              Mon espace
-            </Link>
+            <span className="flex items-center gap-2">
+              {isCopine && <CopineBadge copineSince={copineSince} size={14} />}
+              <Link
+                href={dashboardPathFor(user)}
+                className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[13px] font-semibold transition-all ${
+                  scrolled
+                    ? 'border-vert text-vert hover:bg-vert hover:text-creme'
+                    : 'border-or text-or hover:bg-or hover:text-vert'
+                }`}
+              >
+                <LayoutDashboard size={16} strokeWidth={1.75} aria-hidden="true" />
+                Mon espace
+              </Link>
+            </span>
           ) : (
             <>
               <Link

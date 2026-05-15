@@ -1,6 +1,7 @@
 import { Toaster } from 'sonner'
 import { Sidebar, type SidebarItem } from '@/components/dashboard/Sidebar'
 import { requireUserProfile } from '@/lib/supabase/session'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function UtilisatriceLayout({
   children,
@@ -9,6 +10,17 @@ export default async function UtilisatriceLayout({
 }) {
   const { user, profile } = await requireUserProfile()
   const isAdmin = Boolean(user.user_metadata?.is_admin)
+
+  // Pass Copine fast-path : lookup is_copine pour personnaliser le label
+  // sidebar (Devenir Copine vs Mon Pass Copine) et afficher le badge sur
+  // le UserBlock.
+  const supabase = await createClient()
+  const { data: copineRow } = await supabase
+    .from('user_profiles')
+    .select('is_copine')
+    .eq('user_id', user.id)
+    .maybeSingle()
+  const isCopine = copineRow?.is_copine ?? false
 
   const items: SidebarItem[] = [
     { href: '/dashboard/utilisatrice', label: 'Accueil', icon: '·' },
@@ -32,6 +44,11 @@ export default async function UtilisatriceLayout({
       href: '/dashboard/utilisatrice/evenements',
       label: 'Mes événements',
       icon: '◇',
+    },
+    {
+      href: isCopine ? '/dashboard/utilisatrice/copine' : '/pass-copine',
+      label: isCopine ? 'Mon Pass Copine' : 'Devenir Copine',
+      icon: '★',
     },
     { href: '/dashboard/utilisatrice/profil', label: 'Mon profil', icon: '❋' },
     {
@@ -66,6 +83,7 @@ export default async function UtilisatriceLayout({
           prenom: profile.prenom,
           avatar: profile.avatar_url ?? '#D4C5B0',
           meta: `Membre depuis ${memberSince}`,
+          badge: isCopine ? 'Copine' : undefined,
         }}
         signOutLabel="À bientôt"
       />
