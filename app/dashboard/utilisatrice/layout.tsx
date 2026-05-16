@@ -12,7 +12,7 @@ export default async function UtilisatriceLayout({
   const isAdmin = Boolean(user.user_metadata?.is_admin)
 
   // Pass Copine fast-path : lookup is_copine pour personnaliser le label
-  // sidebar (Devenir Copine vs Mon Pass Copine) et afficher le badge sur
+  // sidebar (Mon Pass vs Mon Pass Copine) et afficher le badge sur
   // le UserBlock.
   const supabase = await createClient()
   const { data: copineRow } = await supabase
@@ -47,7 +47,7 @@ export default async function UtilisatriceLayout({
     },
     {
       href: isCopine ? '/dashboard/utilisatrice/copine' : '/pass-copine',
-      label: isCopine ? 'Mon Pass Copine' : 'Devenir Copine',
+      label: isCopine ? 'Mon Pass Copine' : 'Mon Pass',
       icon: '★',
     },
     // Pro Perks (mig 50). Visible pour toutes — la page elle-même

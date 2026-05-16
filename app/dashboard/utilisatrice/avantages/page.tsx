@@ -85,7 +85,7 @@ export default async function UtilisatriceAvantagesPage() {
               href="/pass-copine"
               className="inline-flex items-center justify-center rounded-full bg-or px-6 py-3 text-[12px] font-semibold tracking-[0.18em] text-vert uppercase transition-colors hover:bg-or-light"
             >
-              Devenir Copine
+              Je prends mon Pass
             </Link>
           )
         }

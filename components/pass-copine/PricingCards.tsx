@@ -86,7 +86,7 @@ export function PricingCards() {
               >
                 {loading === 'annual'
                   ? 'Redirection vers le paiement…'
-                  : 'Devenir Copine'}
+                  : 'Je prends mon Pass'}
               </button>
             </div>
           </div>
@@ -112,7 +112,7 @@ export function PricingCards() {
               >
                 {loading === 'monthly'
                   ? 'Redirection vers le paiement…'
-                  : 'Devenir Copine'}
+                  : 'Je prends mon Pass'}
               </button>
             </div>
           </div>

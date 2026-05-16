@@ -15,7 +15,7 @@ interface PerkClaimButtonProps {
  * Bouton de claim d'un Pro Perk pour une Copine.
  *
  * 3 états :
- *   - Non-Copine → bouton désactivé + CTA "Devenir Copine"
+ *   - Non-Copine → bouton désactivé + CTA "Je prends mon Pass"
  *   - Copine + pas encore claim → bouton "Récupérer mon code"
  *   - Copine + déjà claim → affiche le code HILMY-XXXX-YYYY + bouton
  *     "Marquer comme utilisé" si pas encore marqué
@@ -38,7 +38,7 @@ export function PerkClaimButton({
         href="/pass-copine"
         className="block w-full rounded-full bg-vert px-6 py-3 text-center text-[12px] font-semibold tracking-[0.18em] text-creme uppercase transition-colors hover:bg-vert-dark"
       >
-        Devenir Copine
+        Je prends mon Pass
       </Link>
     )
   }

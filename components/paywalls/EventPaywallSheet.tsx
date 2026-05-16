@@ -89,7 +89,7 @@ export function EventPaywallSheet({
               onClick={() => onOpenChange(false)}
               className="inline-flex items-center justify-center rounded-full bg-or px-8 py-4 text-[15px] font-semibold text-vert transition-all hover:-translate-y-0.5 hover:bg-or-light hover:shadow-[0_8px_24px_rgba(201,169,97,0.3)]"
             >
-              Devenir Copine — 4,99 €/mois
+              Je prends mon Pass — 4,99 €/mois
             </Link>
             <button
               type="button"
