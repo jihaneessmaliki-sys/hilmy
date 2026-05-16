@@ -575,6 +575,62 @@ export interface CopineSubscription {
 
 
 /* ─────────────────────────────────────────────────────────────
+   pro_perks + pro_perk_claims (mig 50) — Offres Cercle Pro
+   pour les Copines.
+
+   Les prestataires Cercle Pro créent des perks (status='pending_review'),
+   un admin modère (→ 'active' OU 'rejected' + rejection_reason), puis
+   les Copines actives peuvent claim chaque perk une fois (UNIQUE perk_id
+   × user_id), recevant un code unique HILMY-XXXX-YYYY.
+
+   ⚠️ INSERT pro_perk_claims est gaté DB-side par la SECURITY DEFINER
+   function is_user_copine(auth.uid()) — voir mig 50 §3. Tout INSERT
+   doit aussi être gaté côté API route (defense-in-depth Phase 5 D5).
+   ───────────────────────────────────────────────────────────── */
+
+export type ProPerkStatus =
+  | 'pending_review'
+  | 'active'
+  | 'paused'
+  | 'expired'
+  | 'rejected';
+
+export type ProPerkDiscountType = 'percentage' | 'fixed';
+
+export interface ProPerk {
+  id: string;
+  prestataire_profile_id: string;
+  title: string;
+  description: string | null;
+  discount_type: ProPerkDiscountType;
+  /** numeric côté DB — exposé en number côté TS. % si discount_type =
+   *  'percentage' (0-100), montant absolu si 'fixed' (devise = celle du
+   *  prestataire — non typée ici, le front affiche "X €" par défaut). */
+  discount_value: number;
+  conditions: string | null;
+  max_uses: number | null;
+  used_count: number;
+  starts_at: string;
+  ends_at: string | null;
+  status: ProPerkStatus;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProPerkClaim {
+  id: string;
+  perk_id: string;
+  user_id: string;
+  /** Format HILMY-XXXX-YYYY (contrainte CHECK regex côté DB). Généré
+   *  côté server-side via crypto.randomBytes — jamais côté client. */
+  code_displayed: string;
+  marked_used_at: string | null;
+  created_at: string;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
    Gamification utilisatrices (mig 16 + backfill mig 48 — Sprint U1.5)
    ─────────────────────────────────────────────────────────────
    Aligné sur la BDD réelle :

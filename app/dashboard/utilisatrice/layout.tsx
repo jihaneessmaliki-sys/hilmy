@@ -50,6 +50,13 @@ export default async function UtilisatriceLayout({
       label: isCopine ? 'Mon Pass Copine' : 'Devenir Copine',
       icon: '★',
     },
+    // Pro Perks (mig 50). Visible pour toutes — la page elle-même
+    // adapte l'UX (Copine = claim, non-Copine = teasing).
+    {
+      href: '/dashboard/utilisatrice/avantages',
+      label: isCopine ? 'Mes avantages' : 'Avantages Copines',
+      icon: '◉',
+    },
     { href: '/dashboard/utilisatrice/profil', label: 'Mon profil', icon: '❋' },
     {
       href: '/dashboard/utilisatrice/parametres',

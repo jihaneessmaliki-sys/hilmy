@@ -889,3 +889,117 @@ export async function sendDevisExpressEmail({
     }),
   });
 }
+
+/* ───────────────────────────────────────────────────────────────
+   Pro Perks (mig 50 — Phase 5)
+
+   Trois notifications encadrent le workflow de modération :
+   1. sendPerkPendingReview  → admins/founders quand un presta soumet
+   2. sendPerkApproved        → presta quand admin valide
+   3. sendPerkRejected        → presta quand admin refuse (+ raison)
+
+   Recipients admins via getFounderRecipients() — décision D3 Phase 5
+   (un seul canal admin/founders, cf sendNewEventToFounders pattern).
+   ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Notification founders : un prestataire vient de soumettre un perk
+ * pour modération. Best-effort : no-op si FOUNDER_NOTIFICATION_EMAILS
+ * absent.
+ */
+export async function sendPerkPendingReview({
+  perkTitle,
+  prestaNom,
+  discountLabel,
+  adminUrl,
+}: {
+  perkTitle: string;
+  prestaNom: string;
+  discountLabel: string;
+  adminUrl: string;
+}) {
+  const recipients = getFounderRecipients();
+  if (recipients.length === 0) return;
+
+  await sendEmail({
+    to: recipients,
+    subject: `Nouvelle offre Cercle Pro à modérer — ${perkTitle}`,
+    html: buildRichLayout({
+      preview: `${prestaNom} vient de soumettre une offre pour les Copines`,
+      title: "Une offre Cercle Pro à modérer.",
+      paragraphs: [
+        `${prestaNom} vient de créer une nouvelle offre pour les Copines : « ${perkTitle} » — ${discountLabel}.`,
+        "Elle est en file de modération. Valide-la pour qu'elle apparaisse aux Copines, ou refuse-la avec une raison si elle ne convient pas.",
+      ],
+      ctaLabel: "Voir la queue de modération",
+      ctaHref: adminUrl,
+      footer: "Tu reçois ce mail parce que ton email est listé dans FOUNDER_NOTIFICATION_EMAILS.",
+    }),
+  });
+}
+
+/**
+ * Notification prestataire : son perk a été approuvé et est en ligne
+ * pour les Copines. Copy Sara stricte (cf brief Phase 5).
+ */
+export async function sendPerkApproved({
+  to,
+  prestaPrenom,
+  perkTitle,
+  dashboardUrl,
+}: {
+  to: string;
+  prestaPrenom: string;
+  perkTitle: string;
+  dashboardUrl: string;
+}) {
+  await sendEmail({
+    to,
+    subject: `Ton offre Copines est en ligne — ${perkTitle}`,
+    html: buildRichLayout({
+      preview: `Ton offre ${perkTitle} est validée`,
+      title: `${prestaPrenom}, ton offre est en ligne.`,
+      paragraphs: [
+        `Ton offre « ${perkTitle} » est en ligne. Les Copines peuvent maintenant en profiter.`,
+        "Elles vont la voir apparaître dans leurs avantages, et chaque code utilisé sera tracé dans ton dashboard.",
+      ],
+      ctaLabel: "Voir mon offre",
+      ctaHref: dashboardUrl,
+      footer: "La team Hilmy.",
+    }),
+  });
+}
+
+/**
+ * Notification prestataire : son perk a été refusé avec une raison.
+ * La raison est obligatoire côté UI admin (cf PerkModerationRow).
+ */
+export async function sendPerkRejected({
+  to,
+  prestaPrenom,
+  perkTitle,
+  rejectionReason,
+  dashboardUrl,
+}: {
+  to: string;
+  prestaPrenom: string;
+  perkTitle: string;
+  rejectionReason: string;
+  dashboardUrl: string;
+}) {
+  await sendEmail({
+    to,
+    subject: `Ton offre Copines n'a pas pu être validée — ${perkTitle}`,
+    html: buildRichLayout({
+      preview: `Ton offre ${perkTitle} n'a pas été validée`,
+      title: `${prestaPrenom}, on a une remarque sur ton offre.`,
+      paragraphs: [
+        `Ton offre « ${perkTitle} » n'a pas pu être validée. Raison : ${rejectionReason}.`,
+        "Tu peux la modifier et la resoumettre quand tu veux. Si tu veux en discuter, réponds à ce mail — on lit tout.",
+      ],
+      ctaLabel: "Modifier mon offre",
+      ctaHref: dashboardUrl,
+      footer: "La team Hilmy.",
+    }),
+  });
+}
