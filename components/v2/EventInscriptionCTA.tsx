@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
+import { EventPaywallSheet } from '@/components/paywalls/EventPaywallSheet'
 
 interface Props {
   eventId: string
@@ -18,6 +19,12 @@ interface Props {
   registrationMode?: 'internal' | 'external' | 'info_only'
   /** URL externe à utiliser pour 'external' ou 'info_only'. */
   externalUrl?: string | null
+  /** Pass Copine (mig 50). ISO date. Si > now() ET isCopine=false, le
+   *  click "S'inscrire" ouvre le EventPaywallSheet au lieu de POSTer. */
+  earlyAccessUntil?: string | null
+  /** Pass Copine. Si true, accès anticipé OK ; si false, l'inscription
+   *  est gatée tant qu'on est dans la fenêtre early_access. */
+  isCopine?: boolean
 }
 
 export function EventInscriptionCTA({
@@ -31,6 +38,8 @@ export function EventInscriptionCTA({
   variant = 'solid',
   registrationMode = 'internal',
   externalUrl = null,
+  earlyAccessUntil = null,
+  isCopine = false,
 }: Props) {
   const router = useRouter()
   const [inscrite, setInscrite] = useState(initiallyInscrite)
@@ -38,8 +47,16 @@ export function EventInscriptionCTA({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [paywallOpen, setPaywallOpen] = useState(false)
 
   const complet = placesMax !== null && count >= placesMax
+  // Paywall actif tant qu'on est dans la fenêtre Copines ET que la
+  // user n'est pas Copine. Le check passe aussi côté server-side dans
+  // l'API route inscription (defense-in-depth).
+  const earlyAccessBlocked =
+    !!earlyAccessUntil &&
+    !isCopine &&
+    new Date(earlyAccessUntil).getTime() > Date.now()
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -54,6 +71,11 @@ export function EventInscriptionCTA({
       return
     }
     if (inscrite || complet || isOwner) return
+    // Gate client : early access Copines en cours, user non Copine.
+    if (earlyAccessBlocked) {
+      setPaywallOpen(true)
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {
@@ -62,6 +84,16 @@ export function EventInscriptionCTA({
       })
       const body = await res.json().catch(() => ({}))
       if (!res.ok) {
+        // Defense-in-depth : si le server gate intercepte avec
+        // EARLY_ACCESS_COPINE_ONLY (cas où le client gate aurait été
+        // contourné), on ouvre quand même le paywall.
+        if (
+          res.status === 403 &&
+          body.error === 'EARLY_ACCESS_COPINE_ONLY'
+        ) {
+          setPaywallOpen(true)
+          return
+        }
         setError(body.error ?? 'Impossible de t\'inscrire pour l\'instant.')
         return
       }
@@ -218,6 +250,11 @@ export function EventInscriptionCTA({
       )}
       {error && <p className="text-[12px] text-red-900">{error}</p>}
       <Toast message={toast} />
+      <EventPaywallSheet
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        earlyAccessUntil={earlyAccessUntil}
+      />
     </div>
   )
 }

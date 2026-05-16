@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { formatRelativeTime } from '@/lib/format-relative-time'
 import { toggleThanksAction } from '@/app/je-cherche/_actions'
 import { SignalementModal } from '@/components/je-cherche/SignalementModal'
+import { MemberName } from '@/components/badges/MemberName'
 import type { DemandeResponseWithProfile } from '@/lib/types/je-cherche'
 
 interface Props {
@@ -63,7 +64,11 @@ export function ResponseRow({ response, demandeId, thanked, isOwn }: Props) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-medium text-vert">
-              {response.author_prenom ?? 'Une copine'}
+              <MemberName
+                prenom={response.author_prenom}
+                isCopine={response.author_is_copine}
+                copineSince={response.author_copine_since}
+              />
             </p>
             <p className="text-[11px] text-texte-sec">
               {formatRelativeTime(response.created_at)}

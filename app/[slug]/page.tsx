@@ -8,6 +8,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { FollowButton } from "@/components/voix/FollowButton";
 import { RecosList } from "@/components/voix/RecosList";
+import { MemberName } from "@/components/badges/MemberName";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hilmy.io";
 
@@ -88,10 +89,21 @@ export default async function VoixSlugPage({
   } = await supabase.auth.getUser();
   const isLoggedIn = Boolean(user);
 
-  const [{ data: isFollowing }, { data: recos }] = await Promise.all([
+  const [{ data: isFollowing }, { data: recos }, { data: copineRow }] = await Promise.all([
     isFollowingVoix(voix.user_id),
     getRecosByVoix(voix.user_id),
+    // Pass Copine (mig 50, Phase 6) : fetch séparé is_copine/copine_since
+    // — la vue voix_hilmy_public ne les expose pas (décision D1 Phase 6 :
+    // pas de migration pour étendre la vue SECURITY DEFINER).
+    supabase
+      .from("user_profiles")
+      .select("is_copine, copine_since")
+      .eq("user_id", voix.user_id)
+      .maybeSingle(),
   ]);
+  const isCopine = (copineRow as { is_copine?: boolean | null } | null)?.is_copine ?? null;
+  const copineSince =
+    (copineRow as { copine_since?: string | null } | null)?.copine_since ?? null;
 
   return (
     <main className="min-h-screen bg-creme">
@@ -99,7 +111,12 @@ export default async function VoixSlugPage({
         <header className="text-center">
           <PhotoPlaceholder prenom={voix.prenom} />
           <h1 className="mt-4 font-serif text-3xl font-semibold text-vert">
-            {voix.prenom}
+            <MemberName
+              prenom={voix.prenom}
+              isCopine={isCopine}
+              copineSince={copineSince}
+              badgeSize={18}
+            />
           </h1>
           <div className="mt-2 flex justify-center">
             <span className="inline-flex items-center gap-1 rounded-md bg-or px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-vert">

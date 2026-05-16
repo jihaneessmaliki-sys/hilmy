@@ -67,6 +67,14 @@ export default async function PrestataireLayout({
           },
         ] as SidebarItem[])
       : []),
+    // Pro Perks (mig 50). Item toujours visible (cf décision D8
+    // Phase 5) : levier de conversion vers Cercle Pro pour les
+    // Standard/Premium qui découvrent la feature.
+    {
+      href: '/dashboard/prestataire/avantages',
+      label: 'Mes offres Copines',
+      icon: '★',
+    },
     {
       href: '/dashboard/prestataire/abonnement',
       label: 'Mon abonnement',

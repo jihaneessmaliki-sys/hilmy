@@ -246,7 +246,7 @@ export default async function AccueilPage() {
   // ── 6 events à venir ─────────────────────────────────────────────
   const { data: eventsRows } = await supabase
     .from('events')
-    .select('id, title, slug, description, start_date, city, address, event_type, flyer_url, places_max, inscrites_count')
+    .select('id, title, slug, description, start_date, city, address, event_type, flyer_url, places_max, inscrites_count, early_access_until')
     .eq('status', 'published')
     .gte('start_date', new Date().toISOString())
     .order('start_date', { ascending: true })
@@ -266,6 +266,7 @@ export default async function AccueilPage() {
     flyer: ev.flyer_url ?? null,
     places: ev.places_max ?? 20,
     inscrites: ev.inscrites_count ?? 0,
+    early_access_until: (ev as { early_access_until?: string | null }).early_access_until ?? null,
   }))
 
   // ── 3 favoris ────────────────────────────────────────────────────

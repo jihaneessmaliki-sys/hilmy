@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Navigation } from '@/components/landing/Navigation'
+import { NavigationServer } from '@/components/landing/NavigationServer'
 import { FooterV2 } from '@/components/landing/FooterV2'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { CardOverlayGated } from '@/components/v2/CardOverlayGated'
@@ -128,7 +128,7 @@ export default async function PrestatairePage({
 
   return (
     <div className="min-h-screen bg-creme text-texte">
-      <Navigation variant="solid" />
+      <NavigationServer variant="solid" />
 
       {/* Hero */}
       <header className="pt-28 pb-8 md:pt-36 md:pb-12">

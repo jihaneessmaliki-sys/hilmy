@@ -510,6 +510,10 @@ export type Evenement = {
    *  PostgREST sur event_seasonal_categories. Drive le badge card +
    *  filtre chips /evenements-v2. */
   seasonal_category?: { slug: string; label: string; emoji: string } | null;
+  /** Pass Copine (mig 50). ISO date. Si > now(), badge "Accès anticipé
+   *  Copines" sur la card et paywall sur l'inscription pour les
+   *  non-Copines. Optionnel : les mock data legacy n'ont pas le champ. */
+  early_access_until?: string | null;
 };
 
 export const evenements: Evenement[] = [

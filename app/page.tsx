@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Navigation } from '@/components/landing/Navigation'
+import { NavigationServer } from '@/components/landing/NavigationServer'
 import { HeroV2 } from '@/components/landing/HeroV2'
 import { StartingPoint } from '@/components/landing/StartingPoint'
 import { ThreePromises } from '@/components/landing/ThreePromises'
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-creme text-texte">
-      <Navigation />
+      <NavigationServer />
       <main>
         <HeroV2 />
         <StartingPoint />

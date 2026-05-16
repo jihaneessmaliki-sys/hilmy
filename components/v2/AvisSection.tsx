@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import { createClient } from '@/lib/supabase/client'
 import { GoldLine } from '@/components/ui/GoldLine'
+import { MemberName } from '@/components/badges/MemberName'
 
 export type AvisItem = {
   id: string
@@ -13,7 +14,13 @@ export type AvisItem = {
   created_at: string
   reponse_pro: string | null
   reponse_date: string | null
-  user: { prenom: string | null; avatar_url: string | null } | null
+  user: {
+    prenom: string | null
+    avatar_url: string | null
+    /** Pass Copine (mig 50, Phase 6). NULL = inconnu (badge masqué). */
+    is_copine?: boolean | null
+    copine_since?: string | null
+  } | null
   likes_count: number
   liked_by_me: boolean
 }
@@ -123,10 +130,10 @@ export function AvisSection({
       return
     }
 
-    // Fetch user_profile pour nom + avatar
+    // Fetch user_profile pour nom + avatar + flags Pass Copine
     const { data: prof } = await supabase
       .from('user_profiles')
-      .select('prenom, avatar_url')
+      .select('prenom, avatar_url, is_copine, copine_since')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -141,6 +148,8 @@ export function AvisSection({
       user: {
         prenom: prof?.prenom ?? null,
         avatar_url: prof?.avatar_url ?? null,
+        is_copine: prof?.is_copine ?? null,
+        copine_since: prof?.copine_since ?? null,
       },
       likes_count: 0,
       liked_by_me: false,
@@ -398,7 +407,11 @@ export function AvisSection({
                     />
                     <div>
                       <p className="text-[14px] font-medium text-vert">
-                        {a.user?.prenom ?? 'Une copine'}
+                        <MemberName
+                          prenom={a.user?.prenom ?? null}
+                          isCopine={a.user?.is_copine ?? null}
+                          copineSince={a.user?.copine_since ?? null}
+                        />
                       </p>
                       <p className="text-[11px] text-texte-sec">{dateFr}</p>
                     </div>

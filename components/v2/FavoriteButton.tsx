@@ -8,6 +8,7 @@ import {
   removeFavori,
 } from '@/lib/supabase/queries/favoris'
 import type { FavoriType } from '@/lib/supabase/types'
+import { FavorisPaywallSheet } from '@/components/paywalls/FavorisPaywallSheet'
 
 interface FavoriteButtonProps {
   /** Quel type d'item est sauvegardé (mig 05 + mig 16) :
@@ -48,6 +49,7 @@ export function FavoriteButton({
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [pending, setPending] = useState(false)
+  const [paywallOpen, setPaywallOpen] = useState(false)
 
   // Lecture initiale de l'état (existe-t-il déjà un favori pour cet item ?).
   // Fail silencieux : si erreur réseau, on assume "pas favori" et on
@@ -80,8 +82,16 @@ export function FavoriteButton({
       : await removeFavori(itemType, itemId)
 
     if (op.error) {
-      // Revert
+      // Revert l'optimistic toggle puis route l'erreur :
+      // - 'FAVORITES_LIMIT_REACHED' → ouvre le paywall Pass Copine
+      //   (trigger SQL mig 50 §7 raise exception P0001 avec ce texte
+      //   exact pour les non-Copines au 11e favori).
+      // - Autre erreur → fail silencieux (la user retentera, le toggle
+      //   reflète déjà l'état réel).
       setSaved(previous)
+      if (next && op.error.includes('FAVORITES_LIMIT_REACHED')) {
+        setPaywallOpen(true)
+      }
     }
     setPending(false)
   }
@@ -101,27 +111,30 @@ export function FavoriteButton({
         : 'border border-or/40 bg-transparent text-vert hover:border-or hover:bg-creme-deep'
 
   return (
-    <button
-      type="button"
-      onClick={handleToggle}
-      disabled={loading || pending}
-      className={`group inline-flex items-center gap-2.5 rounded-full font-medium tracking-[0.22em] uppercase transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${base} ${styles}`}
-      aria-pressed={saved}
-      aria-busy={pending || loading}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={saved ? 'on' : 'off'}
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.7, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          aria-hidden="true"
-        >
-          {saved ? '♥' : '♡'}
-        </motion.span>
-      </AnimatePresence>
-      <span>{saved ? labelActive : label}</span>
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={loading || pending}
+        className={`group inline-flex items-center gap-2.5 rounded-full font-medium tracking-[0.22em] uppercase transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${base} ${styles}`}
+        aria-pressed={saved}
+        aria-busy={pending || loading}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={saved ? 'on' : 'off'}
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.7, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            aria-hidden="true"
+          >
+            {saved ? '♥' : '♡'}
+          </motion.span>
+        </AnimatePresence>
+        <span>{saved ? labelActive : label}</span>
+      </button>
+      <FavorisPaywallSheet open={paywallOpen} onOpenChange={setPaywallOpen} />
+    </>
   )
 }

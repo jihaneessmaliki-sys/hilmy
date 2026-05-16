@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { Lock } from 'lucide-react'
 import type { Evenement } from '@/lib/mock-data'
 
 interface Props {
@@ -20,6 +21,13 @@ export function EvenementCard({ e, index = 0, variant = 'default' }: Props) {
   const flyerUrl = isUrl(e.flyer) ? e.flyer : null
 
   const complet = e.inscrites >= e.places
+  // Badge "Accès anticipé Copines" — visible si l'event est dans sa
+  // fenêtre Copines (mig 50) ET pas encore complet. Si complet, on
+  // privilégie l'info "Complet" (priorité business).
+  const earlyAccessActive =
+    !complet &&
+    !!e.early_access_until &&
+    new Date(e.early_access_until).getTime() > Date.now()
 
   return (
     <motion.article
@@ -74,6 +82,15 @@ export function EvenementCard({ e, index = 0, variant = 'default' }: Props) {
           {complet && (
             <div className="absolute right-5 top-5 rounded-full bg-texte/85 px-3 py-1 text-[10px] tracking-[0.22em] text-creme uppercase backdrop-blur">
               Complet
+            </div>
+          )}
+          {earlyAccessActive && (
+            <div
+              className="absolute right-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-creme/95 px-3 py-1 text-[10px] font-medium tracking-[0.22em] text-or uppercase backdrop-blur"
+              title="Cet event ouvre aux Copines 48h avant tout le monde"
+            >
+              <Lock size={11} strokeWidth={1.75} aria-hidden="true" />
+              Accès anticipé Copines
             </div>
           )}
         </div>

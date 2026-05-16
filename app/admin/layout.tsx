@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireUser } from '@/lib/supabase/session'
+import { countPendingPerksAdmin } from '@/lib/supabase/queries/pro-perks'
 import { AdminNavLink } from './admin-nav-link'
 import { AdminSignOut } from './admin-sign-out'
 
@@ -20,7 +21,7 @@ export default async function AdminLayout({
   //   'published' OR owner)
   // → service_role pour avoir les vrais chiffres. Safe parce que
   // l'accès à ce layout est déjà gaté par le notFound() ci-dessus.
-  const [prestaCount, eventCount, recoCount, reportCount, jeChercheSignalementsCount] = await Promise.all([
+  const [prestaCount, eventCount, recoCount, reportCount, jeChercheSignalementsCount, pendingPerksCount] = await Promise.all([
     admin
       .from('profiles')
       .select('id', { count: 'exact', head: true })
@@ -43,6 +44,8 @@ export default async function AdminLayout({
       .from('demande_signalements')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', new Date(Date.now() - 30 * 86_400_000).toISOString()),
+    // Pro Perks (mig 50) : queue pending_review pour modération.
+    countPendingPerksAdmin(),
   ])
 
   const nav = [
@@ -76,6 +79,11 @@ export default async function AdminLayout({
       href: '/admin/event-seasonal-categories',
       label: 'Catégories saisonnières',
       badge: undefined,
+    },
+    {
+      href: '/admin/pro-perks',
+      label: 'Offres Cercle Pro',
+      badge: pendingPerksCount,
     },
   ]
 
