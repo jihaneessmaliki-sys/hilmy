@@ -117,9 +117,24 @@ export async function getDemandesFeed(
     const { data, error } = await query
     if (error) return fail(error.message, error.code)
 
-    const rows = (data ?? []) as DemandeWithProfile[]
-    const hasMore = rows.length > limit
-    const items = hasMore ? rows.slice(0, limit) : rows
+    const rawRows = (data ?? []) as Array<
+      Omit<DemandeWithProfile, 'author_is_copine' | 'author_copine_since'>
+    >
+    const hasMore = rawRows.length > limit
+    const sliced = hasMore ? rawRows.slice(0, limit) : rawRows
+
+    // Pass Copine (Phase 6) : fetch séparé is_copine/copine_since par
+    // user_id. La vue demandes_feed ne les expose pas, on évite une
+    // migration en Phase 6 — pattern fallback identique à getResponsesFallback.
+    const copineByUserId = await fetchCopineFlagsByUserIds(
+      sliced.map((r) => r.user_id),
+    )
+    const items: DemandeWithProfile[] = sliced.map((r) => ({
+      ...r,
+      author_is_copine: copineByUserId.get(r.user_id)?.is_copine ?? null,
+      author_copine_since: copineByUserId.get(r.user_id)?.copine_since ?? null,
+    }))
+
     const nextCursor =
       hasMore && items.length > 0 ? items[items.length - 1].created_at : null
 
@@ -149,7 +164,20 @@ export async function getDemandeById(
       .eq('id', id)
       .maybeSingle()
     if (error) return fail(error.message, error.code)
-    return { ok: true, data: (data as DemandeWithProfile | null) ?? null }
+    if (!data) return { ok: true, data: null }
+
+    // Enrichit is_copine/copine_since via fetch séparé (Phase 6).
+    const raw = data as Omit<
+      DemandeWithProfile,
+      'author_is_copine' | 'author_copine_since'
+    >
+    const copineByUserId = await fetchCopineFlagsByUserIds([raw.user_id])
+    const enriched: DemandeWithProfile = {
+      ...raw,
+      author_is_copine: copineByUserId.get(raw.user_id)?.is_copine ?? null,
+      author_copine_since: copineByUserId.get(raw.user_id)?.copine_since ?? null,
+    }
+    return { ok: true, data: enriched }
   } catch (err) {
     return fail(err instanceof Error ? err.message : String(err))
   }
@@ -175,7 +203,7 @@ export async function getDemandeResponsesByDemandeId(
         `
         id, demande_id, user_id, content, prestataire_id,
         flag_count, is_hidden, helpful_count, created_at, updated_at,
-        author:user_profiles!demande_responses_user_id_fkey ( prenom, avatar_url ),
+        author:user_profiles!demande_responses_user_id_fkey ( prenom, avatar_url, is_copine, copine_since ),
         prestataire:profiles!demande_responses_prestataire_id_fkey (
           id, slug, nom, ville, note_moyenne, nb_avis, photos, galerie
         )
@@ -194,7 +222,12 @@ export async function getDemandeResponsesByDemandeId(
 
     const rows = (data ?? []) as Array<
       DemandeResponse & {
-        author: { prenom: string | null; avatar_url: string | null } | null
+        author: {
+          prenom: string | null
+          avatar_url: string | null
+          is_copine: boolean | null
+          copine_since: string | null
+        } | null
         prestataire: {
           id: string
           slug: string
@@ -226,6 +259,8 @@ export async function getDemandeResponsesByDemandeId(
         updated_at: r.updated_at,
         author_prenom: r.author?.prenom ?? null,
         author_avatar_url: r.author?.avatar_url ?? null,
+        author_is_copine: r.author?.is_copine ?? null,
+        author_copine_since: r.author?.copine_since ?? null,
         prestataire: r.prestataire
           ? {
               id: r.prestataire.id,
@@ -280,7 +315,7 @@ async function getResponsesFallback(
   const [authorsRes, prestaRes] = await Promise.all([
     supabase
       .from('user_profiles')
-      .select('user_id, prenom, avatar_url')
+      .select('user_id, prenom, avatar_url, is_copine, copine_since')
       .in('user_id', userIds),
     prestaIds.length > 0
       ? supabase
@@ -292,12 +327,25 @@ async function getResponsesFallback(
 
   const authorsByUserId = new Map<
     string,
-    { prenom: string | null; avatar_url: string | null }
+    {
+      prenom: string | null
+      avatar_url: string | null
+      is_copine: boolean | null
+      copine_since: string | null
+    }
   >()
-  for (const a of authorsRes.data ?? []) {
+  for (const a of (authorsRes.data ?? []) as Array<{
+    user_id: string
+    prenom: string | null
+    avatar_url: string | null
+    is_copine: boolean | null
+    copine_since: string | null
+  }>) {
     authorsByUserId.set(a.user_id, {
       prenom: a.prenom ?? null,
       avatar_url: a.avatar_url ?? null,
+      is_copine: a.is_copine ?? null,
+      copine_since: a.copine_since ?? null,
     })
   }
 
@@ -342,12 +390,55 @@ async function getResponsesFallback(
     ...r,
     author_prenom: authorsByUserId.get(r.user_id)?.prenom ?? null,
     author_avatar_url: authorsByUserId.get(r.user_id)?.avatar_url ?? null,
+    author_is_copine: authorsByUserId.get(r.user_id)?.is_copine ?? null,
+    author_copine_since: authorsByUserId.get(r.user_id)?.copine_since ?? null,
     prestataire: r.prestataire_id
       ? (prestaById.get(r.prestataire_id) ?? null)
       : null,
   }))
 
   return { ok: true, data: items }
+}
+
+/**
+ * Helper Phase 6 : fetch séparé de is_copine/copine_since pour un set
+ * de user_ids. Utilisé par les queries demandes (vue demandes_feed
+ * n'expose pas ces colonnes — pas de migration en Phase 6).
+ *
+ * Lecture RLS authenticated (les colonnes Copine sont readable sur
+ * user_profiles policies select existantes).
+ */
+async function fetchCopineFlagsByUserIds(
+  userIds: string[],
+): Promise<
+  Map<string, { is_copine: boolean | null; copine_since: string | null }>
+> {
+  const map = new Map<
+    string,
+    { is_copine: boolean | null; copine_since: string | null }
+  >()
+  const unique = Array.from(new Set(userIds.filter(Boolean)))
+  if (unique.length === 0) return map
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('user_id, is_copine, copine_since')
+      .in('user_id', unique)
+    for (const row of (data ?? []) as Array<{
+      user_id: string
+      is_copine: boolean | null
+      copine_since: string | null
+    }>) {
+      map.set(row.user_id, {
+        is_copine: row.is_copine ?? null,
+        copine_since: row.copine_since ?? null,
+      })
+    }
+  } catch {
+    // Fail silencieux : badge non affiché, prénom toujours visible.
+  }
+  return map
 }
 
 /**

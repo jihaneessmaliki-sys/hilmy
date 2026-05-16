@@ -20,6 +20,8 @@ import {
   setUserProfileCopineStripeCustomerIdAdmin,
   getCopineSubscriptionByStripeIdAdmin,
 } from '@/lib/supabase/queries/copine-subscriptions'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { sendCopineWelcome } from '@/lib/email/transactional'
 import type { SubscriptionStatus } from '@/lib/supabase/types'
 
 export const runtime = 'nodejs'
@@ -502,7 +504,15 @@ async function persistCopineSubscription(
 
   // Propage le flag is_copine sur user_profiles selon le statut.
   if (status === 'active' || status === 'trialing' || status === 'past_due') {
+    // Détection "premier abo" pour le welcome email (Phase 6) : on lit
+    // copine_since AVANT l'update. Si null → c'est la première
+    // activation → on enverra le welcome après setUserProfileCopineActiveAdmin.
+    // (cf décision D2 Phase 6 : check simple, pas de table dédiée).
+    const isFirstActivation = await wasNeverActivatedBefore(userId)
     await setUserProfileCopineActiveAdmin(userId)
+    if (isFirstActivation) {
+      await maybeSendCopineWelcome(userId)
+    }
   } else if (
     status === 'canceled' ||
     status === 'incomplete_expired' ||
@@ -512,4 +522,65 @@ async function persistCopineSubscription(
   }
   // 'incomplete' : pas de change — paiement à finaliser. Stripe
   // re-trigger à completion.
+}
+
+/**
+ * Helper Phase 6 : true si l'utilisatrice n'a JAMAIS été Copine
+ * (copine_since est NULL avant l'UPDATE qui va le set). Sert à gater
+ * l'envoi du welcome email au PREMIER abo uniquement.
+ *
+ * Race condition résiduelle : si Stripe re-trigger l'event en
+ * parallèle, 2 lectures peuvent toutes deux voir NULL et déclencher
+ * 2 emails. À l'échelle actuelle (72 utilisatrices) c'est acceptable
+ * (cf décision D2 Phase 6).
+ */
+async function wasNeverActivatedBefore(userId: string): Promise<boolean> {
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('user_profiles')
+      .select('copine_since')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error || !data) return false
+    return (data as { copine_since: string | null }).copine_since === null
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Envoie le welcome Copine. Best-effort : log + swallow en cas
+ * d'erreur réseau pour ne pas faire échouer le webhook (Stripe
+ * re-trigger 3-7 jours, ce qui re-déclencherait l'email — pas
+ * souhaitable).
+ *
+ * Récupère email + prénom via admin client (auth.users + user_profiles).
+ */
+async function maybeSendCopineWelcome(userId: string): Promise<void> {
+  try {
+    const admin = createAdminClient()
+    const { data: profile } = await admin
+      .from('user_profiles')
+      .select('prenom')
+      .eq('user_id', userId)
+      .maybeSingle()
+    const { data: authUser } = await admin.auth.admin.getUserById(userId)
+    const email = authUser?.user?.email ?? null
+    if (!email) {
+      console.warn('[stripe/webhook] welcome Copine : pas d\'email pour', userId)
+      return
+    }
+
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ??
+      'https://www.hilmy.io'
+    await sendCopineWelcome({
+      to: email,
+      prenom: (profile as { prenom: string | null } | null)?.prenom ?? null,
+      dashboardUrl: `${siteUrl}/dashboard/utilisatrice/avantages`,
+    })
+  } catch (err) {
+    console.warn('[stripe/webhook] sendCopineWelcome failed:', err)
+  }
 }

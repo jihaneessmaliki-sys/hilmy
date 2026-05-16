@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CATEGORIES_MAP } from '@/lib/constants'
 import { formatRelativeTime } from '@/lib/format-relative-time'
+import { MemberName } from '@/components/badges/MemberName'
 import type { DemandeWithProfile } from '@/lib/types/je-cherche'
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -67,7 +68,11 @@ export function DemandeCard({ demande }: Props) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-medium text-vert">
-            {demande.prenom ?? 'Une copine'}
+            <MemberName
+              prenom={demande.prenom}
+              isCopine={demande.author_is_copine}
+              copineSince={demande.author_copine_since}
+            />
           </p>
           <p className="truncate text-[11px] text-texte-sec">
             {locationLabel(demande)} · {formatRelativeTime(demande.created_at)}

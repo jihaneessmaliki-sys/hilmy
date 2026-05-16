@@ -4,6 +4,7 @@ import { PageShell } from '@/components/v2/PageShell'
 import { FavoriteButton } from '@/components/v2/FavoriteButton'
 import { TrackPlaceView } from '@/components/v2/TrackPlaceView'
 import { PlaceContactLink } from '@/components/v2/PlaceContactLink'
+import { MemberName } from '@/components/badges/MemberName'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { LieuCard } from '@/components/v2/LieuCard'
@@ -39,6 +40,9 @@ type RecoView = {
   /** Statut gamif (mig 16 + backfill mig 48). NULL si user n'a aucun
    *  point cumulé (= jamais publié de reco/event au moment du fetch). */
   statut: GamificationStatut | null
+  /** Pass Copine (mig 50, Phase 6) — drive le badge `<MemberName>`. */
+  isCopine: boolean | null
+  copineSince: string | null
 }
 
 const AVATAR_PALETTE = ['#B8C7B0', '#D9C9A8', '#C4B8D4', '#E8C5B5', '#A8C4C9', '#D4B8A8']
@@ -130,20 +134,37 @@ export default async function RecommandationPage({
   const { data: recos } = await getRecommendationsByPlace(row.id)
   const recoRows = (recos ?? []) as Recommendation[]
   const userIds = Array.from(new Set(recoRows.map((r) => r.user_id)))
-  const profilesById = new Map<string, { prenom: string }>()
+  const profilesById = new Map<
+    string,
+    {
+      prenom: string
+      is_copine: boolean | null
+      copine_since: string | null
+    }
+  >()
   // Pré-fetch gamif batch (Sprint U1.5) — 1 RPC sur la vue user_gamification
   // pour tous les auteurs en parallèle des prenoms. RLS authenticated read OK.
+  // Phase 6 : on ajoute is_copine + copine_since pour le badge MemberName.
   let gamifByUser = new Map<string, { statut: GamificationStatut }>()
   if (userIds.length > 0) {
     const [{ data: profs }, gamifMap] = await Promise.all([
       supabase
         .from('user_profiles')
-        .select('user_id, prenom')
+        .select('user_id, prenom, is_copine, copine_since')
         .in('user_id', userIds),
       getUserGamificationByUserIds(userIds),
     ])
-    for (const p of (profs ?? []) as { user_id: string; prenom: string }[]) {
-      profilesById.set(p.user_id, { prenom: p.prenom })
+    for (const p of (profs ?? []) as Array<{
+      user_id: string
+      prenom: string
+      is_copine: boolean | null
+      copine_since: string | null
+    }>) {
+      profilesById.set(p.user_id, {
+        prenom: p.prenom,
+        is_copine: p.is_copine ?? null,
+        copine_since: p.copine_since ?? null,
+      })
     }
     // On ne garde que le statut côté view-model (le reste pas utile ici)
     gamifByUser = new Map(
@@ -154,9 +175,10 @@ export default async function RecommandationPage({
     const rawTags = r.tags ?? []
     const diets = rawTags.filter((t) => t in DIET_TAGS_MAP).map((t) => dietTagLabel(t))
     const tags = rawTags.filter((t) => !(t in DIET_TAGS_MAP)).map((t) => recTagLabel(t))
+    const profile = profilesById.get(r.user_id)
     return {
       id: r.id,
-      prenom: profilesById.get(r.user_id)?.prenom ?? 'Une copine',
+      prenom: profile?.prenom ?? 'Une copine',
       avatar: avatarFor(r.user_id),
       date: relativeDate(r.created_at),
       rating: r.rating,
@@ -166,6 +188,8 @@ export default async function RecommandationPage({
       priceIndicator: r.price_indicator,
       photos: r.photo_urls ?? [],
       statut: gamifByUser.get(r.user_id)?.statut ?? null,
+      isCopine: profile?.is_copine ?? null,
+      copineSince: profile?.copine_since ?? null,
     }
   })
 
@@ -308,7 +332,11 @@ export default async function RecommandationPage({
                         />
                         <div>
                           <p className="text-[14px] font-medium text-vert">
-                            {r.prenom}
+                            <MemberName
+                              prenom={r.prenom}
+                              isCopine={r.isCopine}
+                              copineSince={r.copineSince}
+                            />
                             {r.statut && (
                               <span
                                 className={`ml-1.5 font-serif text-[13px] italic font-light ${
@@ -456,7 +484,12 @@ export default async function RecommandationPage({
                           style={{ background: r.avatar }}
                         />
                         <span className="text-[12px] font-medium text-vert">
-                          {r.prenom}
+                          <MemberName
+                            prenom={r.prenom}
+                            isCopine={r.isCopine}
+                            copineSince={r.copineSince}
+                            badgeSize={10}
+                          />
                           {r.statut && (
                             <span
                               className={`ml-1 font-serif text-[11px] italic font-light ${

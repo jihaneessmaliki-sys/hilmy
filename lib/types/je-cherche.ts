@@ -56,6 +56,9 @@ export interface Demande {
 export interface DemandeWithProfile extends Demande {
   prenom: string | null
   avatar_url: string | null
+  /** Pass Copine (mig 50). Phase 6 : drive le badge `<MemberName>`. */
+  author_is_copine: boolean | null
+  author_copine_since: string | null
 }
 
 export interface DemandeResponse {
@@ -78,6 +81,9 @@ export interface DemandeResponse {
 export interface DemandeResponseWithProfile extends DemandeResponse {
   author_prenom: string | null
   author_avatar_url: string | null
+  /** Pass Copine (mig 50). Phase 6 : drive le badge `<MemberName>`. */
+  author_is_copine: boolean | null
+  author_copine_since: string | null
   prestataire?: {
     id: string
     slug: string

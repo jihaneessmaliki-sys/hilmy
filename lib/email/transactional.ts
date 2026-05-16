@@ -1003,3 +1003,51 @@ export async function sendPerkRejected({
     }),
   });
 }
+
+/* ───────────────────────────────────────────────────────────────
+   Pass Copine welcome (mig 50 — Phase 6)
+
+   Déclenché par le webhook Stripe customer.subscription.created (et
+   par checkout.session.completed via persistCopineSubscription) à la
+   PREMIÈRE activation Copine — détecté côté webhook par
+   `copine_since IS NULL avant l'UPDATE`. Pas de table dédiée pour
+   l'idempotence — risque résiduel de doublon en cas de re-trigger
+   Stripe en parallèle (acceptable cf décision D2 Phase 6).
+   ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Email de bienvenue Pass Copine — envoyé au premier abo réussi.
+ * Best-effort : la fonction lève si Resend/Brevo down ; le caller
+ * (webhook) catch et log pour ne pas faire échouer le webhook lui-même.
+ */
+export async function sendCopineWelcome({
+  to,
+  prenom,
+  dashboardUrl,
+}: {
+  to: string;
+  /** Prénom de la Copine — fallback "coucou" si absent. */
+  prenom: string | null;
+  dashboardUrl: string;
+}) {
+  const safePrenom = prenom && prenom.length > 0 ? prenom : "coucou";
+  await sendEmail({
+    to,
+    subject: "Bienvenue dans la team Copines",
+    html: buildRichLayout({
+      preview: "Tu es officiellement Copine Hilmy",
+      title: `Coucou ${safePrenom},`,
+      paragraphs: [
+        "Te voilà officiellement Copine Hilmy. Ton badge est posé, tes favoris débloqués, tes avantages Cercle Pro t'attendent.",
+        "Voici ce que tu peux faire dès maintenant :",
+        "1. Découvrir les avantages Copines de tes prestataires préférées",
+        "2. T'inscrire aux Rendez-vous Hilmy en accès anticipé, 48h avant tout le monde",
+        "3. Sauvegarder toutes les adresses qui te font envie, sans limite",
+        "Si tu as une question, réponds à cet email. On lit tout.",
+      ],
+      ctaLabel: "Voir mes avantages",
+      ctaHref: dashboardUrl,
+      footer: "La team Hilmy.",
+    }),
+  });
+}
