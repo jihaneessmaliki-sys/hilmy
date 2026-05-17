@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { randomBytes } from 'node:crypto'
-import { createClient } from '@/lib/supabase/server'
+import { authenticateRequest } from '@/lib/supabase/bearer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import {
@@ -50,10 +50,8 @@ export async function POST(
 
   const { id: perkId } = await params
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Cookies (web) avec fallback Bearer (mobile RN). Cf. lib/supabase/bearer.ts.
+  const { supabase, user } = await authenticateRequest(request)
   if (!user) {
     return NextResponse.json({ error: 'Non authentifiée' }, { status: 401 })
   }
@@ -174,10 +172,8 @@ export async function PATCH(
 
   const { id: perkId } = await params
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Cookies (web) avec fallback Bearer (mobile RN). Cf. lib/supabase/bearer.ts.
+  const { supabase, user } = await authenticateRequest(request)
   if (!user) {
     return NextResponse.json({ error: 'Non authentifiée' }, { status: 401 })
   }
