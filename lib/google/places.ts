@@ -107,11 +107,6 @@ function extractLocation(components?: AddressComponent[]) {
   return { city, region, country };
 }
 
-function buildPhotoUrl(photoName: string, maxWidth = 1200) {
-  const apiKey = getApiKey();
-  return `${PLACES_BASE}/${photoName}/media?maxWidthPx=${maxWidth}&key=${apiKey}`;
-}
-
 function mapSearch(p: GooglePlace): PlaceSearchResult {
   const { city, region, country } = extractLocation(p.addressComponents);
   return {
@@ -195,11 +190,63 @@ export async function getPlaceDetails(
     phone: p.internationalPhoneNumber ?? null,
     website: p.websiteUri ?? null,
     opening_hours: p.regularOpeningHours?.weekdayDescriptions ?? null,
-    photos: (p.photos ?? []).slice(0, 6).map((ph) => buildPhotoUrl(ph.name)),
+    // URLs keyless indexées (proxy). Ordre = ordre des photos Google, donc
+    // l'index i sert plus tard la même photo via getPlacePhotoName(id, i).
+    photos: (p.photos ?? [])
+      .slice(0, 6)
+      .map((_ph, i) => placePhotoProxyUrl(p.id, i)),
     business_status: p.businessStatus ?? null,
   };
 }
 
-export function buildGooglePhotoProxyUrl(photoName: string, maxWidth = 1200) {
-  return buildPhotoUrl(photoName, maxWidth);
+// Domaine canonique de prod. `hilmy.io` redirige 307 vers `www.hilmy.io` :
+// on stocke directement le www pour éviter un hop de redirect à chaque
+// chargement d'image (mobile expo-image + web <img>). NE PAS utiliser
+// NEXT_PUBLIC_SITE_URL ici : c'est une valeur persistée en DB, elle doit
+// pointer vers la prod quel que soit l'environnement qui l'écrit.
+const PHOTO_PROXY_BASE = "https://www.hilmy.io";
+
+/**
+ * URL stable de la photo d'un lieu, servie par le proxy /api/places/photo.
+ * Ne contient JAMAIS la clé Google. C'est cette URL qu'on persiste dans
+ * `places.main_photo_url` / `places.photos[]` (lue telle quelle par web et
+ * mobile). `index` (défaut 0) sélectionne la nième photo de la fiche, pour
+ * servir une galerie entière en URLs keyless indexées.
+ */
+export function placePhotoProxyUrl(googlePlaceId: string, index = 0): string {
+  const base = `${PHOTO_PROXY_BASE}/api/places/photo?place_id=${encodeURIComponent(
+    googlePlaceId,
+  )}`;
+  return index > 0 ? `${base}&i=${index}` : base;
+}
+
+/**
+ * Récupère le resource name de la nième photo d'un lieu Google
+ * (`places/{id}/photos/{ref}`) via Place Details (New), field mask `photos`
+ * uniquement (call minimal, moins cher que getPlaceDetails). La clé reste
+ * dans le header X-Goog-Api-Key, jamais dans une URL. `index` (défaut 0)
+ * sélectionne la photo dans la galerie. Retourne null si pas de photo à cet
+ * index ou erreur upstream.
+ */
+export async function getPlacePhotoName(
+  placeId: string,
+  index = 0,
+): Promise<string | null> {
+  if (!placeId) return null;
+  const apiKey = getApiKey();
+
+  const res = await fetch(
+    `${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=fr`,
+    {
+      method: "GET",
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "photos",
+      },
+    },
+  );
+
+  if (!res.ok) return null;
+  const p = (await res.json()) as { photos?: GooglePhoto[] };
+  return p.photos?.[index]?.name ?? null;
 }
