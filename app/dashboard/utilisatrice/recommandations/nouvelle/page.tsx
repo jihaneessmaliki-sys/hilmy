@@ -151,6 +151,14 @@ export default function RecommandationNouvellePage() {
     setError(null)
 
     // Upsert place
+    // URL stable servie par le proxy /api/places/photo — sans clé Google
+    // (cf. lib/google/places.ts placePhotoProxyUrl). Persistée telle quelle,
+    // lue directement par le web et l'app mobile. www canonique = pas de hop.
+    const photoProxyUrl = place.google_place_id
+      ? `https://www.hilmy.io/api/places/photo?place_id=${encodeURIComponent(
+          place.google_place_id,
+        )}`
+      : null
     let placeId: string | null = null
     const { data: existing } = await supabase
       .from('places')
@@ -161,10 +169,10 @@ export default function RecommandationNouvellePage() {
     if (existing) {
       placeId = existing.id
       // Optionally patch main_photo_url if missing
-      if (place.photos[0]) {
+      if (photoProxyUrl) {
         await supabase
           .from('places')
-          .update({ main_photo_url: place.photos[0] })
+          .update({ main_photo_url: photoProxyUrl })
           .eq('id', existing.id)
           .is('main_photo_url', null)
       }
@@ -184,7 +192,7 @@ export default function RecommandationNouvellePage() {
           longitude: place.longitude,
           google_category: place.google_category,
           hilmy_category: hilmyCategory || null,
-          main_photo_url: place.photos[0] ?? null,
+          main_photo_url: photoProxyUrl,
           photos: place.photos,
         })
         .select('id')
