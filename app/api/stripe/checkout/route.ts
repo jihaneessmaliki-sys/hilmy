@@ -87,9 +87,18 @@ export async function POST(request: Request) {
   // Body shape 1 : { plan: 'monthly' | 'annual' } → résolution Copine
   // Body shape 2 : { price_id } → flow Copine si isCopinePriceId, sinon
   //                prestataire si isKnownPriceId, sinon 422.
-  const bodyObj = body as { price_id?: unknown; plan?: unknown }
+  const bodyObj = body as {
+    price_id?: unknown
+    plan?: unknown
+    context?: unknown
+  }
   let priceId: string
   let isCopineFlow = false
+  // Contexte funnel d'inscription : si présent, le retour de paiement
+  // pointe vers /onboarding/prestataire/publiee au lieu du dashboard
+  // fiche. N'affecte que le flow prestataire (le Pass Copine a ses
+  // propres URLs). Toute autre valeur est ignorée (= checkout dashboard).
+  const isOnboarding = bodyObj.context === 'onboarding'
 
   if (typeof bodyObj.plan === 'string') {
     if (bodyObj.plan !== 'monthly' && bodyObj.plan !== 'annual') {
@@ -203,8 +212,15 @@ export async function POST(request: Request) {
       mode: 'subscription',
       customer: stripeCustomerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: buildStripeSuccessUrl(origin, profile.id as string),
-      cancel_url: buildStripeCancelUrl(origin),
+      success_url: buildStripeSuccessUrl(
+        origin,
+        profile.id as string,
+        isOnboarding ? 'onboarding' : undefined,
+      ),
+      cancel_url: buildStripeCancelUrl(
+        origin,
+        isOnboarding ? 'onboarding' : undefined,
+      ),
       ...(discounts && discounts.length > 0
         ? { discounts }
         : { allow_promotion_codes: true }),

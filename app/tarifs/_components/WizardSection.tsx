@@ -45,6 +45,11 @@ interface WizardSectionProps {
    *  on cache le SubscribeButton (l'API /api/stripe/checkout refuserait
    *  de toute façon avec 403, mais on évite la friction UX). */
   isFounder?: boolean
+  /** True quand la prestataire arrive du funnel d'inscription
+   *  (/tarifs?from=onboarding). Propage le contexte 'onboarding' au
+   *  checkout pour que le retour de paiement la mène à
+   *  /onboarding/prestataire/publiee. */
+  fromOnboarding?: boolean
 }
 
 const STEPS: {
@@ -142,7 +147,7 @@ function computeReco(answers: Record<number, WizardKey>): Palier {
   return best
 }
 
-export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isFounder }: WizardSectionProps = {}) {
+export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isFounder, fromOnboarding }: WizardSectionProps = {}) {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
   const [answers, setAnswers] = useState<Record<number, WizardKey>>({})
   // Si un palier vient du deep-link, on saute le wizard et on affiche
@@ -637,6 +642,7 @@ export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isF
                       priceId={priceId}
                       label="Je choisis cette formule"
                       ariaLabel={aria}
+                      context={fromOnboarding ? 'onboarding' : undefined}
                     />
                   )
                 }
