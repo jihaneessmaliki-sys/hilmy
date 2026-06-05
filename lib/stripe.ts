@@ -206,13 +206,37 @@ export function buildCopineCancelUrl(origin: string): string {
    NEXT_PUBLIC_SITE_URL qui peut diverger entre Preview/Prod). Le
    profile_id est injecté en query param pour détecter côté client si
    le user actuel matche celui qui a payé (cas multi-comptes browser).
+
+   `context` distingue le retour de paiement :
+     • undefined (défaut) — checkout depuis le dashboard d'une fiche
+       existante → retour sur la fiche.
+     • 'onboarding' — checkout branché à la fin du funnel d'inscription
+       (manuel/google → /tarifs?from=onboarding → Stripe). Le paiement
+       rend la fiche visible (Modèle B : abo actif = visible via RLS),
+       on atterrit sur l'écran de confirmation d'inscription /publiee.
    ────────────────────────────────────────────────────────────────── */
 
-export function buildStripeSuccessUrl(origin: string, profileId: string): string {
+export function buildStripeSuccessUrl(
+  origin: string,
+  profileId: string,
+  context?: 'onboarding',
+): string {
+  if (context === 'onboarding') {
+    return `${origin}/onboarding/prestataire/publiee?stripe_success=1`
+  }
   return `${origin}/dashboard/prestataire/fiche?stripe_success=1&profile_id=${encodeURIComponent(profileId)}`
 }
 
-export function buildStripeCancelUrl(origin: string): string {
+export function buildStripeCancelUrl(
+  origin: string,
+  context?: 'onboarding',
+): string {
+  if (context === 'onboarding') {
+    // Abandon au checkout pendant l'inscription : la fiche reste en
+    // 'pending' invisible (voulu). On ramène la prestataire sur le
+    // choix de formule pour réessayer, sans perdre le contexte.
+    return `${origin}/tarifs?from=onboarding&stripe_canceled=1`
+  }
   return `${origin}/tarifs?stripe_canceled=1`
 }
 

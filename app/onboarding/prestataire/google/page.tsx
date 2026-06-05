@@ -166,7 +166,11 @@ export default function GoogleOnboardingPage() {
       setError(insErr.message)
       return
     }
-    router.push('/onboarding/prestataire/publiee')
+    // Modèle B : la fiche est créée en 'pending' (invisible). C'est le
+    // PAIEMENT qui la rend visible. On enchaîne sur le choix de formule
+    // → Stripe Checkout → /publiee. Tant qu'elle n'a pas payé, la fiche
+    // reste pending invisible (voulu).
+    router.push('/tarifs?from=onboarding')
   }
 
   if (checking) {

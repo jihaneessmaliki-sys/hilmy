@@ -20,7 +20,7 @@ export default function PubliePage() {
           className="flex items-center gap-4"
         >
           <GoldLine width={40} />
-          <span className="overline text-or">Écran 3 · Bien envoyé</span>
+          <span className="overline text-or">C'est en ligne · Bienvenue dans la team</span>
           <GoldLine width={40} />
         </motion.div>
 
@@ -39,9 +39,9 @@ export default function PubliePage() {
           transition={{ duration: 0.9, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="font-serif text-[clamp(2.5rem,5vw,4rem)] font-light leading-[1.05]"
         >
-          Ta fiche est partie,
+          Ta fiche est en ligne ! <span aria-hidden>🎉</span>
           <br />
-          <em className="italic text-or">entre nos mains.</em>
+          <em className="italic text-or">Les copines peuvent déjà te trouver.</em>
         </motion.h1>
 
         <motion.p
@@ -50,8 +50,9 @@ export default function PubliePage() {
           transition={{ duration: 1, delay: 0.7 }}
           className="max-w-lg font-serif text-[17px] italic leading-[1.6] text-creme/80"
         >
-          On la regarde à la main, tranquillement. Tu reçois un email dès qu&apos;elle
-          est en ligne — 48h max, souvent moins.
+          Elle est visible dans l&apos;annuaire Hilmy dès maintenant. Tu peux la
+          peaufiner quand tu veux depuis ton espace — photos, services, ton
+          histoire.
         </motion.p>
 
         <motion.div
@@ -61,15 +62,13 @@ export default function PubliePage() {
           className="grid w-full gap-4 sm:grid-cols-3"
         >
           {[
-            { k: 'Étape 1', v: 'Fiche reçue ✓' },
-            { k: 'Étape 2', v: 'Relecture par l\'équipe' },
-            { k: 'Étape 3', v: 'Mise en ligne + email' },
-          ].map((s, i) => (
+            { k: 'Fiche créée', v: 'C\'est fait ✓' },
+            { k: 'Paiement confirmé', v: 'Merci à toi ✓' },
+            { k: 'En ligne', v: 'Visible dans l\'annuaire ✓' },
+          ].map((s) => (
             <div
               key={s.k}
-              className={`rounded-sm border border-or/20 p-5 text-left backdrop-blur ${
-                i === 0 ? 'bg-or/10' : 'bg-vert-dark/40'
-              }`}
+              className="rounded-sm border border-or/20 bg-or/10 p-5 text-left backdrop-blur"
             >
               <p className="overline text-or">{s.k}</p>
               <p className="mt-2 text-[14px] text-creme">{s.v}</p>

@@ -1,0 +1,75 @@
+-- =====================================================================
+-- HILMY · 55 — Suppression du trigger legacy sync_profile_status
+--
+-- CONTEXTE
+--   Objet posé en live SANS migration versionnée (découvert au test de
+--   la mig 54). Vestige du MODÈLE A, où `profiles.status` portait la
+--   visibilité publique : le statut d'abonnement Stripe pilotait
+--   directement le statut de modération.
+--
+--   Trigger : sync_profile_status_trigger
+--             AFTER INSERT OR UPDATE OF status ON public.subscriptions
+--   Fonction : public.sync_profile_status_from_subscription()
+--
+--   Comportement (re-déclaré ici pour traçabilité avant suppression) :
+--     - abo canceled/unpaid/incomplete_expired
+--         + profil NOT IN (draft,rejected)  → profiles.status='suspended'
+--     - abo active/trialing + profil='suspended' → profiles.status='approved'
+--     (founders exemptés : RETURN sans rien faire)
+--
+-- POURQUOI ON LE SUPPRIME (Modèle B)
+--   Sous le Modèle B (mig 54), la visibilité est gérée par la RLS
+--   policy "public read visible profiles" qui interroge directement
+--   l'abonnement (`profile_has_active_subscription`). `profiles.status`
+--   redevient un axe PUREMENT modération (humain). Ce trigger :
+--     1. ANNULE le pouvoir de suspension admin : si on suspend une
+--        fiche qui paie encore, le prochain webhook Stripe (active)
+--        la repasse en 'approved'. Inacceptable.
+--     2. CONFOND « a arrêté de payer » et « suspendue par modération »
+--        en écrivant 'suspended' sur lapse d'abo — redondant avec la
+--        policy (abo inactif = déjà invisible) et polluant pour la modé.
+--
+--   → On découple les axes : status = modération, abo = monétisation.
+--     Le webhook continue de gérer profiles.palier (features), pas le
+--     status. La visibilité vit dans la policy.
+--
+-- ⚠️ Idempotente. DROP IF EXISTS. À appliquer après backup, sur
+--    demande explicite Jiji.
+-- =====================================================================
+
+drop trigger if exists sync_profile_status_trigger on public.subscriptions;
+drop function if exists public.sync_profile_status_from_subscription();
+
+-- =====================================================================
+-- NOTIFY PostgREST — recharger le schéma exposé
+-- =====================================================================
+notify pgrst, 'reload schema';
+
+-- =====================================================================
+-- ROLLBACK (manuel — restaure le trigger legacy tel qu'il était)
+-- =====================================================================
+-- create or replace function public.sync_profile_status_from_subscription()
+--   returns trigger language plpgsql security definer set search_path to 'public'
+-- as $$
+-- declare
+--   v_is_founder boolean;
+--   v_current_status text;
+-- begin
+--   select is_founder, status into v_is_founder, v_current_status
+--   from public.profiles where id = new.profile_id;
+--   if v_is_founder then return new; end if;
+--   if new.status in ('canceled','unpaid','incomplete_expired')
+--      and v_current_status not in ('draft','rejected') then
+--     update public.profiles set status='suspended', updated_at=now()
+--     where id = new.profile_id;
+--   end if;
+--   if new.status in ('active','trialing') and v_current_status = 'suspended' then
+--     update public.profiles set status='approved', updated_at=now()
+--     where id = new.profile_id;
+--   end if;
+--   return new;
+-- end; $$;
+-- create trigger sync_profile_status_trigger
+--   after insert or update of status on public.subscriptions
+--   for each row execute function public.sync_profile_status_from_subscription();
+-- notify pgrst, 'reload schema';

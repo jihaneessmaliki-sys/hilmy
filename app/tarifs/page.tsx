@@ -71,6 +71,7 @@ type SearchParams = Promise<{
   palier?: string
   promo?: string
   utm_source?: string
+  from?: string
 }>
 
 export const metadata: Metadata = {
@@ -208,6 +209,12 @@ export default async function TarifsPage({
   const initialPalier = normalizePalier(params.palier)
   const initialPromo = params.promo?.trim().toUpperCase() || undefined
   const isFounder = await isAuthenticatedFounder()
+  // Funnel d'inscription : la prestataire arrive de manuel/google après
+  // avoir créé sa fiche (pending invisible). On masque les éléments hors
+  // contexte (sélecteur d'audience, sections "lieux") — elle est déjà
+  // prestataire — et on propage le contexte au checkout pour qu'elle
+  // atterrisse sur /publiee après paiement.
+  const fromOnboarding = params.from === 'onboarding'
 
   // Log analytics dev mode (deep-link mobile UTM tracking).
   if (process.env.NODE_ENV !== 'production' && params.utm_source) {
@@ -224,37 +231,67 @@ export default async function TarifsPage({
         {/* HERO */}
         <section className="overflow-hidden px-6 py-28 text-center md:px-20 md:py-32">
           <div className="mx-auto max-w-[780px]">
-            <span className="mb-7 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
-              Tarifs Hilmy
-            </span>
-            <h1 className="mb-7 font-serif text-[clamp(44px,6.5vw,80px)] font-light leading-[1.05] tracking-tight">
-              Ce que tu fais avec amour mérite{' '}
-              <em className="font-normal italic text-or">d'être vu</em>.
-            </h1>
-            <p className="mx-auto mb-11 max-w-[540px] text-[19px] leading-relaxed text-texte-sec">
-              Visibilité, entraide, bonnes adresses entre copines. Trouve ta place dans la team Hilmy.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3.5">
-              <a
-                href="#audience"
-                className="inline-block rounded-full bg-vert px-8 py-4 text-[15px] font-medium text-creme transition-all hover:-translate-y-0.5 hover:bg-vert/90 hover:shadow-[0_8px_24px_rgba(15,61,46,0.18)]"
-              >
-                Trouver ma formule
-              </a>
-              <a
-                href="#lieux"
-                className="inline-block rounded-full border border-vert bg-transparent px-8 py-4 text-[15px] font-medium text-vert transition-all hover:bg-vert hover:text-creme"
-              >
-                Je tiens un lieu
-              </a>
-            </div>
+            {fromOnboarding ? (
+              <>
+                <span className="mb-7 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
+                  Dernière étape
+                </span>
+                <h1 className="mb-7 font-serif text-[clamp(44px,6.5vw,80px)] font-light leading-[1.05] tracking-tight">
+                  Ta fiche est prête.{' '}
+                  <em className="font-normal italic text-or">
+                    Choisis ta formule pour la publier.
+                  </em>
+                </h1>
+                <p className="mx-auto mb-11 max-w-[540px] text-[19px] leading-relaxed text-texte-sec">
+                  Tu as rempli ta fiche, il ne reste qu'à choisir ton
+                  abonnement. Dès le paiement, elle est en ligne et les copines
+                  peuvent te trouver.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3.5">
+                  <a
+                    href="#wizard"
+                    className="inline-block rounded-full bg-vert px-8 py-4 text-[15px] font-medium text-creme transition-all hover:-translate-y-0.5 hover:bg-vert/90 hover:shadow-[0_8px_24px_rgba(15,61,46,0.18)]"
+                  >
+                    Choisir ma formule
+                  </a>
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="mb-7 inline-block text-[13px] font-medium uppercase tracking-[.28em] text-or">
+                  Tarifs Hilmy
+                </span>
+                <h1 className="mb-7 font-serif text-[clamp(44px,6.5vw,80px)] font-light leading-[1.05] tracking-tight">
+                  Ce que tu fais avec amour mérite{' '}
+                  <em className="font-normal italic text-or">d'être vu</em>.
+                </h1>
+                <p className="mx-auto mb-11 max-w-[540px] text-[19px] leading-relaxed text-texte-sec">
+                  Visibilité, entraide, bonnes adresses entre copines. Trouve ta place dans la team Hilmy.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3.5">
+                  <a
+                    href="#audience"
+                    className="inline-block rounded-full bg-vert px-8 py-4 text-[15px] font-medium text-creme transition-all hover:-translate-y-0.5 hover:bg-vert/90 hover:shadow-[0_8px_24px_rgba(15,61,46,0.18)]"
+                  >
+                    Trouver ma formule
+                  </a>
+                  <a
+                    href="#lieux"
+                    className="inline-block rounded-full border border-vert bg-transparent px-8 py-4 text-[15px] font-medium text-vert transition-all hover:bg-vert hover:text-creme"
+                  >
+                    Je tiens un lieu
+                  </a>
+                </div>
+              </>
+            )}
             <div className="mt-16 flex justify-center opacity-60">
               <span aria-hidden className="block h-px w-20 bg-or" />
             </div>
           </div>
         </section>
 
-        {/* AUDIENCE SELECTOR */}
+        {/* AUDIENCE SELECTOR — masqué en mode inscription (déjà prestataire) */}
+        {!fromOnboarding && (
         <section
           id="audience"
           className="bg-[#f0e3d0] px-6 py-20 scroll-mt-24 md:px-20"
@@ -314,6 +351,7 @@ export default async function TarifsPage({
             </div>
           </div>
         </section>
+        )}
 
         {/* WIZARD GUIDÉ */}
         <section id="wizard" className="bg-creme py-24 scroll-mt-24 md:py-28">
@@ -334,9 +372,14 @@ export default async function TarifsPage({
             initialPromo={initialPromo}
             stripePriceIds={buildStripePriceIds()}
             isFounder={isFounder}
+            fromOnboarding={fromOnboarding}
           />
         </section>
 
+        {/* CTA STRIP 1 + SECTION LIEUX — masqués en mode inscription
+            (la prestataire est déjà sur son parcours, pas un lieu) */}
+        {!fromOnboarding && (
+        <>
         {/* CTA STRIP 1 */}
         <section className="bg-creme-deep px-6 py-16 text-center md:px-20">
           <div className="mx-auto max-w-[1200px]">
@@ -402,6 +445,8 @@ export default async function TarifsPage({
             <LieuPricing />
           </div>
         </section>
+        </>
+        )}
 
         {/* POURQUOI HILMY */}
         <section className="bg-white px-6 py-24 md:px-20 md:py-28">
@@ -439,12 +484,14 @@ export default async function TarifsPage({
               >
                 Trouver ma formule
               </a>
-              <a
-                href="#lieux"
-                className="inline-block rounded-full border border-vert bg-transparent px-8 py-4 text-[15px] font-medium text-vert transition-all hover:bg-vert hover:text-creme"
-              >
-                Je tiens un lieu
-              </a>
+              {!fromOnboarding && (
+                <a
+                  href="#lieux"
+                  className="inline-block rounded-full border border-vert bg-transparent px-8 py-4 text-[15px] font-medium text-vert transition-all hover:bg-vert hover:text-creme"
+                >
+                  Je tiens un lieu
+                </a>
+              )}
             </div>
           </div>
         </section>
@@ -518,12 +565,14 @@ export default async function TarifsPage({
               >
                 Je choisis ma formule
               </a>
-              <a
-                href="#lieux"
-                className="inline-block rounded-full border border-creme bg-transparent px-8 py-4 text-[15px] font-medium text-creme transition-all hover:bg-creme hover:text-vert"
-              >
-                Je veux ma fiche lieu
-              </a>
+              {!fromOnboarding && (
+                <a
+                  href="#lieux"
+                  className="inline-block rounded-full border border-creme bg-transparent px-8 py-4 text-[15px] font-medium text-creme transition-all hover:bg-creme hover:text-vert"
+                >
+                  Je veux ma fiche lieu
+                </a>
+              )}
             </div>
           </div>
         </section>

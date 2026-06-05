@@ -12,6 +12,11 @@ interface Props {
   ariaLabel?: string
   /** ClassName optionnelle pour custom styling (sinon défaut Hilmy or). */
   className?: string
+  /** Contexte du checkout. 'onboarding' = la prestataire arrive du
+   *  funnel d'inscription (/tarifs?from=onboarding) → le retour de
+   *  paiement la mène à /onboarding/prestataire/publiee. Absent =
+   *  checkout depuis le dashboard d'une fiche existante. */
+  context?: 'onboarding'
 }
 
 /**
@@ -29,6 +34,7 @@ export function SubscribeButton({
   label,
   ariaLabel,
   className,
+  context,
 }: Props) {
   const [loading, setLoading] = useState(false)
 
@@ -38,7 +44,10 @@ export function SubscribeButton({
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price_id: priceId }),
+        body: JSON.stringify({
+          price_id: priceId,
+          ...(context ? { context } : {}),
+        }),
       })
 
       if (!res.ok) {
