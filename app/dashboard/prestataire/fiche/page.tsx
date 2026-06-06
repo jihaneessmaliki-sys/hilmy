@@ -15,10 +15,33 @@ import {
   photoCountLabel,
 } from '@/lib/palier-limits'
 import { getEffectivePalier } from '@/lib/permissions'
+import { COUNTRY_CODES, toE164, nationalDigits } from '@/lib/phone'
 import type { Palier } from '@/app/tarifs/_lib/pricing'
 import type { Subscription } from '@/lib/supabase/types'
 
 type Service = { nom: string; prix: string; duree: string }
+
+/**
+ * Sépare un numéro WhatsApp stocké (idéalement E.164, ex: +33612345678) en
+ * { indicatif, national } pour pré-remplir le sélecteur d'édition. Matche
+ * l'indicatif connu le plus long. Si aucun indicatif ne matche (numéro legacy
+ * non normalisé), renvoie indicatif vide → la prestataire devra le choisir.
+ */
+function splitWhatsapp(value: string): { dial: string; national: string } {
+  const v = (value || '').trim()
+  if (!v) return { dial: '', national: '' }
+  const digits = v.replace(/\D/g, '')
+  if (v.startsWith('+')) {
+    const dials = [...new Set(COUNTRY_CODES.map((c) => c.dial.replace(/\D/g, '')))].sort(
+      (a, b) => b.length - a.length,
+    )
+    for (const cc of dials) {
+      if (digits.startsWith(cc)) return { dial: `+${cc}`, national: digits.slice(cc.length) }
+    }
+  }
+  // legacy / non-E.164 → indicatif à choisir, on conserve les chiffres saisis
+  return { dial: '', national: digits }
+}
 
 type Draft = {
   nom: string
@@ -61,6 +84,10 @@ export default function MaFichePage() {
   const [nbAvis, setNbAvis] = useState(0)
   const [editing, setEditing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  // WhatsApp édité en deux parties (indicatif + national), recomposé en E.164
+  // au save. Seedé depuis la valeur stockée au chargement de la fiche.
+  const [waDial, setWaDial] = useState('')
+  const [waNumber, setWaNumber] = useState('')
 
   const [draft, setDraft] = useState<Draft>({
     nom: '',
@@ -147,6 +174,9 @@ export default function MaFichePage() {
         services: (data.services ?? []) as Service[],
         galerie: (data.galerie ?? []) as string[],
       })
+      const wa = splitWhatsapp(data.whatsapp ?? '')
+      setWaDial(wa.dial)
+      setWaNumber(wa.national)
 
       // Sprint 7 mig 49 — fetch abo actif (status active/trialing/past_due)
       const { data: sub } = await supabase
@@ -225,6 +255,12 @@ export default function MaFichePage() {
 
   const handleSave = async () => {
     if (!profileId) return
+    if (waDial === '' || nationalDigits(waNumber).length < 6) {
+      toast.error('Choisis ton indicatif pays et saisis un numéro WhatsApp valide.', {
+        duration: 5000,
+      })
+      return
+    }
     setSaving(true)
     setError(null)
     const supabase = createClient()
@@ -234,7 +270,7 @@ export default function MaFichePage() {
       ville: draft.ville.trim(),
       tagline: draft.tagline.trim() || null,
       description: draft.description.trim() || null,
-      whatsapp: draft.whatsapp.trim(),
+      whatsapp: toE164(waDial, waNumber),
       phone_public: draft.phone_public.trim() || null,
       instagram: draft.instagram.trim() || null,
       tiktok: draft.tiktok.trim() || null,
@@ -496,15 +532,29 @@ export default function MaFichePage() {
 
                 <Group kicker="Contact">
                   <div className="grid gap-6 md:grid-cols-2">
-                    <Field label="WhatsApp" hint="Format international +41…">
-                      <input
-                        type="tel"
-                        value={draft.whatsapp}
-                        onChange={(e) =>
-                          setDraft((d) => ({ ...d, whatsapp: e.target.value }))
-                        }
-                        className="input-line"
-                      />
+                    <Field label="WhatsApp" hint="Indicatif pays + numéro sans le 0 initial">
+                      <div className="flex gap-2">
+                        <select
+                          value={waDial}
+                          onChange={(e) => setWaDial(e.target.value)}
+                          className="input-line w-auto shrink-0"
+                          aria-label="Indicatif pays"
+                        >
+                          <option value="">Indicatif…</option>
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={`${c.dial}-${c.name}`} value={c.dial}>
+                              {c.flag} {c.dial}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="tel"
+                          value={waNumber}
+                          onChange={(e) => setWaNumber(e.target.value)}
+                          placeholder="79 123 45 67"
+                          className="input-line flex-1"
+                        />
+                      </div>
                     </Field>
                     <Field label="Téléphone (optionnel)">
                       <input

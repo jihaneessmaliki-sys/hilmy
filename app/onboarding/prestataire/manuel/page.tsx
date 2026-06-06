@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { CATEGORIES_MAP } from '@/lib/constants'
 import { villesSuggestions } from '@/lib/mock-data'
 import { formatVilleDisplay } from '@/lib/geo/city-centroids'
+import { COUNTRY_CODES, toE164, nationalDigits } from '@/lib/phone'
 
 type Etape = 0 | 1 | 2 | 3
 
@@ -81,7 +82,10 @@ export default function ManuelOnboardingPage() {
   const [ville, setVille] = useState('')
 
   // Step 2 - contact + canaux
-  const [whatsapp, setWhatsapp] = useState('')
+  // WhatsApp en deux parties : indicatif pays (obligatoire, sans défaut) +
+  // numéro national. Stocké en E.164 (+33612345678) au submit via toE164.
+  const [waDial, setWaDial] = useState('')
+  const [waNumber, setWaNumber] = useState('')
   const [phonePublic, setPhonePublic] = useState('')
   const [email, setEmail] = useState('')
   const [instagram, setInstagram] = useState('')
@@ -143,7 +147,7 @@ export default function ManuelOnboardingPage() {
 
   const canContinue = () => {
     if (etape === 0) return nom && categorie && pays && ville
-    if (etape === 1) return whatsapp.trim().length >= 6
+    if (etape === 1) return waDial !== '' && nationalDigits(waNumber).length >= 6
     if (etape === 2) return description.trim().length >= 30
     if (etape === 3) return galerie.length >= 1
     return false
@@ -201,7 +205,7 @@ export default function ManuelOnboardingPage() {
       slug,
       categorie,
       ville: formatVilleDisplay(ville.trim()) ?? ville.trim(),
-      whatsapp: whatsapp.trim(),
+      whatsapp: toE164(waDial, waNumber),
       phone_public: phonePublic.trim() || null,
       email: email.trim() || null,
       instagram: instagram.trim() || null,
@@ -354,16 +358,31 @@ export default function ManuelOnboardingPage() {
                   <div className="grid gap-6 md:grid-cols-2">
                     <Field
                       label="WhatsApp (obligatoire)"
-                      hint="Format international : +41 79 123 45 67 — ce sera le CTA principal de ta fiche."
+                      hint="Choisis ton indicatif pays puis ton numéro sans le 0 initial — ce sera le CTA principal de ta fiche."
                     >
-                      <input
-                        type="tel"
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value)}
-                        placeholder="+41 79 123 45 67"
-                        className="line"
-                        autoFocus
-                      />
+                      <div className="flex gap-2">
+                        <select
+                          value={waDial}
+                          onChange={(e) => setWaDial(e.target.value)}
+                          className="line w-auto shrink-0"
+                          aria-label="Indicatif pays"
+                        >
+                          <option value="">Indicatif…</option>
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={`${c.dial}-${c.name}`} value={c.dial}>
+                              {c.flag} {c.dial}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="tel"
+                          value={waNumber}
+                          onChange={(e) => setWaNumber(e.target.value)}
+                          placeholder="79 123 45 67"
+                          className="line flex-1"
+                          autoFocus
+                        />
+                      </div>
                     </Field>
                     <Field
                       label="Téléphone (optionnel)"

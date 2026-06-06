@@ -5,6 +5,7 @@
  *   en URL cliquable (avec pattern approprié par plateforme).
  * - `label` affiché côté UI + CTA public ("Lui écrire sur Instagram").
  */
+import { cleanWhatsappDigits } from '@/lib/phone'
 export type SocialKey =
   | 'whatsapp'
   | 'phone_public'
@@ -58,10 +59,7 @@ export const SOCIAL_CHANNELS: SocialChannel[] = [
     ctaLabel: 'Lui écrire sur WhatsApp',
     placeholder: '+41 79 123 45 67',
     hint: 'Format international avec l\'indicatif pays (+41, +33, …).',
-    toUrl: (v) => {
-      const digits = v.replace(/[^\d]/g, '')
-      return `https://wa.me/${digits}`
-    },
+    toUrl: (v) => `https://wa.me/${cleanWhatsappDigits(v)}`,
     displayValue: (v) => v,
   },
   {

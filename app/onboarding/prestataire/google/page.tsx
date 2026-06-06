@@ -15,6 +15,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORIES_MAP } from '@/lib/constants'
 import { formatVilleDisplay } from '@/lib/geo/city-centroids'
+import { COUNTRY_CODES, toE164, nationalDigits } from '@/lib/phone'
 
 type PlaceDetails = AutocompletePlace & {
   phone: string | null
@@ -67,7 +68,10 @@ export default function GoogleOnboardingPage() {
   const [categorie, setCategorie] = useState('')
   const [tagline, setTagline] = useState('')
   const [description, setDescription] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
+  // WhatsApp en deux parties : indicatif pays (obligatoire, sans défaut) +
+  // numéro national. Stocké en E.164 (+33612345678) au submit via toE164.
+  const [waDial, setWaDial] = useState('')
+  const [waNumber, setWaNumber] = useState('')
   const [instagram, setInstagram] = useState('')
 
   useEffect(() => {
@@ -131,8 +135,12 @@ export default function GoogleOnboardingPage() {
 
   const submit = async () => {
     if (!userId || !details) return
-    if (!nom.trim() || !categorie || !whatsapp.trim()) {
-      setError('Il manque le nom, la catégorie ou un numéro WhatsApp.')
+    if (!nom.trim() || !categorie) {
+      setError('Il manque le nom ou la catégorie.')
+      return
+    }
+    if (waDial === '' || nationalDigits(waNumber).length < 6) {
+      setError('Choisis ton indicatif pays et saisis un numéro WhatsApp valide.')
       return
     }
     setSubmitting(true)
@@ -148,7 +156,7 @@ export default function GoogleOnboardingPage() {
       categorie,
       pays: details.country || null,
       ville: formatVilleDisplay(details.city) ?? details.city ?? '',
-      whatsapp: whatsapp.trim(),
+      whatsapp: toE164(waDial, waNumber),
       email: userEmail || null,
       instagram: instagram.trim() || null,
       site_web: details.website,
@@ -354,14 +362,29 @@ export default function GoogleOnboardingPage() {
                         ))}
                       </select>
                     </Field>
-                    <Field label="WhatsApp (obligatoire)" hint="Format +41 79 123 45 67">
-                      <input
-                        type="tel"
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value)}
-                        placeholder="+41 79 123 45 67"
-                        className="line"
-                      />
+                    <Field label="WhatsApp (obligatoire)" hint="Indicatif pays + numéro sans le 0 initial">
+                      <div className="flex gap-2">
+                        <select
+                          value={waDial}
+                          onChange={(e) => setWaDial(e.target.value)}
+                          className="line w-auto shrink-0"
+                          aria-label="Indicatif pays"
+                        >
+                          <option value="">Indicatif…</option>
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={`${c.dial}-${c.name}`} value={c.dial}>
+                              {c.flag} {c.dial}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="tel"
+                          value={waNumber}
+                          onChange={(e) => setWaNumber(e.target.value)}
+                          placeholder="79 123 45 67"
+                          className="line flex-1"
+                        />
+                      </div>
                     </Field>
                     <Field label="Instagram (optionnel)">
                       <input
