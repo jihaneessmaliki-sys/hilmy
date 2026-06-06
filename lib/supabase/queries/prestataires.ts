@@ -1,7 +1,11 @@
 /**
  * Queries prestataires (table : profiles).
- * Respecte les RLS : seules les fiches status='approved' sont visibles
- * publiquement. Pas de bypass admin côté client.
+ * Respecte les RLS (Modèle B) : la visibilité publique est gérée par la
+ * policy "public read visible profiles" (status hors
+ * suspended/rejected/ghost/draft ET (paywall_exempt OU abonnement actif)).
+ * Une fiche payée est donc visible dès le paiement, même en status
+ * 'pending' — on ne filtre plus status='approved' côté requête, c'est la
+ * RLS qui gate la visibilité. Pas de bypass admin côté client.
  *
  * ⚠️ Privacy is_founder : tous les helpers de ce fichier appliquent
  * `toPublicPrestataire` qui strippe le champ `is_founder` et substitue
@@ -87,7 +91,7 @@ export async function getPionnieres(
     const { data, error } = await supabase
       .from("profiles")
       .select(PRESTATAIRE_SELECT)
-      .eq("status", "approved")
+      // Modèle B : visibilité gérée par la RLS (plus de filtre status='approved')
       .not("user_id", "is", null)
       .order("created_at", { ascending: true })
       .limit(limit);
@@ -107,7 +111,7 @@ export async function getAllPrestataires(): Promise<QueryResult<Prestataire[]>> 
     const { data, error } = await supabase
       .from("profiles")
       .select(PRESTATAIRE_SELECT)
-      .eq("status", "approved")
+      // Modèle B : visibilité gérée par la RLS (plus de filtre status='approved')
       .order("approved_at", { ascending: false, nullsFirst: false });
 
     if (error) return { data: null, error: error.message };
@@ -194,7 +198,7 @@ export async function getPublicPrestataire(
       .from('profiles')
       .select(PUBLIC_PRESTATAIRE_SELECT)
       .eq('slug', slug)
-      .eq('status', 'approved')
+      // Modèle B : visibilité gérée par la RLS (plus de filtre status='approved')
       .maybeSingle()
 
     if (error) return { data: null, error: error.message }
@@ -224,7 +228,7 @@ export async function getPrestataireBySlug(
       .from("profiles")
       .select(PRESTATAIRE_SELECT)
       .eq("slug", slug)
-      .eq("status", "approved")
+      // Modèle B : visibilité gérée par la RLS (plus de filtre status='approved')
       .maybeSingle();
 
     if (error) return { data: null, error: error.message };
@@ -280,7 +284,7 @@ export async function getPrestatairesByCategorie(
     const { data, error } = await supabase
       .from("profiles")
       .select(PRESTATAIRE_SELECT)
-      .eq("status", "approved")
+      // Modèle B : visibilité gérée par la RLS (plus de filtre status='approved')
       .eq("categorie", categorie)
       .order("approved_at", { ascending: false, nullsFirst: false });
 
@@ -301,7 +305,7 @@ export async function getPrestatairesByVille(
     const { data, error } = await supabase
       .from("profiles")
       .select(PRESTATAIRE_SELECT)
-      .eq("status", "approved")
+      // Modèle B : visibilité gérée par la RLS (plus de filtre status='approved')
       .ilike("ville", ville)
       .order("approved_at", { ascending: false, nullsFirst: false });
 
