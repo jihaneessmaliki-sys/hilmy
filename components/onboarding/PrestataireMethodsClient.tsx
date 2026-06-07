@@ -185,12 +185,12 @@ export function PrestataireMethodsClient() {
           >
             {[
               {
-                k: 'Gratuit',
-                v: "Zéro abonnement, zéro commission. Aujourd'hui et demain.",
+                k: 'Simple',
+                v: 'Crée ta fiche, choisis ta formule, tu es en ligne tout de suite.',
               },
               {
-                k: 'Validé à la main',
-                v: "On regarde chaque fiche. C'est ça, la confiance entre nous.",
+                k: 'Entre copines',
+                v: 'On veille à ce que la communauté reste un espace de confiance.',
               },
               {
                 k: 'Tes données',

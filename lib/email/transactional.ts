@@ -321,13 +321,12 @@ export async function sendFicheApprouvee({
   const ficheUrl = `${getSiteUrl()}/prestataires/${ficheSlug}`;
   await sendEmail({
     to,
-    subject: "Ta fiche Hilmy est en ligne 🌸",
+    subject: "Bienvenue dans Hilmy 🌸",
     html: buildRichLayout({
-      preview: `Ta fiche ${nomFiche} est publiée`,
-      title: `${prenom}, ta fiche est en ligne.`,
+      preview: `Ta fiche ${nomFiche} est en ligne`,
+      title: `${prenom}, bienvenue dans Hilmy.`,
       paragraphs: [
-        `Bonne nouvelle : ta fiche ${nomFiche} vient d'être validée par l'équipe. Elle est maintenant visible dans l'annuaire — les copines peuvent la découvrir, la sauvegarder, et surtout te contacter directement sur WhatsApp.`,
-        `On te conseille de la partager toi-même à une ou deux clientes proches pour amorcer les premiers avis. Les trois premiers comptent triple pour la mise en avant.`,
+        `Ça y est, tu fais partie des copines. Ta fiche est en ligne dans l'annuaire et les clientes peuvent déjà te trouver. Si tu ne l'as pas encore fait, prends deux minutes pour la compléter — plus elle est vivante, plus on te repère. À très vite 🌸`,
       ],
       ctaLabel: "Voir ma fiche publique",
       ctaHref: ficheUrl,
@@ -348,22 +347,17 @@ export async function sendFicheRejetee({
   nomFiche: string;
   raisons: string;
 }) {
-  const dashboardUrl = `${getSiteUrl()}/dashboard/prestataire/fiche`;
   await sendEmail({
     to,
-    subject: "Ta fiche Hilmy nécessite quelques ajustements",
+    subject: "Ta fiche Hilmy a été retirée",
     html: buildRichLayout({
-      preview: "Petits ajustements à apporter avant publication",
-      title: `${prenom}, on a besoin de quelques ajustements.`,
+      preview: `Ta fiche ${nomFiche} a été retirée de l'annuaire`,
+      title: `${prenom}, ta fiche a été retirée.`,
       paragraphs: [
-        `Merci d'avoir créé ta fiche ${nomFiche}. Avant de la mettre en ligne, on aimerait que tu revoies certains points — c'est pour que tout soit à la hauteur de ce que tu proposes.`,
-        `Voici ce qu'on te suggère :`,
+        `Après vérification, ta fiche ne correspond pas à ce qu'on accueille dans Hilmy, et nous l'avons retirée de l'annuaire. Ton abonnement a été annulé et remboursé. Si tu penses qu'il s'agit d'une erreur, tu peux nous écrire en répondant à cet email.`,
       ],
-      quote: raisons,
-      ctaLabel: "Modifier ma fiche",
-      ctaHref: dashboardUrl,
       footer:
-        "Dès que tu as fait les ajustements, resoumet — on la repasse en revue sous 24h.",
+        "Hilmy · Réponds directement à cet email pour toute question.",
     }),
   });
 }

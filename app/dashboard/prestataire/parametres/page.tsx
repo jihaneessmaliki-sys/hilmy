@@ -20,6 +20,11 @@ export default function ParametresPrestatairePage() {
   const [status, setStatus] = useState<
     'pending' | 'approved' | 'rejected' | 'ghost' | 'paused'
   >('pending')
+  // Mémoire du dernier statut "en ligne" (approved ou pending) pour pouvoir le
+  // restaurer au dé-pause sans jamais auto-approuver une fiche pending.
+  const [lastLiveStatus, setLastLiveStatus] = useState<'approved' | 'pending'>(
+    'pending',
+  )
   const [palier, setPalier] = useState<'standard' | 'premium' | 'cercle_pro'>(
     'standard',
   )
@@ -58,6 +63,12 @@ export default function ParametresPrestatairePage() {
       if (profileRes.data) {
         setProfileId(profileRes.data.id)
         setStatus(profileRes.data.status)
+        if (
+          profileRes.data.status === 'approved' ||
+          profileRes.data.status === 'pending'
+        ) {
+          setLastLiveStatus(profileRes.data.status)
+        }
         const p = profileRes.data.palier
         setPalier(
           p === 'premium' ? 'premium' : p === 'cercle_pro' ? 'cercle_pro' : 'standard',
@@ -120,7 +131,11 @@ export default function ParametresPrestatairePage() {
 
   const toggleVisibility = async () => {
     if (!profileId) return
-    const next = status === 'approved' ? 'paused' : 'approved'
+    // "En ligne" = approved OU pending (les deux sont visibles via la RLS Modèle B).
+    const isLive = status === 'approved' || status === 'pending'
+    // Pause → 'paused'. Dé-pause → on restaure le statut live précédent
+    // (jamais d'auto-approbation d'une fiche pending).
+    const next = isLive ? 'paused' : lastLiveStatus
     setSaving(true)
     setError(null)
     setMsg(null)
@@ -134,11 +149,14 @@ export default function ParametresPrestatairePage() {
       setError(updErr.message)
       return
     }
+    if (isLive && (status === 'approved' || status === 'pending')) {
+      setLastLiveStatus(status)
+    }
     setStatus(next)
     setMsg(
-      next === 'approved'
-        ? 'Ta fiche est de nouveau visible.'
-        : 'Ta fiche est en pause — elle n\'apparaît plus dans l\'annuaire.',
+      next === 'paused'
+        ? 'Ta fiche est en pause — elle n\'apparaît plus dans l\'annuaire.'
+        : 'Ta fiche est de nouveau visible.',
     )
     setTimeout(() => setMsg(null), 4000)
   }
@@ -151,7 +169,11 @@ export default function ParametresPrestatairePage() {
     router.refresh()
   }
 
-  const canToggle = status === 'approved' || status === 'paused'
+  // Une fiche payée 'pending' est déjà en ligne (Modèle B) → elle peut se mettre
+  // en pause comme une fiche 'approved'. Seuls 'rejected'/'ghost' restent figés.
+  const canToggle =
+    status === 'approved' || status === 'paused' || status === 'pending'
+  const isLive = status === 'approved' || status === 'pending'
 
   return (
     <>
@@ -219,16 +241,16 @@ export default function ParametresPrestatairePage() {
                 <button
                   type="button"
                   role="switch"
-                  aria-checked={status === 'approved'}
+                  aria-checked={isLive}
                   disabled={!canToggle || saving}
                   onClick={toggleVisibility}
                   className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-                    status === 'approved' ? 'bg-vert' : 'bg-creme-deep'
+                    isLive ? 'bg-vert' : 'bg-creme-deep'
                   } disabled:opacity-60`}
                 >
                   <span
                     className={`absolute top-1 h-5 w-5 rounded-full shadow-sm transition-all ${
-                      status === 'approved' ? 'left-6 bg-or' : 'left-1 bg-blanc'
+                      isLive ? 'left-6 bg-or' : 'left-1 bg-blanc'
                     }`}
                   />
                 </button>
@@ -236,8 +258,7 @@ export default function ParametresPrestatairePage() {
               {!canToggle && (
                 <div className="px-6 py-4">
                   <p className="text-[12px] italic text-texte-sec">
-                    Tu pourras activer/désactiver ta fiche après sa première
-                    validation.
+                    Ta fiche n&apos;est plus active.
                   </p>
                 </div>
               )}
@@ -332,11 +353,11 @@ function labelFor(status: string) {
     case 'approved':
       return 'Visible dans l\'annuaire'
     case 'pending':
-      return 'En revue'
+      return 'En ligne'
     case 'paused':
       return 'En pause'
     case 'rejected':
-      return 'Non validée'
+      return 'Retirée'
     case 'ghost':
       return 'Archivée'
     default:

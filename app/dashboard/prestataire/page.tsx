@@ -136,8 +136,8 @@ export default async function PrestataireAccueilPage() {
         <section className="border-b border-or/20 bg-or/10 px-6 py-4 md:px-12">
           <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between">
             <p className="text-[13px] text-vert">
-              <span className="font-serif italic">Fiche en revue —</span>{' '}
-              On vérifie les infos puis on la met en ligne sous 24h ouvrées. Tu peux déjà la compléter.
+              <span className="font-serif italic">Ta fiche est en ligne 🌸</span>{' '}
+              Pense à la compléter pour qu&apos;on te trouve plus facilement.
             </p>
             <Link
               href="/dashboard/prestataire/fiche"

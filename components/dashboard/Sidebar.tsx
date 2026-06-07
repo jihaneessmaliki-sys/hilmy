@@ -30,6 +30,7 @@ interface SidebarProps {
     avatar: string
     meta?: string
     badge?: string
+    badgeTone?: 'gold' | 'green'
   }
   items: SidebarItem[]
   signOutLabel?: string
@@ -415,7 +416,14 @@ function MobileGroup({
 function UserBlock({
   user,
 }: {
-  user: { prenom: string; nom?: string; avatar: string; meta?: string; badge?: string }
+  user: {
+    prenom: string
+    nom?: string
+    avatar: string
+    meta?: string
+    badge?: string
+    badgeTone?: 'gold' | 'green'
+  }
 }) {
   const isUrl = user.avatar?.startsWith('http') || user.avatar?.startsWith('/')
   return (
@@ -435,7 +443,13 @@ function UserBlock({
             {user.prenom}
           </p>
           {user.badge && (
-            <span className="rounded-full bg-or/15 px-2 py-0.5 text-[9px] tracking-[0.22em] text-or-deep uppercase">
+            <span
+              className={`rounded-full px-2 py-0.5 text-[9px] tracking-[0.22em] uppercase ${
+                user.badgeTone === 'green'
+                  ? 'bg-vert/10 text-vert'
+                  : 'bg-or/15 text-or-deep'
+              }`}
+            >
               {user.badge}
             </span>
           )}
