@@ -110,7 +110,13 @@ export default async function PrestataireLayout({
           prenom: prestataire.nom,
           avatar,
           meta: `${metier} · ${prestataire.ville}`,
-          badge: prestataire.status === 'approved' ? undefined : 'En attente',
+          badge:
+            prestataire.status === 'approved'
+              ? undefined
+              : prestataire.status === 'pending'
+                ? 'En ligne'
+                : 'En attente',
+          badgeTone: prestataire.status === 'pending' ? 'green' : 'gold',
         }}
         signOutLabel="À bientôt"
       />
