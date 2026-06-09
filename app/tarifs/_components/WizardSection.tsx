@@ -188,7 +188,7 @@ export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isF
       const supabase = createClient()
       const { data } = await supabase
         .from('promo_codes')
-        .select('id, code, discount_pct, applies_to_palier, valid_from, valid_until, max_uses, current_uses, active')
+        .select('id, code, type, trial_end, discount_pct, applies_to_palier, valid_from, valid_until, max_uses, current_uses, active')
         .ilike('code', trimmed)
         .maybeSingle()
 
@@ -197,7 +197,9 @@ export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isF
         setAppliedPromo(result.code)
         setPromoStatus('valid')
         setPromoMessage(
-          `Code «${result.code.code}» appliqué : -${result.code.discount_pct}%.`,
+          result.code.type === 'trial'
+            ? `Code «${result.code.code}» : gratuit jusqu'au 1ᵉʳ septembre, puis prix plein. Carte demandée, rien débité avant.`
+            : `Code «${result.code.code}» appliqué : -${result.code.discount_pct}%.`,
         )
       } else {
         setAppliedPromo(null)
@@ -283,6 +285,9 @@ export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isF
 
   const info = PALIER_INFO[palier]
   const price = PRICING[palier][duree]
+  // Code 'trial' (ENSEMBLE) : pas de remise %, on garde le prix plein
+  // affiché (l'essai est géré côté Stripe, pas un rabais sur le prix).
+  const isTrial = appliedPromo?.type === 'trial'
   const discountPct = appliedPromo?.discount_pct ?? 0
   const monthlyAfterDiscount = applyDiscount(price.m, discountPct)
   const totalAfterDiscount =
@@ -488,7 +493,7 @@ export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isF
                 {info.tagline}
               </p>
               <div className="mb-7 border-b border-or/25 pb-7">
-                {appliedPromo ? (
+                {appliedPromo && !isTrial ? (
                   <div className="flex items-baseline gap-3">
                     <span className="font-serif text-[60px] font-light leading-none text-creme">
                       {formatPrice(monthlyAfterDiscount)}
@@ -522,7 +527,9 @@ export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isF
                 {appliedPromo && (
                   <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-or/15 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-or uppercase">
                     <span aria-hidden>✓</span>
-                    Code «{appliedPromo.code}» −{appliedPromo.discount_pct}%
+                    {isTrial
+                      ? `Code «${appliedPromo.code}» · gratuit jusqu'au 1ᵉʳ sept`
+                      : `Code «${appliedPromo.code}» −${appliedPromo.discount_pct}%`}
                   </p>
                 )}
                 {promoLancActive && (
@@ -643,6 +650,7 @@ export function WizardSection({ initialPalier, initialPromo, stripePriceIds, isF
                       label="Je choisis cette formule"
                       ariaLabel={aria}
                       context={fromOnboarding ? 'onboarding' : undefined}
+                      promoCode={appliedPromo?.code}
                     />
                   )
                 }

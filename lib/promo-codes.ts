@@ -18,7 +18,13 @@ import type { Palier } from '@/app/tarifs/_lib/pricing'
 export interface PromoCodeRow {
   id: string
   code: string
-  discount_pct: number
+  /** 'discount' = remise % (discount_pct) ; 'trial' = essai gratuit
+   *  jusqu'à trial_end. Ajouté en mig 61. */
+  type: 'discount' | 'trial'
+  /** Fin de l'essai gratuit (codes 'trial' uniquement). NULL sinon. */
+  trial_end: string | null
+  /** Pourcentage de remise (codes 'discount'). NULL pour les 'trial'. */
+  discount_pct: number | null
   applies_to_palier: 'standard' | 'premium' | 'cercle_pro' | 'all'
   valid_from: string
   valid_until: string | null

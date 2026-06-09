@@ -91,6 +91,7 @@ export async function POST(request: Request) {
     price_id?: unknown
     plan?: unknown
     context?: unknown
+    promo_code?: unknown
   }
   let priceId: string
   let isCopineFlow = false
@@ -170,6 +171,38 @@ export async function POST(request: Request) {
     )
   }
 
+  // ─── Code trial (ex. ENSEMBLE) : essai gratuit à date fixe ────────
+  // Optionnel. Transmis par le front dans le body. Un code trial pose
+  // subscription_data.trial_end (date fixe identique pour toutes) et
+  // REMPLACE toute autre remise — pas de cumul LANCEMENT50. Résolu
+  // server-side contre la table promo_codes (type='trial', active).
+  // Code inconnu / expiré / trop proche de trial_end → ignoré
+  // silencieusement → le checkout retombe en paiement normal.
+  let trialEndUnix: number | null = null
+  const promoCodeRaw =
+    typeof bodyObj.promo_code === 'string' ? bodyObj.promo_code.trim() : ''
+  if (promoCodeRaw) {
+    const { data: trialRow } = await admin
+      .from('promo_codes')
+      .select('trial_end, valid_from, valid_until, active, type')
+      .ilike('code', promoCodeRaw)
+      .eq('type', 'trial')
+      .eq('active', true)
+      .maybeSingle()
+    if (trialRow?.trial_end) {
+      const end = Math.floor(new Date(trialRow.trial_end as string).getTime() / 1000)
+      const nowSec = Math.floor(Date.now() / 1000)
+      const validNow =
+        new Date(trialRow.valid_from as string).getTime() <= Date.now() &&
+        (!trialRow.valid_until ||
+          new Date(trialRow.valid_until as string).getTime() > Date.now())
+      // Stripe exige trial_end >= now + 48h.
+      if (validNow && end > nowSec + 48 * 3600) {
+        trialEndUnix = end
+      }
+    }
+  }
+
   // Crée ou retrouve un customer Stripe.
   let stripeCustomerId = profile.stripe_customer_id as string | null
   if (!stripeCustomerId) {
@@ -204,7 +237,8 @@ export async function POST(request: Request) {
 
   // Crée la Checkout Session
   // Stripe API : allow_promotion_codes et discounts sont mutuellement exclusifs.
-  const discounts = getActiveStripeDiscounts()
+  // Un trial actif désactive l'injection LANCEMENT50 (pas de cumul).
+  const discounts = trialEndUnix ? undefined : getActiveStripeDiscounts()
   const origin = new URL(request.url).origin
   let session
   try {
@@ -221,15 +255,25 @@ export async function POST(request: Request) {
         origin,
         isOnboarding ? 'onboarding' : undefined,
       ),
-      ...(discounts && discounts.length > 0
-        ? { discounts }
-        : { allow_promotion_codes: true }),
+      ...(trialEndUnix
+        ? { allow_promotion_codes: false }
+        : discounts && discounts.length > 0
+          ? { discounts }
+          : { allow_promotion_codes: true }),
       metadata: {
         profile_id: profile.id as string,
         palier: decoded.palier,
         duree_months: String(decoded.duree_months),
       },
       subscription_data: {
+        ...(trialEndUnix
+          ? {
+              trial_end: trialEndUnix,
+              trial_settings: {
+                end_behavior: { missing_payment_method: 'cancel' as const },
+              },
+            }
+          : {}),
         metadata: {
           profile_id: profile.id as string,
           palier: decoded.palier,
