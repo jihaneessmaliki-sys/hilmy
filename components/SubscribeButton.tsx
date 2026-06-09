@@ -17,6 +17,10 @@ interface Props {
    *  paiement la mène à /onboarding/prestataire/publiee. Absent =
    *  checkout depuis le dashboard d'une fiche existante. */
   context?: 'onboarding'
+  /** Code promo Hilmy saisi sur /tarifs (ex. ENSEMBLE). Transmis au
+   *  serveur pour résoudre un essai gratuit (trial_end). Optionnel —
+   *  absent = checkout normal. */
+  promoCode?: string
 }
 
 /**
@@ -35,6 +39,7 @@ export function SubscribeButton({
   ariaLabel,
   className,
   context,
+  promoCode,
 }: Props) {
   const [loading, setLoading] = useState(false)
 
@@ -47,6 +52,7 @@ export function SubscribeButton({
         body: JSON.stringify({
           price_id: priceId,
           ...(context ? { context } : {}),
+          ...(promoCode ? { promo_code: promoCode } : {}),
         }),
       })
 
