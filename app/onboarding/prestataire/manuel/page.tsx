@@ -9,6 +9,7 @@ import {
   OnboardingHeader,
 } from '@/components/onboarding/OnboardingShell'
 import { createClient } from '@/lib/supabase/client'
+import { CopineDiscountField } from '@/components/onboarding/CopineDiscountField'
 import { CATEGORIES_MAP } from '@/lib/constants'
 import { villesSuggestions } from '@/lib/mock-data'
 import { formatVilleDisplay } from '@/lib/geo/city-centroids'
@@ -103,6 +104,9 @@ export default function ManuelOnboardingPage() {
   const [services, setServices] = useState<Service[]>([
     { nom: '', prix: '', duree: '' },
   ])
+  // Réduction copines Hilmy (mig 62). pct null = pas de réduction.
+  const [copineDiscountPct, setCopineDiscountPct] = useState<number | null>(null)
+  const [copineDiscountNote, setCopineDiscountNote] = useState('')
 
   // Step 4 - photos
   const [galerie, setGalerie] = useState<string[]>([])
@@ -218,6 +222,8 @@ export default function ManuelOnboardingPage() {
       description: description.trim(),
       prix_from: prixFrom ? Number(prixFrom) : null,
       devise,
+      copine_discount_pct: copineDiscountPct,
+      copine_discount_note: copineDiscountNote.trim() || null,
       services: cleanServices,
       galerie,
       photos: galerie,
@@ -612,6 +618,13 @@ export default function ManuelOnboardingPage() {
                       ))}
                     </ul>
                   </div>
+
+                  <CopineDiscountField
+                    pct={copineDiscountPct}
+                    note={copineDiscountNote}
+                    onPctChange={setCopineDiscountPct}
+                    onNoteChange={setCopineDiscountNote}
+                  />
                 </div>
               )}
 

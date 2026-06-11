@@ -106,6 +106,12 @@ export interface Prestataire {
   // Founder flag — accès Cercle Pro à vie (gratuit, sans abonnement Stripe).
   // ⚠️ Ne JAMAIS exposer côté public : strippé via toPublicPrestataire().
   is_founder?: boolean;
+
+  // Réduction copines Hilmy (mig 62). pct ∈ {5,10,15,20} ou null (= pas de
+  // réduction). Note = conditions libres. Les deux éditables librement par la
+  // prestataire (volontairement HORS lock_profile_update).
+  copine_discount_pct?: number | null;
+  copine_discount_note?: string | null;
 }
 
 /* ─────────────────────────────────────────────────────────────

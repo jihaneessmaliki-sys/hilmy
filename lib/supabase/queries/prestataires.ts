@@ -58,7 +58,9 @@ const PRESTATAIRE_SELECT = `
   nb_avis,
   nb_vues,
   palier,
-  is_founder
+  is_founder,
+  copine_discount_pct,
+  copine_discount_note
 `;
 
 /**
@@ -154,7 +156,9 @@ const PUBLIC_PRESTATAIRE_SELECT = `
   youtube,
   linkedin,
   site_web,
-  approved_at
+  approved_at,
+  copine_discount_pct,
+  copine_discount_note
 `
 
 export type PublicPrestataire = {
@@ -183,6 +187,8 @@ export type PublicPrestataire = {
   linkedin: string | null
   site_web: string | null
   approved_at: string | null
+  copine_discount_pct: number | null
+  copine_discount_note: string | null
 }
 
 /**

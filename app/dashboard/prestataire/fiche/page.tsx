@@ -8,6 +8,8 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { GoldLine } from '@/components/ui/GoldLine'
 import { VideosManager } from '@/components/v2/VideosManager'
 import { createClient } from '@/lib/supabase/client'
+import { CopineDiscountField } from '@/components/onboarding/CopineDiscountField'
+import { CopineDiscountBadge } from '@/components/v2/CopineDiscountBadge'
 import { CATEGORIES_MAP } from '@/lib/constants'
 import {
   PHOTO_LIMIT,
@@ -61,6 +63,9 @@ type Draft = {
   site_web: string
   prix_from: string
   devise: 'CHF' | 'EUR'
+  // Réduction copines Hilmy (mig 62). pct null = pas de réduction.
+  copine_discount_pct: number | null
+  copine_discount_note: string
   services: Service[]
   galerie: string[]
 }
@@ -107,6 +112,8 @@ export default function MaFichePage() {
     site_web: '',
     prix_from: '',
     devise: 'CHF',
+    copine_discount_pct: null,
+    copine_discount_note: '',
     services: [],
     galerie: [],
   })
@@ -171,6 +178,8 @@ export default function MaFichePage() {
         site_web: data.site_web ?? '',
         prix_from: data.prix_from !== null ? String(data.prix_from) : '',
         devise: data.devise ?? 'CHF',
+        copine_discount_pct: data.copine_discount_pct ?? null,
+        copine_discount_note: data.copine_discount_note ?? '',
         services: (data.services ?? []) as Service[],
         galerie: (data.galerie ?? []) as string[],
       })
@@ -281,6 +290,8 @@ export default function MaFichePage() {
       site_web: draft.site_web.trim() || null,
       prix_from: draft.prix_from ? Number(draft.prix_from) : null,
       devise: draft.devise,
+      copine_discount_pct: draft.copine_discount_pct,
+      copine_discount_note: draft.copine_discount_note.trim() || null,
       // Trim + filter pour éviter de polluer la BDD avec des services
       // {nom: "", prix: "", duree: ""} créés puis non remplis.
       services: draft.services
@@ -674,6 +685,19 @@ export default function MaFichePage() {
                   </Field>
                 </Group>
 
+                <Group kicker="Réduction copines">
+                  <CopineDiscountField
+                    pct={draft.copine_discount_pct}
+                    note={draft.copine_discount_note}
+                    onPctChange={(pct) =>
+                      setDraft((d) => ({ ...d, copine_discount_pct: pct }))
+                    }
+                    onNoteChange={(note) =>
+                      setDraft((d) => ({ ...d, copine_discount_note: note }))
+                    }
+                  />
+                </Group>
+
                 <Group
                   kicker="Services"
                   action={
@@ -913,26 +937,34 @@ export default function MaFichePage() {
                         'Ta description apparaîtra ici. Clique sur Modifier pour la rédiger.'}
                     </p>
                   </div>
-                  <div className="rounded-sm bg-creme-deep p-6">
-                    <p className="overline text-or">Services</p>
-                    {draft.services.length === 0 ? (
-                      <p className="mt-4 text-[12px] italic text-texte-sec">
-                        Aucun service ajouté.
-                      </p>
-                    ) : (
-                      <ul className="mt-4 divide-y divide-or/10 text-[13px]">
-                        {draft.services.map((s, i) => (
-                          <li
-                            key={i}
-                            className="flex items-center justify-between py-2"
-                          >
-                            <span className="text-vert">{s.nom}</span>
-                            <span className="font-serif italic text-or-deep">
-                              {s.prix}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                  <div className="space-y-6">
+                    <div className="rounded-sm bg-creme-deep p-6">
+                      <p className="overline text-or">Services</p>
+                      {draft.services.length === 0 ? (
+                        <p className="mt-4 text-[12px] italic text-texte-sec">
+                          Aucun service ajouté.
+                        </p>
+                      ) : (
+                        <ul className="mt-4 divide-y divide-or/10 text-[13px]">
+                          {draft.services.map((s, i) => (
+                            <li
+                              key={i}
+                              className="flex items-center justify-between py-2"
+                            >
+                              <span className="text-vert">{s.nom}</span>
+                              <span className="font-serif italic text-or-deep">
+                                {s.prix}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    {draft.copine_discount_pct != null && (
+                      <CopineDiscountBadge
+                        pct={draft.copine_discount_pct}
+                        note={draft.copine_discount_note || null}
+                      />
                     )}
                   </div>
                 </div>

@@ -13,6 +13,7 @@ import {
   type AutocompletePlace,
 } from '@/components/google/PlaceAutocomplete'
 import { createClient } from '@/lib/supabase/client'
+import { CopineDiscountField } from '@/components/onboarding/CopineDiscountField'
 import { CATEGORIES_MAP } from '@/lib/constants'
 import { formatVilleDisplay } from '@/lib/geo/city-centroids'
 import { COUNTRY_CODES, toE164, nationalDigits } from '@/lib/phone'
@@ -73,6 +74,9 @@ export default function GoogleOnboardingPage() {
   const [waDial, setWaDial] = useState('')
   const [waNumber, setWaNumber] = useState('')
   const [instagram, setInstagram] = useState('')
+  // Réduction copines Hilmy (mig 62). pct null = pas de réduction.
+  const [copineDiscountPct, setCopineDiscountPct] = useState<number | null>(null)
+  const [copineDiscountNote, setCopineDiscountNote] = useState('')
 
   useEffect(() => {
     const run = async () => {
@@ -162,6 +166,8 @@ export default function GoogleOnboardingPage() {
       site_web: details.website,
       tagline: tagline.trim() || null,
       description: description.trim() || null,
+      copine_discount_pct: copineDiscountPct,
+      copine_discount_note: copineDiscountNote.trim() || null,
       galerie: details.photos,
       photos: details.photos,
       services: [],
@@ -416,6 +422,13 @@ export default function GoogleOnboardingPage() {
                       className="line resize-none"
                     />
                   </Field>
+
+                  <CopineDiscountField
+                    pct={copineDiscountPct}
+                    note={copineDiscountNote}
+                    onPctChange={setCopineDiscountPct}
+                    onNoteChange={setCopineDiscountNote}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">

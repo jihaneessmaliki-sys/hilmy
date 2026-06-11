@@ -9,6 +9,7 @@ import { CardOverlayGated } from '@/components/v2/CardOverlayGated'
 import { GalleryAutoplayCarousel } from '@/components/v2/GalleryAutoplayCarousel'
 import { PalierBadge } from '@/components/v2/PalierBadge'
 import { PastilleSelectionHilmy } from '@/components/v2/PastilleSelectionHilmy'
+import { CopineDiscountBadge } from '@/components/v2/CopineDiscountBadge'
 import { categoriesPrestataires } from '@/lib/mock-data'
 import {
   getPublicPrestataire,
@@ -170,6 +171,14 @@ export default async function PrestatairePage({
                   </span>
                 ) : null}
               </div>
+              {pub.copine_discount_pct != null && (
+                <div className="mt-5 max-w-sm">
+                  <CopineDiscountBadge
+                    pct={pub.copine_discount_pct}
+                    note={pub.copine_discount_note}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
