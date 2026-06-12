@@ -96,7 +96,15 @@ function adaptPrestataireFromDb(p: DbPrestataire): MockPrestataire {
 // SSR : on fetch côté serveur via getAllPrestataires() qui strippe is_founder
 // et retourne le palier effectif. Aucune donnée brute is_founder ne transite
 // dans le bundle ni dans la JSON envoyée au client.
-export default async function AnnuairePage() {
+export default async function AnnuairePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; categorie?: string }>
+}) {
+  const sp = await searchParams
+  const initialQuery = sp.q ?? ''
+  const initialCategorie = sp.categorie ?? 'all'
+
   const { data, error } = await getAllPrestataires()
 
   if (error) {
@@ -124,5 +132,11 @@ export default async function AnnuairePage() {
   }))
   const sorted = sortByPalierThenServerOrder(adapted)
 
-  return <AnnuaireClient prestataires={sorted} />
+  return (
+    <AnnuaireClient
+      prestataires={sorted}
+      initialQuery={initialQuery}
+      initialCategorie={initialCategorie}
+    />
+  )
 }
