@@ -28,3 +28,20 @@ Shippé en Option A **sans attribution** : la carte affiche date + titre + ville
   - un **consentement explicite** sur ce qui est rendu public.
 - Technique : `events.user_id` → join `user_profiles` (pas de FK directe, PostgREST n'auto-embed pas → fetch 2 temps ou vue dédiée), + chemin de lecture **anon-safe** du pseudo (vue ou RLS anon).
 - Aujourd'hui `/evenements-v2` hardcode `organisatrice: 'HILMY'` — même bascule à prévoir là.
+
+## Texte verbatim des recos sur la vitrine publique
+
+**Origine :** sous-lot A2-b (bloc « Les copines recommandent » sur la landing publique).
+Shippé en Option A **sans texte** : la carte affiche lieu + ville + catégorie + note, pas
+le `comment` rédigé par la copine. La vue `recos_vitrine_public` (mig 63) n'expose
+volontairement **ni `comment`, ni `user_id`, ni `photo_urls`**.
+
+**À faire en Lot B :**
+- Surfacer l'**extrait du texte** de la reco sur la carte vitrine (landing + détail lieu).
+- Prérequis bloquants avant tout rendu public du texte :
+  - **modération** du contenu — le `comment` peut contenir des mots à ne jamais rendre
+    dans l'UI publique (ex. « halal » → règle CLAUDE.md : aucune référence Muslim/halal/Islam) ;
+  - un **pseudo public** choisi par l'autrice (même brique que l'attribution events) ;
+  - un **consentement explicite** sur la mise en avant publique de son témoignage.
+- Technique : étendre la vue (ou une vue sœur) avec un `comment` **modéré/tronqué** +
+  pseudo anon-safe ; ne jamais joindre le `comment` brut au HTML anonyme.
