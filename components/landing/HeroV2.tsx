@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { GoldLine } from '@/components/ui/GoldLine'
+import { HeroSearch } from '@/components/landing/HeroSearch'
 
 /* ─────────────────────────────────────────────────────────
    SYSTÈME DE SWITCH — change HERO_VARIANT pour tester
@@ -107,9 +108,10 @@ export function HeroV2({ variant }: { variant?: VariantKey } = {}) {
         },
   }
 
-  // Délai après fin du stagger H1 pour sous-titre + CTA
+  // Délai après fin du stagger H1 pour sous-titre + recherche + CTA
   const subDelay = 0.6 * speed
-  const ctaDelay = 1.2 * speed
+  const searchDelay = 0.9 * speed
+  const ctaDelay = 1.3 * speed
   // Shimmer démarre juste après que tous les mots soient apparus
   const shimmerDelay = 0.1 + words.length * 0.08 * speed + 0.1
 
@@ -244,6 +246,21 @@ export function HeroV2({ variant }: { variant?: VariantKey } = {}) {
         >
           {sub}
         </motion.p>
+
+        {/* Recherche — barre + chips d'aiguillage */}
+        <motion.div
+          initial={shouldReduceMotion ? undefined : { opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{
+            duration: 0.5 * speed,
+            delay: searchDelay,
+            ease: 'easeOut',
+          }}
+          className="flex w-full justify-center"
+        >
+          <HeroSearch />
+        </motion.div>
 
         {/* CTAs — scale léger à la fin */}
         <motion.div

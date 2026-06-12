@@ -45,3 +45,18 @@ volontairement **ni `comment`, ni `user_id`, ni `photo_urls`**.
   - un **consentement explicite** sur la mise en avant publique de son témoignage.
 - Technique : étendre la vue (ou une vue sœur) avec un `comment` **modéré/tronqué** +
   pseudo anon-safe ; ne jamais joindre le `comment` brut au HTML anonyme.
+
+## A2-a-bis — Support `?q=` (et `?categorie=`) sur les événements
+
+**Origine :** sous-lot A2-a (barre de recherche du hero, aiguilleur de destination).
+La barre route vers `/annuaire?q=` (prestataires) et `/recommandations?categorie=…&q=`
+(lieux). Pour les **événements**, la chip « Événements » fait une **navigation immédiate**
+vers `/evenements-v2` **sans transmettre le terme** : la page events ne lit aujourd'hui
+que `?seasonal=<slug>` (pas de `?q=` ni `?categorie=`).
+
+**À faire (petit patch) :**
+- Faire lire à `/evenements-v2` un param `?q=` (filtre texte client sur titre + ville +
+  description) et éventuellement `?categorie=<event_type>`, sur le même modèle que les
+  patchs annuaire/recommandations.
+- Puis basculer la chip « Événements » du hero en mode **sélection + submit** (comme les
+  autres chips) pour transmettre le terme tapé, au lieu de la navigation immédiate.

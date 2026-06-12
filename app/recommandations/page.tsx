@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PageShell } from '@/components/v2/PageShell'
 import { PageHero } from '@/components/v2/PageHero'
@@ -44,8 +45,40 @@ function adaptPlaceFromDb(p: Place): MockLieu {
   }
 }
 
+/** Normalise pour une recherche insensible à la casse ET aux accents. */
+const normalise = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+
+// useSearchParams() exige une frontière <Suspense> (Next). Le contenu réel
+// vit dans RecommandationsContent ; l'export default ne fait que l'envelopper.
 export default function RecommandationsPage() {
-  const [categorie, setCategorie] = useState('all')
+  return (
+    <Suspense
+      fallback={
+        <PageShell>
+          <PageHero
+            number="02"
+            kicker="Les recommandations"
+            titre={<>Les adresses qui passent de main en main.</>}
+          />
+          <SkeletonListGrid count={6} />
+        </PageShell>
+      }
+    >
+      <RecommandationsContent />
+    </Suspense>
+  )
+}
+
+function RecommandationsContent() {
+  const searchParams = useSearchParams()
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
+  const [categorie, setCategorie] = useState(
+    () => searchParams.get('categorie') ?? 'all',
+  )
   const [ville, setVille] = useState('all')
 
   const [loading, setLoading] = useState(true)
@@ -115,12 +148,15 @@ export default function RecommandationsPage() {
   const dataSource = liveLieux
 
   const filtered = useMemo(() => {
+    const q = normalise(query.trim())
     return dataSource.filter((l) => {
       if (categorie !== 'all' && l.categorie !== categorie) return false
       if (ville !== 'all' && l.ville !== ville) return false
+      if (q && !normalise(`${l.nom} ${l.ville} ${l.description}`).includes(q))
+        return false
       return true
     })
-  }, [dataSource, categorie, ville])
+  }, [dataSource, query, categorie, ville])
 
   const villesPresentes = Array.from(new Set(dataSource.map((l) => l.ville)))
   const villesOptions = villesPresentes
@@ -128,6 +164,7 @@ export default function RecommandationsPage() {
     .map((v) => ({ value: v, label: v }))
 
   const reset = () => {
+    setQuery('')
     setCategorie('all')
     setVille('all')
   }
@@ -204,6 +241,32 @@ export default function RecommandationsPage() {
           </span>
         </Link>
       </PageHero>
+
+      <div className="mx-auto max-w-container px-4 pt-8 sm:px-6 md:px-20">
+        <div className="flex items-center gap-2 rounded-full border border-or/30 bg-blanc px-5 py-1.5 shadow-[0_10px_30px_-20px_rgba(15,61,46,0.4)]">
+          <span aria-hidden="true" className="text-texte-sec/50">
+            ⌕
+          </span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Cherche par nom, ville…"
+            aria-label="Rechercher un lieu"
+            className="min-w-0 flex-1 bg-transparent py-2 text-[15px] text-vert outline-none placeholder:text-texte-sec/50"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Effacer la recherche"
+              className="shrink-0 px-2 text-texte-sec/60 transition-colors hover:text-vert"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
 
       <FiltersBar
         resultCount={filtered.length}
