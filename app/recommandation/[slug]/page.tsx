@@ -473,14 +473,15 @@ export default async function RecommandationPage({
                     Recommandé par {recoViews.length} cop
                     {recoViews.length > 1 ? 'ines' : 'ine'}
                   </p>
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {/* Texte simple, pas de pastille : en attendant les profils
+                      publics (Lot B), ce bloc ne doit PAS paraître cliquable.
+                      Aucun lien, aucun pointer — cursor-default explicite. */}
+                  <div className="mt-4 flex cursor-default flex-col gap-3">
                     {recoViews.map((r) => (
-                      <div
-                        key={r.id}
-                        className="flex items-center gap-2 rounded-full border border-or/20 bg-creme-soft px-3 py-1.5"
-                      >
+                      <div key={r.id} className="flex items-center gap-2">
                         <span
-                          className="h-6 w-6 rounded-full ring-1 ring-or/30"
+                          aria-hidden="true"
+                          className="h-6 w-6 shrink-0 rounded-full ring-1 ring-or/30"
                           style={{ background: r.avatar }}
                         />
                         <span className="text-[12px] font-medium text-vert">
