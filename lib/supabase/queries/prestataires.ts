@@ -224,6 +224,40 @@ export async function getPublicPrestataire(
   }
 }
 
+/**
+ * Liste publique des prestataires ayant renseigné une réduction copines
+ * (`copine_discount_pct` non null). Projection PUBLIQUE (même garanties que
+ * getPublicPrestataire : pas de whatsapp/email/phone, is_founder strippé,
+ * palier effectif). Alimente le bloc « Réductions copines » de l'accueil
+ * anonyme — la section se masque d'elle-même si la liste est vide.
+ */
+export async function getPrestatairesCopineDiscount(
+  limit = 6,
+): Promise<QueryResult<PublicPrestataire[]>> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(PUBLIC_PRESTATAIRE_SELECT)
+      .not('copine_discount_pct', 'is', null)
+      // Modèle B : visibilité gérée par la RLS (fiche visible dès paiement)
+      .order('approved_at', { ascending: false, nullsFirst: false })
+      .limit(limit)
+
+    if (error) return { data: null, error: error.message }
+    const rows = (data ?? []) as unknown as (PublicPrestataire & {
+      is_founder?: boolean
+    })[]
+    const mapped = rows.map(({ is_founder, palier, ...rest }) => ({
+      ...rest,
+      palier: getEffectivePalier({ palier, is_founder }),
+    })) as PublicPrestataire[]
+    return { data: mapped, error: null }
+  } catch (err) {
+    return { data: null, error: errorMessage(err) }
+  }
+}
+
 /** Récupère une prestataire par son slug. Renvoie null si introuvable. */
 export async function getPrestataireBySlug(
   slug: string
