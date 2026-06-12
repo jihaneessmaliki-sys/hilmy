@@ -68,7 +68,10 @@ export function Navigation({
           HILMY
         </Link>
 
-        <div className="hidden items-center gap-10 md:flex">
+        {/* Barre de liens : visible à partir de lg (1024) seulement. En dessous,
+            la nav retombe sur logo + bouton (la zone 768–1023 ne pouvait pas tenir
+            8 liens + cluster auth sur une rangée sans déborder). */}
+        <div className="hidden items-center gap-5 lg:flex xl:gap-7">
           {[
             // Lien Accueil explicite en tête : le logo seul ne suffit pas
             // comme repère de retour. Même cible que le logo (espace connecté
@@ -94,18 +97,15 @@ export function Navigation({
                   },
                 ]
               : []),
-            // Lien dashboard visible uniquement pour les comptes prestataire.
-            // Approximation via signupType (set au signup) — si la fiche n'existe
-            // pas encore, /mon-espace redirige proprement vers /onboarding.
-            ...(user?.user_metadata?.signupType === 'provider'
-              ? [{ href: '/mon-espace', label: 'Mon espace' }]
-              : []),
+            // NB : pas de lien texte « Mon espace » ici — il ferait doublon avec
+            // le bouton doré « Mon espace » à droite (cluster auth), qui pointe
+            // déjà vers le dashboard du compte connecté.
             { href: '/manifeste', label: 'À propos' },
           ].map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-[13px] transition-colors ${
+              className={`whitespace-nowrap text-[12px] transition-colors xl:text-[13px] ${
                 scrolled ? 'text-vert hover:text-or' : 'text-creme hover:text-or-light'
               }`}
             >
@@ -132,7 +132,7 @@ export function Navigation({
               {isCopine && <CopineBadge copineSince={copineSince} size={14} />}
               <Link
                 href={dashboardPathFor(user)}
-                className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[13px] font-semibold transition-all ${
+                className={`inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-full border px-5 text-[13px] font-semibold transition-all ${
                   scrolled
                     ? 'border-vert text-vert hover:bg-vert hover:text-creme'
                     : 'border-or text-or hover:bg-or hover:text-vert'
@@ -146,7 +146,7 @@ export function Navigation({
             <>
               <Link
                 href="/auth/login"
-                className={`hidden text-[13px] transition-colors md:inline-flex ${
+                className={`hidden whitespace-nowrap text-[13px] transition-colors md:inline-flex ${
                   scrolled ? 'text-vert hover:text-or' : 'text-creme hover:text-or-light'
                 }`}
               >
@@ -154,7 +154,7 @@ export function Navigation({
               </Link>
               <Link
                 href="/auth/signup"
-                className={`inline-flex h-11 items-center rounded-full border px-5 text-[13px] font-semibold transition-all ${
+                className={`inline-flex h-11 items-center whitespace-nowrap rounded-full border px-5 text-[13px] font-semibold transition-all ${
                   scrolled
                     ? 'border-vert text-vert hover:bg-vert hover:text-creme'
                     : 'border-or text-or hover:bg-or hover:text-vert'
