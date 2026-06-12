@@ -56,6 +56,62 @@ export async function getAllEvents(): Promise<QueryResult<HilmyEvent[]>> {
   }
 }
 
+/**
+ * Champs PUBLICS d'un événement — exposés sans login dans le HTML anonyme
+ * de la landing. SÉCURITÉ : on n'expose PAS `user_id` (créatrice),
+ * `external_signup_url`, ni aucune méta interne.
+ *
+ * ⚠️ `flyer_url` est volontairement EXCLU : le chemin de stockage des
+ * flyers contient le `user_id` de la créatrice
+ * (`event-flyers/<user_id>/<ts>.png`) — l'afficher ferait fuiter cet
+ * identifiant dans le HTML anonyme. À réintroduire en Lot B une fois le
+ * storage re-keyé (chemins sans user_id). L'attribution
+ * « Ajouté par [prénom] » est elle aussi repoussée au Lot B
+ * (profils + pseudo public + consentement).
+ */
+const PUBLIC_EVENT_SELECT = `
+  id,
+  title,
+  slug,
+  start_date,
+  city
+`;
+
+export type PublicEvent = {
+  id: string;
+  title: string;
+  slug: string | null;
+  start_date: string;
+  city: string | null;
+};
+
+/**
+ * Les N prochains événements publiés (à venir), triés par date croissante.
+ * Projection PUBLIQUE anonyme-safe (pas de user_id ni de donnée perso).
+ * Alimente le bloc « Événements de la commu » de l'accueil anonyme — la
+ * section se masque d'elle-même si la liste est vide.
+ */
+export async function getProchainEvents(
+  limit = 3
+): Promise<QueryResult<PublicEvent[]>> {
+  try {
+    const supabase = await createClient();
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("events")
+      .select(PUBLIC_EVENT_SELECT)
+      .eq("status", "published")
+      .gte("start_date", now)
+      .order("start_date", { ascending: true })
+      .limit(limit);
+
+    if (error) return { data: null, error: error.message };
+    return { data: (data ?? []) as unknown as PublicEvent[], error: null };
+  } catch (err) {
+    return { data: null, error: errorMessage(err) };
+  }
+}
+
 /** Liste uniquement les événements à venir. */
 export async function getUpcomingEvents(): Promise<QueryResult<HilmyEvent[]>> {
   try {
