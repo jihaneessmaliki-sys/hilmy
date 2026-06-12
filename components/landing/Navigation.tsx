@@ -70,9 +70,16 @@ export function Navigation({
 
         <div className="hidden items-center gap-10 md:flex">
           {[
+            // Lien Accueil explicite en tête : le logo seul ne suffit pas
+            // comme repère de retour. Même cible que le logo (espace connecté
+            // vs landing publique).
+            { href: user ? '/accueil' : '/', label: 'Accueil' },
             { href: '/annuaire', label: "L'annuaire" },
             { href: '/recommandations', label: 'Recommandations' },
             { href: '/evenements-v2', label: 'Événements' },
+            // Module « Je cherche » (feed des copines). La liste est
+            // anon-accessible (SSR public), donc pas de redirect login ici.
+            { href: '/je-cherche', label: 'Je cherche' },
             { href: '/tarifs', label: 'Tarifs' },
             // Lien Pass Copine — visible si user connectée non-prestataire
             // (les prestataires ont leur propre flow d'abo dans /tarifs).
