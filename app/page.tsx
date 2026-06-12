@@ -5,6 +5,7 @@ import { StartingPoint } from '@/components/landing/StartingPoint'
 import { ThreePromises } from '@/components/landing/ThreePromises'
 import { ElleProfiles } from '@/components/landing/ElleProfiles'
 import { CopineDiscountsSection } from '@/components/landing/CopineDiscountsSection'
+import { EvenementsSection } from '@/components/landing/EvenementsSection'
 import { Manifesto } from '@/components/landing/Manifesto'
 import { TeamCherche } from '@/components/landing/TeamCherche'
 import { PricingTeaser } from '@/components/landing/PricingTeaser'
@@ -46,6 +47,7 @@ export default function HomePage() {
         <ThreePromises />
         <ElleProfiles />
         <CopineDiscountsSection />
+        <EvenementsSection />
         <TeamCherche variant="public" />
         <PricingTeaser />
         <FAQ />
