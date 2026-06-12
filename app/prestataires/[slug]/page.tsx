@@ -367,12 +367,12 @@ export default async function PrestatairePage({
                         WhatsApp · {priv.whatsapp}
                       </a>
                     )}
-                    {priv.phone_public && (
+                    {(priv.phone_public || priv.whatsapp) && (
                       <a
-                        href={`tel:${priv.phone_public}`}
+                        href={`tel:${priv.phone_public || priv.whatsapp}`}
                         className="block rounded-full border border-or/40 px-5 py-3 text-center text-[14px] text-vert transition-colors hover:bg-creme-soft"
                       >
-                        📞 {priv.phone_public}
+                        📞 {priv.phone_public || priv.whatsapp}
                       </a>
                     )}
                     {priv.email && (
