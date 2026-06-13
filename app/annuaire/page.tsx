@@ -80,6 +80,7 @@ function adaptPrestataireFromDb(p: DbPrestataire): MockPrestataire {
     metier,
     categorie: p.categorie,
     ville: p.ville,
+    pays: p.pays ?? null,
     note: p.note_moyenne ?? 0,
     avis: p.nb_avis ?? 0,
     prix: (p.prix_gamme as '€' | '€€' | '€€€') ?? '€€',

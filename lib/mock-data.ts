@@ -50,6 +50,67 @@ export const villesSuggestions: string[] = [
   "Monte-Carlo",
 ];
 
+// ─── Filtres géo dynamiques (Pays / Ville) ────────────────────────
+// Les options Pays + Ville sont calculées en DISTINCT sur les données
+// RÉELLES (lieux/prestataires), jamais sur une liste figée. Un nouveau
+// pays/ville en base apparaît donc tout seul dans les filtres.
+// `villesSuggestions` ci-dessus ne sert plus que d'ordre d'affichage soft.
+export const PAYS_NON_PRECISE = "__none__";
+export const PAYS_NON_PRECISE_LABEL = "Pays non précisé";
+
+type GeoItem = { ville?: string | null; pays?: string | null };
+
+/** Bucket pays d'un item : pays non vide, sinon sentinelle "non précisé". */
+export function paysBucket(item: GeoItem): string {
+  const p = (item.pays ?? "").trim();
+  return p || PAYS_NON_PRECISE;
+}
+
+/**
+ * Construit les options de filtres géo depuis les données réelles.
+ * Retourne :
+ *  - `paysOptions` : pays distincts présents (ordre alpha FR, "non précisé" en
+ *    dernier) — à passer en chips.
+ *  - `villesByPays` : Map pays → villes distinctes triées (ordre alpha FR), pour
+ *    alimenter le dropdown selon le pays sélectionné.
+ *  - `allVilles` : toutes les villes distinctes (pays = "all").
+ */
+export function buildGeoFilters(items: GeoItem[]): {
+  paysOptions: { value: string; label: string }[];
+  villesByPays: Map<string, string[]>;
+  allVilles: string[];
+} {
+  const sets = new Map<string, Set<string>>();
+  const all = new Set<string>();
+  for (const it of items) {
+    const pays = paysBucket(it);
+    const ville = (it.ville ?? "").trim();
+    if (!sets.has(pays)) sets.set(pays, new Set());
+    if (ville) {
+      sets.get(pays)!.add(ville);
+      all.add(ville);
+    }
+  }
+  const paysList = Array.from(sets.keys()).sort((a, b) => {
+    if (a === PAYS_NON_PRECISE) return 1;
+    if (b === PAYS_NON_PRECISE) return -1;
+    return a.localeCompare(b, "fr");
+  });
+  const paysOptions = paysList.map((p) => ({
+    value: p,
+    label: p === PAYS_NON_PRECISE ? PAYS_NON_PRECISE_LABEL : p,
+  }));
+  const villesByPays = new Map<string, string[]>();
+  for (const [pays, set] of sets) {
+    villesByPays.set(
+      pays,
+      Array.from(set).sort((a, b) => a.localeCompare(b, "fr")),
+    );
+  }
+  const allVilles = Array.from(all).sort((a, b) => a.localeCompare(b, "fr"));
+  return { paysOptions, villesByPays, allVilles };
+}
+
 // ─── Catégories alignées sur le schéma DB (profiles.categorie) ─────
 // 11 catégories prestataires — CHECK constraint en base
 // (01_alter_profiles.sql + 21_categorie_conseilleres.sql).
@@ -94,6 +155,9 @@ export type Prestataire = {
   metier: string;
   categorie: string;
   ville: Ville;
+  /** Pays — source DB `profiles.pays`. Peut être vide pour les fiches legacy
+   *  (backfill PR2) → bucket "Pays non précisé" dans les filtres. */
+  pays?: string | null;
   note: number;
   avis: number;
   prix: "€" | "€€" | "€€€";
@@ -364,6 +428,9 @@ export type Lieu = {
   nom: string;
   categorie: string;
   ville: Ville;
+  /** Pays — source DB `places.country` (capturé auto via Google Places à la
+   *  création). Optionnel côté type pour compat ; en pratique 100% rempli. */
+  pays?: string | null;
   adresse: string;
   description: string;
   cover: string;

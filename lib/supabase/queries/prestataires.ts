@@ -24,9 +24,9 @@ import type {
 import { getEffectivePalier } from "@/lib/permissions";
 
 // ⚠️ On ne sélectionne que les colonnes qui existent vraiment dans la DB.
-// Les champs pays/region/code_postal/zone_intervention du type TS Prestataire
-// sont absents de la table `profiles` actuelle — ils resteront undefined
-// côté consumer (ALTER à ajouter via une future migration si besoin).
+// `pays` existe en base (alimente le filtre Pays dynamique de l'annuaire). Les
+// champs region/code_postal/zone_intervention du type TS Prestataire sont en
+// revanche absents de `profiles` — ils resteront undefined côté consumer.
 const PRESTATAIRE_SELECT = `
   id,
   user_id,
@@ -36,6 +36,7 @@ const PRESTATAIRE_SELECT = `
   slug,
   categorie,
   ville,
+  pays,
   description,
   tagline,
   whatsapp,
