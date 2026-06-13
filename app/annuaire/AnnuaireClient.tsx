@@ -9,7 +9,8 @@ import { FiltersBar } from '@/components/v2/FiltersBar'
 import { PrestataireCard } from '@/components/v2/PrestataireCard'
 import { LiveEmptyState } from '@/components/v2/LiveStates'
 import {
-  villesSuggestions,
+  buildGeoFilters,
+  paysBucket,
   categoriesPrestataires,
   type Prestataire as MockPrestataire,
 } from '@/lib/mock-data'
@@ -34,6 +35,7 @@ export function AnnuaireClient({
 }: Props) {
   const [query, setQuery] = useState(initialQuery)
   const [categorie, setCategorie] = useState(initialCategorie)
+  const [pays, setPays] = useState('all')
   const [ville, setVille] = useState('all')
   const [note, setNote] = useState('all')
 
@@ -43,6 +45,7 @@ export function AnnuaireClient({
     const q = normalise(query.trim())
     return dataSource.filter((p) => {
       if (categorie !== 'all' && p.categorie !== categorie) return false
+      if (pays !== 'all' && paysBucket(p) !== pays) return false
       if (ville !== 'all' && p.ville !== ville) return false
       if (note === '45' && p.note < 4.5) return false
       if (note === '48' && p.note < 4.8) return false
@@ -53,16 +56,25 @@ export function AnnuaireClient({
         return false
       return true
     })
-  }, [dataSource, query, categorie, ville, note])
+  }, [dataSource, query, categorie, pays, ville, note])
 
-  const villesPresentes = Array.from(new Set(dataSource.map((p) => p.ville)))
-  const villesOptions = villesPresentes
-    .sort((a, b) => villesSuggestions.indexOf(a) - villesSuggestions.indexOf(b))
-    .map((v) => ({ value: v, label: v }))
+  // Options Pays/Ville calculées en DISTINCT sur les données réelles (dynamique).
+  const { paysOptions, villesByPays, allVilles } = useMemo(
+    () => buildGeoFilters(dataSource),
+    [dataSource],
+  )
+  const villesForPays = pays === 'all' ? allVilles : (villesByPays.get(pays) ?? [])
+
+  // Changer de pays remet la ville à « toutes ».
+  const onPaysChange = (v: string) => {
+    setPays(v)
+    setVille('all')
+  }
 
   const reset = () => {
     setQuery('')
     setCategorie('all')
+    setPays('all')
     setVille('all')
     setNote('all')
   }
@@ -160,11 +172,22 @@ export function AnnuaireClient({
             ],
           },
           {
+            id: 'pays',
+            label: 'Pays',
+            value: pays,
+            onChange: onPaysChange,
+            options: [{ value: 'all', label: 'Tous' }, ...paysOptions],
+          },
+          {
             id: 'ville',
             label: 'Ville',
             value: ville,
             onChange: setVille,
-            options: [{ value: 'all', label: 'Toutes' }, ...villesOptions],
+            variant: 'dropdown',
+            options: [
+              { value: 'all', label: 'Toutes les villes' },
+              ...villesForPays.map((v) => ({ value: v, label: v })),
+            ],
           },
           {
             id: 'note',

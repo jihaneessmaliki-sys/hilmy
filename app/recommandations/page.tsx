@@ -15,7 +15,8 @@ import {
 } from '@/components/v2/LiveStates'
 import {
   categoriesLieux,
-  villesSuggestions,
+  buildGeoFilters,
+  paysBucket,
   type Lieu as MockLieu,
 } from '@/lib/mock-data'
 import { createClient } from '@/lib/supabase/client'
@@ -35,6 +36,7 @@ function adaptPlaceFromDb(p: Place): MockLieu {
     nom: p.name,
     categorie: p.hilmy_category ?? 'restos-cafes',
     ville: p.city ?? '',
+    pays: p.country ?? null,
     adresse: p.address ?? '',
     description: p.description ?? '',
     cover,
@@ -79,6 +81,7 @@ function RecommandationsContent() {
   const [categorie, setCategorie] = useState(
     () => searchParams.get('categorie') ?? 'all',
   )
+  const [pays, setPays] = useState('all')
   const [ville, setVille] = useState('all')
 
   const [loading, setLoading] = useState(true)
@@ -151,21 +154,32 @@ function RecommandationsContent() {
     const q = normalise(query.trim())
     return dataSource.filter((l) => {
       if (categorie !== 'all' && l.categorie !== categorie) return false
+      if (pays !== 'all' && paysBucket(l) !== pays) return false
       if (ville !== 'all' && l.ville !== ville) return false
       if (q && !normalise(`${l.nom} ${l.ville} ${l.description}`).includes(q))
         return false
       return true
     })
-  }, [dataSource, query, categorie, ville])
+  }, [dataSource, query, categorie, pays, ville])
 
-  const villesPresentes = Array.from(new Set(dataSource.map((l) => l.ville)))
-  const villesOptions = villesPresentes
-    .sort((a, b) => villesSuggestions.indexOf(a) - villesSuggestions.indexOf(b))
-    .map((v) => ({ value: v, label: v }))
+  // Options Pays/Ville calculées en DISTINCT sur les données réelles (dynamique).
+  const { paysOptions, villesByPays, allVilles } = useMemo(
+    () => buildGeoFilters(dataSource),
+    [dataSource],
+  )
+  const villesForPays = pays === 'all' ? allVilles : (villesByPays.get(pays) ?? [])
+
+  // Changer de pays remet la ville à « toutes » (la ville d'avant peut ne plus
+  // appartenir au nouveau pays).
+  const onPaysChange = (v: string) => {
+    setPays(v)
+    setVille('all')
+  }
 
   const reset = () => {
     setQuery('')
     setCategorie('all')
+    setPays('all')
     setVille('all')
   }
 
@@ -286,11 +300,22 @@ function RecommandationsContent() {
             ],
           },
           {
+            id: 'pays',
+            label: 'Pays',
+            value: pays,
+            onChange: onPaysChange,
+            options: [{ value: 'all', label: 'Tous' }, ...paysOptions],
+          },
+          {
             id: 'ville',
             label: 'Ville',
             value: ville,
             onChange: setVille,
-            options: [{ value: 'all', label: 'Toutes' }, ...villesOptions],
+            variant: 'dropdown',
+            options: [
+              { value: 'all', label: 'Toutes les villes' },
+              ...villesForPays.map((v) => ({ value: v, label: v })),
+            ],
           },
         ]}
       />

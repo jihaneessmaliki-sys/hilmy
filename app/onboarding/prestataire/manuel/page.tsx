@@ -208,6 +208,7 @@ export default function ManuelOnboardingPage() {
       nom: nom.trim(),
       slug,
       categorie,
+      pays: pays.trim() || null,
       ville: formatVilleDisplay(ville.trim()) ?? ville.trim(),
       whatsapp: toE164(waDial, waNumber),
       phone_public: phonePublic.trim() || null,
