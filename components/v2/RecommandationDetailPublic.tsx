@@ -7,6 +7,8 @@ import { categoriesLieux, type Lieu as MockLieu } from '@/lib/mock-data'
 import { isSelectionHilmy } from '@/lib/permissions-lieux'
 import { DIET_TAGS_MAP, dietTagLabel, recTagLabel } from '@/lib/constants'
 import { formatRating, copineWord } from '@/lib/reco-format'
+import { CommunityPhotosSection } from '@/components/v2/CommunityPhotosSection'
+import type { CommunityPhoto } from '@/components/v2/CommunityPhotos'
 import type {
   PublicPlaceDetail,
   PublicPlaceReco,
@@ -88,10 +90,14 @@ export function RecommandationDetailPublic({
   detail,
   recos,
   similaires,
+  communityPhotos,
 }: {
   detail: PublicPlaceDetail
   recos: PublicPlaceReco[]
   similaires: PublicPlaceDetail[]
+  // Galerie communauté (vue anon-safe place_public_photos). Signalement INDIRECT
+  // ici (anonyme) → canReport=false, le bouton renvoie vers l'inscription.
+  communityPhotos: CommunityPhoto[]
 }) {
   const photosArr = Array.isArray(detail.photos) ? detail.photos : []
   const coverUrl =
@@ -235,6 +241,17 @@ export function RecommandationDetailPublic({
                       />
                     ))}
                   </div>
+                </FadeInSection>
+              )}
+
+              {communityPhotos.length > 0 && (
+                <FadeInSection>
+                  <CommunityPhotosSection
+                    photos={communityPhotos}
+                    canReport={false}
+                    loginHref={signupHref}
+                    placeName={detail.name}
+                  />
                 </FadeInSection>
               )}
 

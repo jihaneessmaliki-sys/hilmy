@@ -10,6 +10,8 @@ import { LieuCard } from '@/components/v2/LieuCard'
 import { VideoPlayer } from '@/components/v2/VideoPlayer'
 import { AddRecoModal } from '@/components/v2/AddRecoModal'
 import { PhotoGallery } from '@/components/v2/PhotoGallery'
+import { CommunityPhotosSection } from '@/components/v2/CommunityPhotosSection'
+import type { CommunityPhoto } from '@/components/v2/CommunityPhotos'
 import type { ExistingReco } from '@/components/v2/RecoForm'
 import { categoriesLieux, type Lieu as MockLieu } from '@/lib/mock-data'
 import { isSelectionHilmy } from '@/lib/permissions-lieux'
@@ -60,12 +62,16 @@ export function RecommandationDetail({
   heroPriceMode,
   currentUserId,
   myReco,
+  communityPhotos,
 }: {
   l: MockLieu
   row: Place
   recoViews: RecoView[]
   videoEntries: VideoEntry[]
   similaires: MockLieu[]
+  // Galerie communauté (vue anon-safe place_public_photos). Signalement DIRECT
+  // ici (connectée) → canReport=true.
+  communityPhotos: CommunityPhoto[]
   // Stats hero NATIVES Hilmy — lues depuis la MÊME source que la fiche
   // publique (vue place_public_detail) → valeur/format identiques à l'anon.
   heroRating: number | null
@@ -245,6 +251,17 @@ export function RecommandationDetail({
                         : 'aspect-square',
                     )}
                     ariaLabel={`${l.nom} en images`}
+                  />
+                </FadeInSection>
+              )}
+
+              {communityPhotos.length > 0 && (
+                <FadeInSection>
+                  <CommunityPhotosSection
+                    photos={communityPhotos}
+                    canReport
+                    loginHref=""
+                    placeName={l.nom}
                   />
                 </FadeInSection>
               )}

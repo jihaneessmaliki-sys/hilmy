@@ -44,6 +44,25 @@ export type PublicPlaceReco = {
   created_at: string;
 };
 
+/**
+ * Photo communauté publique. AUCUN champ identitaire (pas de user_id, prenom,
+ * recommendation_id) — la vue place_public_photos ne les expose pas. photo_id
+ * sert de clé React + cible du signalement (id de ligne photo, non-perso).
+ */
+export type PublicPlacePhoto = {
+  photo_id: string;
+  url: string;
+  created_at: string;
+};
+
+type PublicPlacePhotoRow = {
+  photo_id: string;
+  storage_path: string;
+  created_at: string;
+};
+
+const PHOTO_SELECT = "photo_id, storage_path, created_at";
+
 const DETAIL_SELECT =
   "place_slug, name, hilmy_category, google_category, city, country, address, latitude, longitude, description, main_photo_url, photos, palier, google_place_id, avg_rating, nb_avis, nb_copines, price_mode";
 
@@ -76,6 +95,32 @@ export async function getPublicPlaceRecos(
     .order("created_at", { ascending: false });
   if (error || !data) return [];
   return data as unknown as PublicPlaceReco[];
+}
+
+/**
+ * Photos PUBLIQUES de la communauté pour un lieu (galerie agrégée, plus
+ * récentes d'abord). Lit UNIQUEMENT la vue anon-safe `place_public_photos`
+ * (status='published', source `place_user_photos` — JAMAIS l'array legacy
+ * `recommendations.photo_urls`). L'URL publique est calculée CÔTÉ SERVEUR
+ * depuis le storage_path → rendu SSR indexable, aucune identité exposée.
+ */
+export async function getPublicPlacePhotos(
+  slug: string
+): Promise<PublicPlacePhoto[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("place_public_photos")
+    .select(PHOTO_SELECT)
+    .eq("place_slug", slug)
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return (data as unknown as PublicPlacePhotoRow[]).map((r) => ({
+    photo_id: r.photo_id,
+    created_at: r.created_at,
+    url: supabase.storage
+      .from("recommendation-photos")
+      .getPublicUrl(r.storage_path).data.publicUrl,
+  }));
 }
 
 /** Lieux similaires (même catégorie), pour le maillage interne SEO. */

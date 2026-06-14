@@ -21,7 +21,7 @@ export default async function AdminLayout({
   //   'published' OR owner)
   // → service_role pour avoir les vrais chiffres. Safe parce que
   // l'accès à ce layout est déjà gaté par le notFound() ci-dessus.
-  const [prestaCount, eventCount, recoCount, photoCount, reportCount, jeChercheSignalementsCount, pendingPerksCount] = await Promise.all([
+  const [prestaCount, eventCount, recoCount, photoCount, communityPhotoReportCount, reportCount, jeChercheSignalementsCount, pendingPerksCount] = await Promise.all([
     admin
       .from('profiles')
       .select('id', { count: 'exact', head: true })
@@ -39,6 +39,12 @@ export default async function AdminLayout({
       .from('place_user_photos')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'flagged'),
+    // PR-c : signalements communauté de photos (content_reports) en attente.
+    admin
+      .from('content_reports')
+      .select('id', { count: 'exact', head: true })
+      .eq('target_type', 'place_photo')
+      .eq('status', 'pending'),
     admin
       .from('recommendation_reports')
       .select('id', { count: 'exact', head: true })
@@ -74,6 +80,11 @@ export default async function AdminLayout({
       href: '/admin/photos-a-moderer',
       label: 'Photos de lieux',
       badge: photoCount.count ?? 0,
+    },
+    {
+      href: '/admin/photos-a-moderer?status=community',
+      label: 'Photos signalées',
+      badge: communityPhotoReportCount.count ?? 0,
     },
     {
       href: '/admin/signalements',

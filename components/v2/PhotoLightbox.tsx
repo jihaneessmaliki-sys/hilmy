@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 
 interface Props {
@@ -10,6 +10,12 @@ interface Props {
   onClose: () => void
   /** Label accessible du lightbox. */
   ariaLabel?: string
+  /**
+   * Slot d'action contextuelle rendu en bas à gauche de l'overlay, recalculé
+   * pour la photo affichée (ex : bouton « Signaler »). Reçoit l'index courant.
+   * Optionnel — aucun impact sur les usages existants (galerie, reco).
+   */
+  actionSlot?: (index: number) => ReactNode
 }
 
 /**
@@ -30,6 +36,7 @@ export function PhotoLightbox({
   startIndex,
   onClose,
   ariaLabel = 'Galerie photo',
+  actionSlot,
 }: Props) {
   const [index, setIndex] = useReducerIndex(startIndex, images.length)
 
@@ -158,6 +165,16 @@ export function PhotoLightbox({
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
+
+          {/* Action contextuelle (ex : signaler) — bas gauche, au-dessus du backdrop */}
+          {actionSlot && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-6 left-5 z-10"
+            >
+              {actionSlot(safeIndex)}
+            </div>
+          )}
 
           {/* Nav prev / next */}
           {hasMultiple && (
