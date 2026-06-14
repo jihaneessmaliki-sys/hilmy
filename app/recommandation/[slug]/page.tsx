@@ -5,6 +5,7 @@ import {
   type RecoView,
   type VideoEntry,
 } from '@/components/v2/RecommandationDetail'
+import type { ExistingReco } from '@/components/v2/RecoForm'
 import { RecommandationDetailPublic } from '@/components/v2/RecommandationDetailPublic'
 import type { Lieu as MockLieu } from '@/lib/mock-data'
 import {
@@ -230,6 +231,18 @@ export default async function RecommandationPage({
 
   const publicStats = await publicStatsPromise
 
+  // PR-a — SA reco existante sur ce lieu (le cas échéant) → édition vs ajout
+  // depuis la fiche. Filtre identique au verrou RLS (user_id = auth.uid()) ;
+  // .maybeSingle() car au plus une reco place par copine attendue côté produit.
+  const { data: myRecoRow } = await supabase
+    .from('recommendations')
+    .select('id, comment, rating, tags, price_indicator, photo_urls')
+    .eq('user_id', user.id)
+    .eq('place_id', row.id)
+    .eq('type', 'place')
+    .maybeSingle()
+  const myReco: ExistingReco | null = myRecoRow ?? null
+
   return (
     <RecommandationDetail
       l={l}
@@ -240,6 +253,8 @@ export default async function RecommandationPage({
       heroRating={publicStats?.avg_rating ?? null}
       heroNbCopines={publicStats?.nb_copines ?? 0}
       heroPriceMode={publicStats?.price_mode ?? null}
+      currentUserId={user.id}
+      myReco={myReco}
     />
   )
 }
