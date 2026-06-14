@@ -17,6 +17,12 @@ interface Props {
   gridClassName?: string
   /** Aspect ratio de chaque tuile. Défaut : aspect-square. */
   aspectClassName?: string
+  /**
+   * Classes par tuile (sérialisable : calculé côté serveur). Si fourni pour un
+   * index, remplace `aspectClassName` pour cette tuile — permet une mosaïque
+   * (1re photo en grand, col-span) tout en gardant le même lightbox partagé.
+   */
+  itemClassNames?: string[]
   /** Label accessible du lightbox (contexte : nom du lieu/prestataire). */
   ariaLabel?: string
 }
@@ -29,6 +35,7 @@ export function PhotoGallery({
   items,
   gridClassName = 'grid grid-cols-2 gap-3 md:grid-cols-4',
   aspectClassName = 'aspect-square',
+  itemClassNames,
   ariaLabel,
 }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
@@ -61,7 +68,7 @@ export function PhotoGallery({
                 key={i}
                 type="button"
                 onClick={() => setOpenIndex(photoIdx)}
-                className={`group relative ${aspectClassName} overflow-hidden rounded-sm focus:outline-none focus:ring-2 focus:ring-or`}
+                className={`group relative ${itemClassNames?.[i] ?? aspectClassName} overflow-hidden rounded-sm focus:outline-none focus:ring-2 focus:ring-or`}
                 aria-label={`Agrandir la photo ${photoIdx + 1} sur ${photoUrls.length}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -82,7 +89,7 @@ export function PhotoGallery({
           return (
             <div
               key={i}
-              className={`${aspectClassName} rounded-sm`}
+              className={`${itemClassNames?.[i] ?? aspectClassName} rounded-sm`}
               style={{
                 background: `linear-gradient(135deg, ${c} 0%, ${
                   items[(i + 1) % items.length] ?? c
