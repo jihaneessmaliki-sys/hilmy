@@ -1,14 +1,21 @@
-import { notFound, redirect } from 'next/navigation'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import {
   RecommandationDetail,
   type RecoView,
   type VideoEntry,
 } from '@/components/v2/RecommandationDetail'
+import { RecommandationDetailPublic } from '@/components/v2/RecommandationDetailPublic'
 import type { Lieu as MockLieu } from '@/lib/mock-data'
 import {
   getPlaceBySlug,
   getPlacesByCategorie,
 } from '@/lib/supabase/queries/places'
+import {
+  getPublicPlaceDetail,
+  getPublicPlaceRecos,
+  getPublicSimilar,
+} from '@/lib/supabase/queries/places-public'
 import { getRecommendationsByPlace } from '@/lib/supabase/queries/recommendations'
 import { getPlaceVideos } from '@/lib/supabase/queries/videos'
 import { getUserGamificationByUserIds } from '@/lib/supabase/queries/gamification'
@@ -64,6 +71,35 @@ function adaptDbPlace(p: Place): MockLieu {
   }
 }
 
+// SEO — métadonnées rendues côté serveur depuis la vue publique anon-safe.
+// Aucune donnée perso (nom du lieu, ville, description éditoriale).
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const detail = await getPublicPlaceDetail(slug)
+  if (!detail) return { title: 'Recommandation · Hilmy' }
+  const title = `${detail.name}${detail.city ? ` · ${detail.city}` : ''} — recommandé sur Hilmy`
+  const description =
+    detail.description?.slice(0, 155) ??
+    `${detail.name}${detail.city ? ` à ${detail.city}` : ''}, recommandé par la communauté Hilmy.`
+  const url = `/recommandation/${encodeURIComponent(slug)}`
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'article',
+      ...(detail.main_photo_url ? { images: [detail.main_photo_url] } : {}),
+    },
+  }
+}
+
 export default async function RecommandationPage({
   params,
 }: {
@@ -75,10 +111,28 @@ export default async function RecommandationPage({
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  // ── Branche ANONYME ────────────────────────────────────────────────
+  // Pas de session → rendu public allégé, branché UNIQUEMENT sur les vues
+  // anon-safe (place_public_detail / place_public_recos), jamais les tables.
+  // Le composant public ne connaît AUCUNE identité (cf. RecommandationDetailPublic).
   if (!user) {
-    redirect(`/auth/signup?redirect=/recommandation/${encodeURIComponent(slug)}`)
+    const detail = await getPublicPlaceDetail(slug)
+    if (!detail) notFound()
+    const [recos, similaires] = await Promise.all([
+      getPublicPlaceRecos(slug),
+      getPublicSimilar(detail.hilmy_category, slug),
+    ])
+    return (
+      <RecommandationDetailPublic
+        detail={detail}
+        recos={recos}
+        similaires={similaires}
+      />
+    )
   }
 
+  // ── Branche CONNECTÉE (rendu riche existant, inchangé) ──────────────
   const { data: row, error } = await getPlaceBySlug(slug)
   if (error || !row) notFound()
   const l: MockLieu = adaptDbPlace(row)
