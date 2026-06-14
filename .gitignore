@@ -49,3 +49,7 @@ parcours-utilisatrice.html
 hilmy-deploy.sh
 hilmy-fix.sh
 
+
+# Backups DB horodatés (données perso — JAMAIS committer)
+_hilmy_db_backups/
+supabase/.temp/

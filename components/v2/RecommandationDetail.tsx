@@ -8,6 +8,8 @@ import { GoldLine } from '@/components/ui/GoldLine'
 import { FadeInSection } from '@/components/ui/FadeInSection'
 import { LieuCard } from '@/components/v2/LieuCard'
 import { VideoPlayer } from '@/components/v2/VideoPlayer'
+import { AddRecoModal } from '@/components/v2/AddRecoModal'
+import type { ExistingReco } from '@/components/v2/RecoForm'
 import { categoriesLieux, type Lieu as MockLieu } from '@/lib/mock-data'
 import { isSelectionHilmy } from '@/lib/permissions-lieux'
 import { formatRating, copineWord } from '@/lib/reco-format'
@@ -55,6 +57,8 @@ export function RecommandationDetail({
   heroRating,
   heroNbCopines,
   heroPriceMode,
+  currentUserId,
+  myReco,
 }: {
   l: MockLieu
   row: Place
@@ -66,6 +70,10 @@ export function RecommandationDetail({
   heroRating: number | null
   heroNbCopines: number
   heroPriceMode: string | null
+  // Membre connectée (PR-a) : id pour l'ajout, + SA reco existante sur ce lieu
+  // (null si aucune) → bouton « Ajouter » vs « Modifier ma reco ».
+  currentUserId: string
+  myReco: ExistingReco | null
 }) {
   // Photos réelles (http) du lieu. La 1re sert de cover (background hero) ;
   // les suivantes alimentent la galerie « Le lieu en images ». Les entrées
@@ -404,6 +412,13 @@ export function RecommandationDetail({
                   </span>
                 </PlaceContactLink>
                 <div className="mt-3 flex flex-col gap-3">
+                  <AddRecoModal
+                    userId={currentUserId}
+                    placeId={row.id}
+                    placeName={l.nom}
+                    hilmyCategory={l.categorie}
+                    existingReco={myReco}
+                  />
                   <FavoriteButton
                     itemType="lieu"
                     itemId={row.id}
