@@ -9,6 +9,7 @@ import { FadeInSection } from '@/components/ui/FadeInSection'
 import { LieuCard } from '@/components/v2/LieuCard'
 import { VideoPlayer } from '@/components/v2/VideoPlayer'
 import { AddRecoModal } from '@/components/v2/AddRecoModal'
+import { PhotoGallery } from '@/components/v2/PhotoGallery'
 import type { ExistingReco } from '@/components/v2/RecoForm'
 import { categoriesLieux, type Lieu as MockLieu } from '@/lib/mock-data'
 import { isSelectionHilmy } from '@/lib/permissions-lieux'
@@ -235,23 +236,16 @@ export function RecommandationDetail({
                   grand, le reste en vignettes. Donne du corps visuel à la page. */}
               {galleryPhotos.length > 0 && (
                 <FadeInSection>
-                  <div className="grid grid-cols-2 gap-3 md:gap-4">
-                    {galleryPhotos.map((url, i) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={i}
-                        src={url}
-                        alt={`${l.nom} — photo ${i + 2}`}
-                        className={`w-full rounded-sm object-cover ${
-                          galleryPhotos.length === 1
-                            ? 'col-span-2 aspect-[16/9]'
-                            : i === 0
-                              ? 'col-span-2 aspect-[16/9]'
-                              : 'aspect-square'
-                        }`}
-                      />
-                    ))}
-                  </div>
+                  <PhotoGallery
+                    items={galleryPhotos}
+                    gridClassName="grid grid-cols-2 gap-3 md:gap-4"
+                    itemClassNames={galleryPhotos.map((_, i) =>
+                      galleryPhotos.length === 1 || i === 0
+                        ? 'col-span-2 aspect-[16/9]'
+                        : 'aspect-square',
+                    )}
+                    ariaLabel={`${l.nom} en images`}
+                  />
                 </FadeInSection>
               )}
 
@@ -357,17 +351,12 @@ export function RecommandationDetail({
                       )}
 
                       {r.photos.length > 0 && (
-                        <div className="mt-5 grid grid-cols-3 gap-2 md:grid-cols-4">
-                          {r.photos.map((url, i) => (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              key={i}
-                              src={url}
-                              alt=""
-                              className="aspect-square w-full rounded-sm object-cover"
-                            />
-                          ))}
-                        </div>
+                        <PhotoGallery
+                          items={r.photos}
+                          gridClassName="mt-5 grid grid-cols-3 gap-2 md:grid-cols-4"
+                          aspectClassName="aspect-square"
+                          ariaLabel={`Photos partagées par ${r.prenom}`}
+                        />
                       )}
                     </li>
                   ))}
