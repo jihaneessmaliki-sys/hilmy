@@ -133,6 +133,10 @@ export default async function RecommandationPage({
   }
 
   // ── Branche CONNECTÉE (rendu riche existant, inchangé) ──────────────
+  // Stats hero (note + nb copines + prix) lues depuis la MÊME vue anon-safe
+  // que la fiche publique → garantit des valeurs strictement identiques à ce
+  // que voit un visiteur anonyme. Lancé en parallèle (ne dépend que du slug).
+  const publicStatsPromise = getPublicPlaceDetail(slug)
   const { data: row, error } = await getPlaceBySlug(slug)
   if (error || !row) notFound()
   const l: MockLieu = adaptDbPlace(row)
@@ -224,6 +228,8 @@ export default async function RecommandationPage({
       .map(adaptDbPlace)
   }
 
+  const publicStats = await publicStatsPromise
+
   return (
     <RecommandationDetail
       l={l}
@@ -231,6 +237,9 @@ export default async function RecommandationPage({
       recoViews={recoViews}
       videoEntries={videoEntries}
       similaires={similaires}
+      heroRating={publicStats?.avg_rating ?? null}
+      heroNbCopines={publicStats?.nb_copines ?? 0}
+      heroPriceMode={publicStats?.price_mode ?? null}
     />
   )
 }

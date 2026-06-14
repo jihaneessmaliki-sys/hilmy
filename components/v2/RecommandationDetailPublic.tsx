@@ -6,6 +6,7 @@ import { LieuCard } from '@/components/v2/LieuCard'
 import { categoriesLieux, type Lieu as MockLieu } from '@/lib/mock-data'
 import { isSelectionHilmy } from '@/lib/permissions-lieux'
 import { DIET_TAGS_MAP, dietTagLabel, recTagLabel } from '@/lib/constants'
+import { formatRating, copineWord } from '@/lib/reco-format'
 import type {
   PublicPlaceDetail,
   PublicPlaceReco,
@@ -178,10 +179,10 @@ export function RecommandationDetailPublic({
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-creme">
               {detail.avg_rating !== null && (
                 <span className="text-[13px] tracking-[0.18em] uppercase">
-                  <span className="text-or">★</span> {detail.avg_rating}
+                  <span className="text-or">★</span> {formatRating(detail.avg_rating)}
                   <span className="text-creme/70">
                     {' · '}
-                    {detail.nb_copines} cop{detail.nb_copines > 1 ? 'ines' : 'ine'}
+                    {detail.nb_copines} {copineWord(detail.nb_copines)}
                   </span>
                 </span>
               )}

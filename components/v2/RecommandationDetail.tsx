@@ -10,6 +10,7 @@ import { LieuCard } from '@/components/v2/LieuCard'
 import { VideoPlayer } from '@/components/v2/VideoPlayer'
 import { categoriesLieux, type Lieu as MockLieu } from '@/lib/mock-data'
 import { isSelectionHilmy } from '@/lib/permissions-lieux'
+import { formatRating, copineWord } from '@/lib/reco-format'
 import type { GamificationStatut } from '@/lib/supabase/types'
 import type { Place } from '@/lib/supabase/types'
 
@@ -51,12 +52,20 @@ export function RecommandationDetail({
   recoViews,
   videoEntries,
   similaires,
+  heroRating,
+  heroNbCopines,
+  heroPriceMode,
 }: {
   l: MockLieu
   row: Place
   recoViews: RecoView[]
   videoEntries: VideoEntry[]
   similaires: MockLieu[]
+  // Stats hero NATIVES Hilmy — lues depuis la MÊME source que la fiche
+  // publique (vue place_public_detail) → valeur/format identiques à l'anon.
+  heroRating: number | null
+  heroNbCopines: number
+  heroPriceMode: string | null
 }) {
   // Photos réelles (http) du lieu. La 1re sert de cover (background hero) ;
   // les suivantes alimentent la galerie « Le lieu en images ». Les entrées
@@ -65,6 +74,10 @@ export function RecommandationDetail({
   const coverIsPhoto = placePhotos.length > 0 && l.galerie[0] === placePhotos[0]
   const galleryPhotos = coverIsPhoto ? placePhotos.slice(1) : placePhotos
   const soloReco = recoViews.length === 1
+  // Type lisible (catégorie Google), miroir exact de la fiche publique.
+  const typeLabel = row.google_category
+    ? row.google_category.replace(/_/g, ' ')
+    : null
 
   return (
     <PageShell>
@@ -119,6 +132,29 @@ export function RecommandationDetail({
             <h1 className="mt-5 font-serif text-display font-light leading-[0.95] text-creme">
               {l.nom}
             </h1>
+            {/* Note + prix NATIFS Hilmy (jamais Google) — IDENTIQUE à la fiche
+                publique : même source (place_public_detail), même format. */}
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-creme">
+              {heroRating !== null && (
+                <span className="text-[13px] tracking-[0.18em] uppercase">
+                  <span className="text-or">★</span> {formatRating(heroRating)}
+                  <span className="text-creme/70">
+                    {' · '}
+                    {heroNbCopines} {copineWord(heroNbCopines)}
+                  </span>
+                </span>
+              )}
+              {heroPriceMode && (
+                <span className="font-serif text-[15px] text-or">
+                  {heroPriceMode}
+                </span>
+              )}
+              {typeLabel && (
+                <span className="text-[11px] text-creme/60 capitalize">
+                  {typeLabel}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </section>
