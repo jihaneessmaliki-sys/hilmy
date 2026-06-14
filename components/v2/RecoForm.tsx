@@ -68,6 +68,13 @@ export function RecoForm({
   const [tags, setTags] = useState<string[]>(initialTags)
   const [dietTags, setDietTags] = useState<string[]>(initialDiets)
   const [photos, setPhotos] = useState<string[]>(existingReco?.photo_urls ?? [])
+  // PR-b : photos uploadées DANS CETTE session (path storage + url publique).
+  // Alimente place_user_photos (structure propre, source de vérité future).
+  // On conserve `photos` (urls) pour la double écriture photo_urls → le rendu
+  // connecté actuel reste inchangé. DETTE : photo_urls devra être retiré plus
+  // tard ; la lecture publique (PR-c) ne lira QUE place_user_photos, jamais
+  // l'array legacy.
+  const [newPhotos, setNewPhotos] = useState<{ path: string; url: string }[]>([])
   const [priceIndicator, setPriceIndicator] = useState(existingReco?.price_indicator ?? '')
   // Consentement frais demandé à CHAQUE enregistrement (jamais pré-coché, même
   // en édition) → preuve éclairée renouvelée. Bloquant uniquement si des photos
@@ -89,7 +96,11 @@ export function RecoForm({
     setUploading(true)
     onError(null)
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const path = `${userId}/${Date.now()}.${ext}`
+    // PR-b : path SANS user_id (anti-fuite d'identité dans l'URL publique).
+    // uuid plat ; la propriété du fichier est portée par la colonne `owner`
+    // (posée par Supabase à l'upload) → verrou écriture/suppression owner-only
+    // côté storage. Le place_id vit dans la colonne place_user_photos.place_id.
+    const path = `${crypto.randomUUID()}.${ext}`
     const { error: upErr } = await supabase.storage
       .from('recommendation-photos')
       .upload(path, file, { cacheControl: '3600' })
@@ -102,7 +113,27 @@ export function RecoForm({
       data: { publicUrl },
     } = supabase.storage.from('recommendation-photos').getPublicUrl(path)
     setPhotos((p) => [...p, publicUrl])
+    setNewPhotos((n) => [...n, { path, url: publicUrl }])
     setUploading(false)
+  }
+
+  // PR-b : enregistre dans place_user_photos les photos uploadées CETTE session.
+  // Double écriture (en plus de photo_urls) → structure propre côté table, rendu
+  // connecté inchangé. Best-effort : si l'insert échoue, la reco + photo_urls
+  // sont déjà sauvegardées (on ne casse pas l'enregistrement principal). La RLS
+  // INSERT (user_id = auth.uid()) verrouille à la base.
+  const savePlacePhotos = async (placeId: string, recommendationId: string) => {
+    if (newPhotos.length === 0) return
+    const { error } = await supabase.from('place_user_photos').insert(
+      newPhotos.map((ph) => ({
+        place_id: placeId,
+        user_id: userId,
+        recommendation_id: recommendationId,
+        storage_path: ph.path,
+        status: 'published',
+      })),
+    )
+    if (error) console.error('place_user_photos insert', error.message)
   }
 
   const submit = async () => {
@@ -137,11 +168,18 @@ export function RecoForm({
           photo_consent_at: photoConsentAt,
         })
         .eq('id', existingReco.id)
-      setSubmitting(false)
       if (updErr) {
+        setSubmitting(false)
         onError(updErr.message)
         return
       }
+      // Nouvelles photos ajoutées pendant l'édition → place_user_photos.
+      // resolvePlaceId() côté modale renvoie simplement le placeId (sans effet).
+      if (newPhotos.length > 0) {
+        const placeId = await resolvePlaceId()
+        if (placeId) await savePlacePhotos(placeId, existingReco.id)
+      }
+      setSubmitting(false)
       toast.success('Reco mise à jour', { duration: 4000 })
       onSuccess()
       return
@@ -154,24 +192,31 @@ export function RecoForm({
       return
     }
 
-    const { error: recoErr } = await supabase.from('recommendations').insert({
-      user_id: userId,
-      type: 'place',
-      place_id: placeId,
-      comment: comment.trim(),
-      rating: rating || null,
-      tags: mergedTags.length ? mergedTags : null,
-      price_indicator: priceIndicator || null,
-      photo_urls: photos.length ? photos : null,
-      photo_consent_at: photoConsentAt,
-      status: 'published',
-    })
+    const { data: inserted, error: recoErr } = await supabase
+      .from('recommendations')
+      .insert({
+        user_id: userId,
+        type: 'place',
+        place_id: placeId,
+        comment: comment.trim(),
+        rating: rating || null,
+        tags: mergedTags.length ? mergedTags : null,
+        price_indicator: priceIndicator || null,
+        photo_urls: photos.length ? photos : null,
+        photo_consent_at: photoConsentAt,
+        status: 'published',
+      })
+      .select('id')
+      .single()
 
-    setSubmitting(false)
     if (recoErr) {
+      setSubmitting(false)
       onError(recoErr.message)
       return
     }
+    // Double écriture place_user_photos (structure propre, rendu inchangé).
+    if (inserted?.id) await savePlacePhotos(placeId, inserted.id)
+    setSubmitting(false)
     // Toast voix Sara — gamification mig 16 award +10 pts via trigger
     // SECURITY DEFINER, on est optimiste côté client (best-effort).
     toast.success('+10 pts · Tu fais grandir Hilmy', { duration: 4000 })
