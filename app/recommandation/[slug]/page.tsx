@@ -14,6 +14,7 @@ import {
 } from '@/lib/supabase/queries/places'
 import {
   getPublicPlaceDetail,
+  getPublicPlacePhotos,
   getPublicPlaceRecos,
   getPublicSimilar,
 } from '@/lib/supabase/queries/places-public'
@@ -120,15 +121,17 @@ export default async function RecommandationPage({
   if (!user) {
     const detail = await getPublicPlaceDetail(slug)
     if (!detail) notFound()
-    const [recos, similaires] = await Promise.all([
+    const [recos, similaires, communityPhotos] = await Promise.all([
       getPublicPlaceRecos(slug),
       getPublicSimilar(detail.hilmy_category, slug),
+      getPublicPlacePhotos(slug),
     ])
     return (
       <RecommandationDetailPublic
         detail={detail}
         recos={recos}
         similaires={similaires}
+        communityPhotos={communityPhotos}
       />
     )
   }
@@ -138,6 +141,9 @@ export default async function RecommandationPage({
   // que la fiche publique → garantit des valeurs strictement identiques à ce
   // que voit un visiteur anonyme. Lancé en parallèle (ne dépend que du slug).
   const publicStatsPromise = getPublicPlaceDetail(slug)
+  // Galerie communauté — MÊME vue anon-safe que la fiche publique (zéro identité,
+  // published only, source place_user_photos). Identique connecté/anonyme.
+  const communityPhotosPromise = getPublicPlacePhotos(slug)
   const { data: row, error } = await getPlaceBySlug(slug)
   if (error || !row) notFound()
   const l: MockLieu = adaptDbPlace(row)
@@ -230,6 +236,7 @@ export default async function RecommandationPage({
   }
 
   const publicStats = await publicStatsPromise
+  const communityPhotos = await communityPhotosPromise
 
   // PR-a — SA reco existante sur ce lieu (le cas échéant) → édition vs ajout
   // depuis la fiche. Filtre identique au verrou RLS (user_id = auth.uid()) ;
@@ -255,6 +262,7 @@ export default async function RecommandationPage({
       heroPriceMode={publicStats?.price_mode ?? null}
       currentUserId={user.id}
       myReco={myReco}
+      communityPhotos={communityPhotos}
     />
   )
 }
