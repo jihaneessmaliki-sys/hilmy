@@ -199,6 +199,57 @@ export async function getPlaceDetails(
   };
 }
 
+/**
+ * Contact LIVE d'un lieu (téléphone + horaires) — réservé aux membres.
+ *
+ * Field mask MINIMAL (`internationalPhoneNumber,regularOpeningHours`) → on ne
+ * tire QUE ces deux champs, jamais photos/rating/atmosphere. SKU Place Details
+ * (Enterprise), payload réduit. La clé reste dans le header (jamais en URL).
+ *
+ * Cache de PERFORMANCE 6 h (Data Cache Next, `revalidate`) keyé par l'URL donc
+ * par place_id : si plusieurs membres regardent le même lieu dans la journée,
+ * 1 seul appel Google. Conforme CGU (cache temporaire < 30 j ; AUCUN stockage
+ * durable en base). La donnée renvoyée est non-personnelle (donnée lieu).
+ */
+export type PlaceContactLive = {
+  phone: string | null;
+  opening_hours: string[] | null;
+};
+
+const CONTACT_FIELD_MASK = "internationalPhoneNumber,regularOpeningHours";
+const CONTACT_CACHE_SECONDS = 6 * 60 * 60; // 6 h
+
+export async function getPlaceContactLive(
+  placeId: string,
+): Promise<PlaceContactLive | null> {
+  if (!placeId) return null;
+  const apiKey = getApiKey();
+
+  const res = await fetch(
+    `${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=fr`,
+    {
+      method: "GET",
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": CONTACT_FIELD_MASK,
+      },
+      // Cache partagé entre membres (donnée lieu, non perso). Le verrou session
+      // est en amont dans la route → l'anonyme n'atteint jamais ce fetch.
+      next: { revalidate: CONTACT_CACHE_SECONDS },
+    },
+  );
+
+  if (!res.ok) return null;
+  const p = (await res.json()) as {
+    internationalPhoneNumber?: string;
+    regularOpeningHours?: { weekdayDescriptions?: string[] };
+  };
+  return {
+    phone: p.internationalPhoneNumber ?? null,
+    opening_hours: p.regularOpeningHours?.weekdayDescriptions ?? null,
+  };
+}
+
 // Domaine canonique de prod. `hilmy.io` redirige 307 vers `www.hilmy.io` :
 // on stocke directement le www pour éviter un hop de redirect à chaque
 // chargement d'image (mobile expo-image + web <img>). NE PAS utiliser
