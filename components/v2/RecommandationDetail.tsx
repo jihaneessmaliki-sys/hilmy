@@ -12,6 +12,7 @@ import { AddRecoModal } from '@/components/v2/AddRecoModal'
 import { PhotoGallery } from '@/components/v2/PhotoGallery'
 import { CommunityPhotosSection } from '@/components/v2/CommunityPhotosSection'
 import type { CommunityPhoto } from '@/components/v2/CommunityPhotos'
+import { PlaceLiveInfo } from '@/components/v2/PlaceLiveInfo'
 import type { ExistingReco } from '@/components/v2/RecoForm'
 import { categoriesLieux, type Lieu as MockLieu } from '@/lib/mock-data'
 import { isSelectionHilmy } from '@/lib/permissions-lieux'
@@ -417,6 +418,9 @@ export function RecommandationDetail({
                     →
                   </span>
                 </PlaceContactLink>
+                {/* Téléphone + horaires LIVE, à la demande (membre connectée).
+                    Rien ne part tant que la membre n'a pas cliqué. */}
+                <PlaceLiveInfo placeId={row.id} />
                 <div className="mt-3 flex flex-col gap-3">
                   <AddRecoModal
                     userId={currentUserId}
