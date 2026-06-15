@@ -50,13 +50,15 @@ export function CommunityPhotosSection({
         />
       </div>
 
-      {/* Mention légale — Hilmy hébergeur, modération a posteriori, signalement. */}
+      {/* Mention légale — Hilmy hébergeur, modération a posteriori, retrait SI
+          illicite (formulation validée, le « si elle est illicite » est gardé
+          mot pour mot pour sa portée juridique). */}
       <p className="mt-4 text-[12px] leading-[1.6] text-texte-sec">
-        Photos partagées par les membres de la communauté. Hilmy héberge ces
-        contenus, modérés a posteriori : ils n&apos;engagent que leurs autrices.
-        Un contenu te semble inapproprié (visage d&apos;un tiers, droit à
-        l&apos;image, contenu illicite)&nbsp;? Signale-le, il sera examiné et
-        retiré le cas échéant.
+        Ces photos sont partagées par les copines de la communauté, qui en sont
+        responsables. Hilmy les héberge et les modère a posteriori. Une photo te
+        semble problématique — visage d&apos;un tiers, droit à l&apos;image,
+        contenu illicite&nbsp;? Signale-la&nbsp;: on l&apos;examine et on la
+        retire si elle est illicite.
       </p>
     </section>
   )
