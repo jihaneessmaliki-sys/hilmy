@@ -57,6 +57,18 @@ const securityHeaders = [
 ]
 
 /**
+ * Variante "no-referrer" des headers de sécu, pour les routes qui voient
+ * transiter un token en query string (revue hilmy-security) :
+ *   • /auth/callback  → token_hash / code du magic-link
+ *   • /tarifs         → page de destination du hand-off (évite que le
+ *     Referer parte vers Stripe.js / fonts / analytics tierces)
+ * On surcharge UNIQUEMENT Referrer-Policy, le reste est identique.
+ */
+const securityHeadersNoReferrer = securityHeaders.map((h) =>
+  h.key === 'Referrer-Policy' ? { key: 'Referrer-Policy', value: 'no-referrer' } : h,
+)
+
+/**
  * Headers COOP + COEP scopés (PR-3 vidéo) — activent crossOriginIsolated=true
  * uniquement sur les 2 routes où UploadVideo (ffmpeg.wasm) tourne. Permet
  * SharedArrayBuffer pour la compression multi-thread (3-5× plus rapide).
@@ -109,6 +121,18 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: securityHeaders,
+      },
+      // Override Referrer-Policy: no-referrer sur les routes à token.
+      // Placé APRÈS le bloc global : chez Next, pour une même clé, la
+      // dernière source qui matche l'emporte → ces routes passent en
+      // no-referrer tout en gardant les autres headers de sécu.
+      {
+        source: '/auth/callback',
+        headers: securityHeadersNoReferrer,
+      },
+      {
+        source: '/tarifs',
+        headers: securityHeadersNoReferrer,
       },
     ]
   },
