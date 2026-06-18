@@ -35,6 +35,13 @@ export type RateLimitOptions = {
   max: number
   /** Fenêtre glissante en millisecondes. */
   windowMs: number
+  /** Clé explicite du bucket (ex: email normalisé). Si absente, on
+   *  retombe sur l'IP client. Permet un rate-limit par identifiant
+   *  métier en plus de l'IP — indispensable derrière NAT/CGNAT mobile,
+   *  où plusieurs utilisatrices partagent une même IP sortante, et
+   *  contre le mail-bombing d'une cible par un attaquant qui tourne
+   *  ses IP. */
+  key?: string
 }
 
 export type RateLimitResult =
@@ -56,8 +63,8 @@ export function rateLimit(
   request: Request,
   options: RateLimitOptions,
 ): RateLimitResult {
-  const ip = getClientIp(request)
-  const key = `${options.tag}:${ip}`
+  const identifier = options.key ?? getClientIp(request)
+  const key = `${options.tag}:${identifier}`
   const now = Date.now()
 
   const existing = cache.get(key)
