@@ -14,7 +14,7 @@ import {
 } from '@/components/google/PlaceAutocomplete'
 import { createClient } from '@/lib/supabase/client'
 import { CopineDiscountField } from '@/components/onboarding/CopineDiscountField'
-import { CATEGORIES_MAP } from '@/lib/constants'
+import { CATEGORIES_MAP, PAYS } from '@/lib/constants'
 import { formatVilleDisplay } from '@/lib/geo/city-centroids'
 import { COUNTRY_CODES, toE164, nationalDigits } from '@/lib/phone'
 
@@ -98,6 +98,10 @@ export default function GoogleOnboardingPage() {
   // Overrides éditables par l'utilisatrice
   const [nom, setNom] = useState('')
   const [categorie, setCategorie] = useState('')
+  // Pays + ville pré-remplis depuis Google mais éditables : la prestataire
+  // peut corriger / écrire librement sa ville (champ texte ouvert).
+  const [pays, setPays] = useState('')
+  const [ville, setVille] = useState('')
   const [tagline, setTagline] = useState('')
   const [description, setDescription] = useState('')
   // WhatsApp en deux parties : indicatif pays (obligatoire, sans défaut) +
@@ -149,6 +153,11 @@ export default function GoogleOnboardingPage() {
       setDetails(full)
       setNom(full.name)
       setCategorie(guessCategorie(full.google_category))
+      // Pré-remplissage éditable : pays seulement s'il fait partie des pays
+      // cible (sinon on laisse vide pour qu'elle choisisse), ville en texte
+      // libre repris de Google.
+      setPays(PAYS.includes(full.country) ? full.country : '')
+      setVille(formatVilleDisplay(full.city) ?? full.city ?? '')
       setTagline('')
       setDescription('')
       setStep('preview')
@@ -163,6 +172,8 @@ export default function GoogleOnboardingPage() {
     setDetails(null)
     setNom('')
     setCategorie('')
+    setPays('')
+    setVille('')
     setTagline('')
     setDescription('')
     setError(null)
@@ -189,8 +200,8 @@ export default function GoogleOnboardingPage() {
       nom: nom.trim(),
       slug,
       categorie,
-      pays: details.country || null,
-      ville: formatVilleDisplay(details.city) ?? details.city ?? '',
+      pays: pays.trim() || null,
+      ville: formatVilleDisplay(ville.trim()) ?? ville.trim(),
       whatsapp: toE164(waDial, waNumber),
       email: userEmail || null,
       instagram: instagram.trim() || null,
@@ -414,6 +425,33 @@ export default function GoogleOnboardingPage() {
                           </option>
                         ))}
                       </select>
+                    </Field>
+                    <Field label="Pays">
+                      <select
+                        value={pays}
+                        onChange={(e) => setPays(e.target.value)}
+                        className="line"
+                      >
+                        <option value="">Choisir…</option>
+                        {PAYS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field
+                      label="Ville"
+                      hint="Tu peux la corriger ou en écrire une autre."
+                    >
+                      <input
+                        type="text"
+                        value={ville}
+                        onChange={(e) => setVille(e.target.value)}
+                        placeholder="Genève, Paris, Montréal, Casablanca…"
+                        className="line"
+                        autoComplete="off"
+                      />
                     </Field>
                     <Field label="WhatsApp (obligatoire)" hint="Indicatif pays + numéro sans le 0 initial">
                       <div className="flex gap-2">
