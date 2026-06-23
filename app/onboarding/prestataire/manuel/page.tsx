@@ -10,7 +10,7 @@ import {
 } from '@/components/onboarding/OnboardingShell'
 import { createClient } from '@/lib/supabase/client'
 import { CopineDiscountField } from '@/components/onboarding/CopineDiscountField'
-import { CATEGORIES_MAP } from '@/lib/constants'
+import { CATEGORIES_MAP, PAYS } from '@/lib/constants'
 import { villesSuggestions } from '@/lib/mock-data'
 import { formatVilleDisplay } from '@/lib/geo/city-centroids'
 import { COUNTRY_CODES, toE164, nationalDigits } from '@/lib/phone'
@@ -329,13 +329,11 @@ export default function ManuelOnboardingPage() {
                       className="line"
                     >
                       <option value="">Choisir…</option>
-                      {['Suisse', 'France', 'Belgique', 'Luxembourg', 'Monaco'].map(
-                        (p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ),
-                      )}
+                      {PAYS.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
                     </select>
                   </Field>
                   <Field
