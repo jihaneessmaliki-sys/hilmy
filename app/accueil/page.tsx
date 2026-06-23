@@ -14,6 +14,7 @@ import {
   formatVilleDisplay,
 } from '@/lib/geo/city-centroids'
 import type { Evenement as MockEvenement } from '@/lib/mock-data'
+import { categoryLabel } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -243,6 +244,49 @@ export default async function AccueilPage() {
     }
   }
 
+  // ── Fallback prestataires ─────────────────────────────────────────
+  // Si aucune reco publiée, on remplit la section "pépites" avec les
+  // prestataires déjà en ligne (annuaire approved) — pas de vide au lancement.
+  type PrestaForHome = {
+    id: string
+    nom: string
+    href: string
+    tagline: string | null
+    categorie: string
+    cover: string | null
+  }
+  let prestatairesFallback: PrestaForHome[] = []
+  if (recos.length === 0) {
+    const { data: prestaRows } = await supabase
+      .from('profiles')
+      .select('id, nom, slug, tagline, categorie, galerie, photos')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(3)
+    prestatairesFallback = (
+      (prestaRows ?? []) as Array<{
+        id: string
+        nom: string
+        slug: string
+        tagline: string | null
+        categorie: string
+        galerie: unknown
+        photos: string[] | null
+      }>
+    ).map((p) => {
+      const galerieArr = Array.isArray(p.galerie) ? (p.galerie as string[]) : []
+      const photos = Array.isArray(p.photos) ? p.photos : []
+      return {
+        id: p.id,
+        nom: p.nom,
+        href: `/prestataires/${p.slug}`,
+        tagline: p.tagline ?? null,
+        categorie: p.categorie,
+        cover: galerieArr[0] ?? photos[0] ?? null,
+      }
+    })
+  }
+
   // ── 6 events à venir ─────────────────────────────────────────────
   const { data: eventsRows } = await supabase
     .from('events')
@@ -427,11 +471,49 @@ export default async function AccueilPage() {
               </Link>
             </div>
 
-            {recos.length === 0 ? (
+            {recos.length === 0 && prestatairesFallback.length === 0 ? (
               <div className="rounded-sm border border-dashed border-or/30 bg-creme-soft py-16 text-center">
                 <p className="font-serif text-xl italic text-vert">
                   Le carnet se remplit — reviens dans quelques jours.
                 </p>
+              </div>
+            ) : recos.length === 0 ? (
+              <div className="grid gap-6 md:grid-cols-3">
+                {prestatairesFallback.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={p.href}
+                    className="group flex h-full flex-col overflow-hidden rounded-sm border border-or/15 bg-blanc transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_30px_60px_-30px_rgba(15,61,46,0.25)]"
+                  >
+                    <div className="relative h-56 w-full overflow-hidden bg-creme-deep">
+                      {p.cover && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.cover}
+                          alt={p.nom}
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          loading="lazy"
+                        />
+                      )}
+                      <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-blanc/85 px-3 py-1 text-[10px] tracking-[0.22em] text-vert backdrop-blur uppercase">
+                        Prestataire
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-col gap-3 p-6">
+                      <h3 className="font-serif text-xl font-light leading-tight text-vert">
+                        {p.nom}
+                      </h3>
+                      {p.tagline && (
+                        <p className="line-clamp-3 font-serif text-[14px] italic leading-[1.55] text-texte-sec">
+                          « {p.tagline} »
+                        </p>
+                      )}
+                      <p className="mt-auto border-t border-or/10 pt-3 text-[11px] tracking-[0.18em] text-or-deep uppercase">
+                        {categoryLabel(p.categorie)}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-3">
