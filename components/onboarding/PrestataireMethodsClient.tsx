@@ -9,58 +9,6 @@ import {
 import { MethodCard } from '@/components/onboarding/MethodCard'
 import { MapPin, PenLine } from 'lucide-react'
 
-function Instagram({
-  size = 18,
-  strokeWidth = 1.5,
-}: {
-  size?: number
-  strokeWidth?: number
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="2" y="2" width="20" height="20" rx="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-    </svg>
-  )
-}
-
-function Linkedin({
-  size = 18,
-  strokeWidth = 1.5,
-}: {
-  size?: number
-  strokeWidth?: number
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" />
-      <rect x="2" y="9" width="4" height="12" />
-      <circle cx="4" cy="4" r="2" />
-    </svg>
-  )
-}
-
 const methods = [
   {
     slug: 'manuel',
@@ -79,32 +27,9 @@ const methods = [
     icon: <MapPin size={18} strokeWidth={1.5} />,
     titre: 'Depuis Google Places',
     accroche:
-      'On récupérera ton adresse, tes horaires, tes photos. Tu corriges, tu publies.',
+      'On récupère ton adresse, tes horaires, tes photos. Tu corriges, tu publies.',
     ideal: 'Restaurants, spas, salons, boutiques — tout lieu physique.',
     duree: '2 min',
-    bientot: true,
-  },
-  {
-    slug: 'instagram',
-    numero: '03',
-    icon: <Instagram size={18} strokeWidth={1.5} />,
-    titre: 'Depuis Instagram',
-    accroche:
-      'Ta bio, ta photo, tes six derniers posts — importés direct pour ta galerie.',
-    ideal: 'Créatrices, influenceuses, marques. Compte Business ou Creator.',
-    duree: '2 min',
-    bientot: true,
-  },
-  {
-    slug: 'linkedin',
-    numero: '04',
-    icon: <Linkedin size={18} strokeWidth={1.5} />,
-    titre: 'Depuis LinkedIn',
-    accroche:
-      'Ton parcours pro reformaté version HILMY. Chaleureux, humain, pas corporate.',
-    ideal: 'Coachs, thérapeutes en ligne, consultantes, avocates.',
-    duree: '3 min',
-    bientot: true,
   },
 ]
 
@@ -135,16 +60,17 @@ export function PrestataireMethodsClient() {
               }
               subtitle={
                 <>
-                  Quelques infos et tu es prête à rejoindre la team. Trois
-                  formules d&apos;abonnement à partir de 19€/mois, sans
+                  Deux façons de créer ta fiche : à la main, ou depuis Google
+                  Places. Quelques infos et tu es prête à rejoindre la team.
+                  Trois formules d&apos;abonnement à partir de 19€/mois, sans
                   commission sur tes prestations — le détail sur{' '}
-                  <a
+                  <Link
                     href="/tarifs"
                     className="text-or-deep underline-offset-4 hover:text-or hover:underline"
                   >
                     /tarifs
-                  </a>
-                  . Les imports automatiques arriveront bientôt.
+                  </Link>
+                  .
                 </>
               }
             />
@@ -156,24 +82,18 @@ export function PrestataireMethodsClient() {
         <div className="mx-auto max-w-container px-6 md:px-20">
           <div className="grid gap-5 md:grid-cols-2">
             {methods.map((m, i) => (
-              <div key={m.slug} className="relative">
-                <MethodCard
-                  index={i}
-                  icon={m.icon}
-                  numero={m.numero}
-                  titre={m.titre}
-                  accroche={m.accroche}
-                  ideal={m.ideal}
-                  duree={m.duree}
-                  recommande={m.recommande}
-                  href={`/onboarding/prestataire/${m.slug}`}
-                />
-                {m.bientot && (
-                  <span className="absolute top-5 right-5 rounded-full bg-or/15 px-3 py-1 text-[10px] tracking-[0.22em] text-or-deep uppercase">
-                    Bientôt
-                  </span>
-                )}
-              </div>
+              <MethodCard
+                key={m.slug}
+                index={i}
+                icon={m.icon}
+                numero={m.numero}
+                titre={m.titre}
+                accroche={m.accroche}
+                ideal={m.ideal}
+                duree={m.duree}
+                recommande={m.recommande}
+                href={`/onboarding/prestataire/${m.slug}`}
+              />
             ))}
           </div>
 
