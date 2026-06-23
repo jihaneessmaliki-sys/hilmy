@@ -39,6 +39,37 @@ function slugify(s: string) {
     .slice(0, 60)
 }
 
+// Google renvoie `opening_hours` (regularOpeningHours.weekdayDescriptions) sous
+// forme de lignes humaines en français, ordonnées du lundi au dimanche, ex.
+// "lundi: 09:00 – 19:00". La fiche publique attend `profiles.horaires` au format
+// { monday: "09:00 – 19:00", ... } (cf. formatHoraires dans la fiche publique).
+// On convertit en retirant le préfixe jour (avant le premier ":") et en mappant
+// par index sur les clés anglaises. La prestataire pourra corriger ensuite.
+const HORAIRES_KEYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const
+
+function googleHoursToHoraires(
+  descriptions: string[] | null,
+): Record<string, string> | null {
+  if (!descriptions || descriptions.length === 0) return null
+  const out: Record<string, string> = {}
+  descriptions.slice(0, 7).forEach((line, i) => {
+    const key = HORAIRES_KEYS[i]
+    if (!key) return
+    const sep = line.indexOf(':')
+    const value = (sep >= 0 ? line.slice(sep + 1) : line).trim()
+    if (value) out[key] = value
+  })
+  return Object.keys(out).length > 0 ? out : null
+}
+
 function guessCategorie(googleType: string | null): string {
   if (!googleType) return 'beaute'
   const t = googleType.toLowerCase()
@@ -168,6 +199,7 @@ export default function GoogleOnboardingPage() {
       description: description.trim() || null,
       copine_discount_pct: copineDiscountPct,
       copine_discount_note: copineDiscountNote.trim() || null,
+      horaires: googleHoursToHoraires(details.opening_hours),
       galerie: details.photos,
       photos: details.photos,
       services: [],
@@ -333,6 +365,21 @@ export default function GoogleOnboardingPage() {
                             className="aspect-square w-full rounded-sm object-cover"
                           />
                         ))}
+                      </div>
+                    )}
+                    {details.opening_hours && details.opening_hours.length > 0 && (
+                      <div className="mt-6 border-t border-or/10 pt-5">
+                        <p className="overline text-or">Horaires importés</p>
+                        <ul className="mt-3 space-y-1">
+                          {details.opening_hours.map((line, i) => (
+                            <li key={i} className="text-[13px] text-texte-sec">
+                              {line}
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="mt-3 text-[11px] text-texte-sec/80">
+                          Tu pourras les ajuster depuis ton tableau de bord.
+                        </p>
                       </div>
                     )}
                   </div>
