@@ -87,6 +87,8 @@ export const PAYS_MAP: Record<string, string> = {
   "Belgique": "Belgique",
   "Luxembourg": "Luxembourg",
   "Monaco": "Monaco",
+  "Canada": "Canada",
+  "Maroc": "Maroc",
 };
 
 export const PAYS = Object.keys(PAYS_MAP);
