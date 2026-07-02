@@ -72,6 +72,7 @@ type SearchParams = Promise<{
   promo?: string
   utm_source?: string
   from?: string
+  stripe_canceled?: string
 }>
 
 export const metadata: Metadata = {
@@ -175,8 +176,8 @@ const DIALOGUE_QA = [
     q: 'Combien de temps avant que ma fiche soit en ligne ?',
     a: (
       <>
-        Tu paies, tu reçois un email de bienvenue dans la minute avec le lien pour
-        créer ta fiche.{' '}
+        Tu crées ta fiche en quelques minutes, tu choisis ta formule, et dès le
+        paiement elle est en ligne.{' '}
         <em className="not-italic font-medium text-vert">
           On valide ton profil sous 24h, et tu es dans la team.
         </em>
@@ -215,6 +216,10 @@ export default async function TarifsPage({
   // prestataire — et on propage le contexte au checkout pour qu'elle
   // atterrisse sur /publiee après paiement.
   const fromOnboarding = params.from === 'onboarding'
+  // Retour d'un checkout Stripe abandonné (cancel_url). Rien n'a été
+  // débité — on rassure et on remet la formule sous les yeux, au lieu
+  // de laisser revenir sur la page sans un mot.
+  const stripeCanceled = params.stripe_canceled === '1'
 
   // Log analytics dev mode (deep-link mobile UTM tracking).
   if (process.env.NODE_ENV !== 'production' && params.utm_source) {
@@ -228,6 +233,24 @@ export default async function TarifsPage({
   return (
     <PageShell navVariant="solid">
       <div className="scroll-smooth">
+        {/* BANDEAU RETOUR CHECKOUT ABANDONNÉ */}
+        {stripeCanceled && (
+          <div
+            role="status"
+            className="border-b border-or/30 bg-creme-deep px-6 py-4 pt-24 text-center md:px-20"
+          >
+            <p className="mx-auto max-w-[640px] text-[15px] leading-relaxed text-vert">
+              Ton paiement n&apos;a pas abouti — rien n&apos;a été débité,
+              aucune inquiétude.{' '}
+              <em className="not-italic font-medium">
+                {fromOnboarding
+                  ? 'Ta fiche est prête, il ne lui manque que ta formule.'
+                  : 'Ta formule t’attend juste en dessous, reprends où tu en étais.'}
+              </em>
+            </p>
+          </div>
+        )}
+
         {/* HERO */}
         <section className="overflow-hidden px-6 py-28 text-center md:px-20 md:py-32">
           <div className="mx-auto max-w-[780px]">

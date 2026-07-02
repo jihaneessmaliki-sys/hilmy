@@ -30,8 +30,10 @@ interface Props {
  * Voix Sara : "Je m'abonne", "Je choisis cette formule", "Je souscris".
  * Pas "Acheter" ni "Buy now".
  *
- * Gère les erreurs serveur (founder qui tente de souscrire = 403,
- * price_id inconnu = 422, Stripe down = 502) avec toast voix Sara.
+ * Gère les erreurs serveur avec toast voix Sara (founder qui tente de
+ * souscrire = 403, price_id inconnu = 422, Stripe down = 502) — sauf
+ * 401 (pas de compte) et 404 (pas de fiche) qui redirigent vers le
+ * funnel d'inscription au lieu de laisser la prospecte dans une impasse.
  */
 export function SubscribeButton({
   priceId,
@@ -57,6 +59,24 @@ export function SubscribeButton({
       })
 
       if (!res.ok) {
+        // 401 = visiteuse sans compte, 404 = compte sans fiche prestataire.
+        // Dans les deux cas on la remet sur le bon rail au lieu d'un toast
+        // sans issue : le funnel d'inscription la ramène sur /tarifs
+        // (?from=onboarding) une fois sa fiche créée.
+        if (res.status === 401) {
+          toast.info('Crée ton compte, on te ramène ici juste après.', {
+            duration: 4000,
+          })
+          window.location.href = '/auth/signup?role=prestataire'
+          return
+        }
+        if (res.status === 404) {
+          toast.info('Il te manque juste ta fiche — deux minutes, promis.', {
+            duration: 4000,
+          })
+          window.location.href = '/onboarding/prestataire'
+          return
+        }
         const json = (await res.json().catch(() => null)) as { error?: string } | null
         const msg = json?.error ?? 'Impossible de démarrer la souscription.'
         toast.error(msg, { duration: 5000 })
