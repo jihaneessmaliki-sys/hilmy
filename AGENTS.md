@@ -132,13 +132,14 @@ Sans validation explicite.
 - **Sélection Hilmy** : 39€/mois · 3m 110€ · 6m 210€ · 1an 374€
 Ne pas modifier les prix, les noms de tiers, ni les durées sans validation explicite.
 
-### Promo lancement -50% (en cours, jusqu'à la sortie de l'app mobile)
-- Feature flag : `NEXT_PUBLIC_PROMO_LANCEMENT=true`
-- Helpers : [lib/promo-lancement.ts](lib/promo-lancement.ts) (UI) + [lib/stripe-promo.ts](lib/stripe-promo.ts) (futur Stripe checkout)
-- Coupon Stripe : `LANCEMENT50` (créé manuellement par Jiji dans le dashboard Stripe LIVE — cf section "Stripe & paiements" ci-dessous pour les règles TEST vs LIVE)
-- UI affecte : [/tarifs](app/tarifs) wizard + homepage [PricingTeaser](components/landing/PricingTeaser.tsx)
-- **À désactiver le jour de sortie de l'app mobile** : passer la var à `false` (ou retirer) côté Vercel + `.env.local`. Aucune autre modif code nécessaire.
-- Coexistence avec le système promo_codes Supabase : pendant la promo lancement, le champ « J'ai un code copine » est masqué (pas de stacking).
+### Promo lancement -50% (TERMINÉE — désactivée début juillet 2026)
+- **Statut : promo désactivée volontairement par Jiji début juillet 2026.** On vend plein tarif. Ne pas la réactiver sans demande explicite.
+- Feature flag : `NEXT_PUBLIC_PROMO_LANCEMENT` absent/`false` sur Vercel (et `.env.local`). Le code reste en place, dormant.
+- Référence historique (helpers conservés, ne pas supprimer) :
+  - Helpers : [lib/promo-lancement.ts](lib/promo-lancement.ts) (UI) + [lib/stripe-promo.ts](lib/stripe-promo.ts) (futur Stripe checkout)
+  - Coupon Stripe : `LANCEMENT50` (créé manuellement par Jiji dans le dashboard Stripe LIVE — cf section "Stripe & paiements" ci-dessous pour les règles TEST vs LIVE)
+  - UI affectée quand le flag était actif : [/tarifs](app/tarifs) wizard + homepage [PricingTeaser](components/landing/PricingTeaser.tsx)
+  - Coexistence avec le système promo_codes Supabase : pendant la promo lancement, le champ « J'ai un code copine » était masqué (pas de stacking).
 
 ## 🔒 Stripe & paiements
 
@@ -509,4 +510,4 @@ Mieux vaut poser une question "évidente" que casser quelque chose en prod.
  
 ---
  
-*Dernière mise à jour : mai 2026*
+*Dernière mise à jour : juillet 2026*
